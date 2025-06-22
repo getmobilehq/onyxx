@@ -1,0 +1,877 @@
+
+> vite-react-typescript-starter@0.0.0 dev
+> vite
+
+
+  VITE v5.4.8  ready in 73 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: use --host to expose
+Browserslist: caniuse-lite is outdated. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+23:57:01 [vite] vite.config.ts changed, restarting server...
+23:57:01 [vite] server restarted.
+23:57:06 [vite] vite.config.ts changed, restarting server...
+23:57:06 [vite] server restarted.
+23:57:28 [vite] vite.config.ts changed, restarting server...
+23:57:28 [vite] server restarted.
+23:59:55 [vite] hmr update /src/pages/buildings/building-details.tsx, /src/index.css
+00:12:04 [vite] hmr update /src/pages/buildings/building-details.tsx, /src/index.css
+00:21:45 [vite] hmr update /src/routes/index.tsx, /src/index.css
+00:21:55 [vite] hmr update /src/routes/index.tsx, /src/index.css
+00:22:05 [vite] hmr update /src/pages/assessments/index.tsx, /src/index.css
+00:25:33 [vite] hmr update /src/pages/assessments/pre-assessment.tsx, /src/index.css
+00:25:33 [vite] ✨ new dependencies optimized: @radix-ui/react-scroll-area
+00:25:33 [vite] ✨ optimized dependencies changed. reloading
+00:28:00 [vite] hmr update /src/pages/assessments/field-assessment.tsx, /src/index.css
+01:29:48 [vite] hmr update /src/layouts/dashboard-layout.tsx, /src/index.css
+01:29:48 [vite] hmr update /src/routes/index.tsx, /src/index.css
+01:29:48 [vite] hmr update /src/components/assessment-workflow.tsx, /src/index.css
+18:36:19 [vite] hmr update /src/pages/assessments/pre-assessment.tsx, /src/index.css
+18:36:26 [vite] hmr update /src/pages/assessments/pre-assessment.tsx, /src/index.css
+18:36:26 [vite] Internal server error: /Users/josephagunbiade/Desktop/studio/onyx/src/pages/assessments/pre-assessment.tsx: Identifier 'uniformatData' has already been declared. (75:9)
+
+  73 | type PreAssessmentForm = z.infer<typeof preAssessmentSchema>;
+  74 |
+> 75 | import { uniformatData } from '@/data/uniformat-codes';
+     |          ^
+  76 | import { buildingTypeCosts, getBuildingTypesForDropdown } from '@/data/building-costs';
+  77 |
+  78 | // Pre-assessment checklist items
+  Plugin: vite:react-babel
+  File: /Users/josephagunbiade/Desktop/studio/onyx/src/pages/assessments/pre-assessment.tsx:75:9
+  73 |  type PreAssessmentForm = z.infer<typeof preAssessmentSchema>;
+  74 |  
+  75 |  import { uniformatData } from '@/data/uniformat-codes';
+     |           ^
+  76 |  import { buildingTypeCosts, getBuildingTypesForDropdown } from '@/data/building-costs';
+  77 |  
+      at constructor (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:362:19)
+      at TypeScriptParserMixin.raise (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:3259:19)
+      at TypeScriptScopeHandler.declareName (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:6913:21)
+      at TypeScriptParserMixin.declareNameFromIdentifier (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:7350:16)
+      at TypeScriptParserMixin.checkIdentifier (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:7346:12)
+      at TypeScriptParserMixin.checkLVal (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:7287:12)
+      at TypeScriptParserMixin.finishImportSpecifier (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:13734:10)
+      at TypeScriptParserMixin.parseImportSpecifier (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:13899:17)
+      at TypeScriptParserMixin.parseImportSpecifier (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:9793:18)
+      at TypeScriptParserMixin.parseNamedImportSpecifiers (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:13878:36)
+      at TypeScriptParserMixin.parseImportSpecifiersAndAfter (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:13711:37)
+      at TypeScriptParserMixin.parseImport (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:13704:17)
+      at TypeScriptParserMixin.parseImport (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:9073:26)
+      at TypeScriptParserMixin.parseStatementContent (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12351:27)
+      at TypeScriptParserMixin.parseStatementContent (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:9157:18)
+      at TypeScriptParserMixin.parseStatementLike (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12243:17)
+      at TypeScriptParserMixin.parseModuleItem (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12220:17)
+      at TypeScriptParserMixin.parseBlockOrModuleBlockBody (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12796:36)
+      at TypeScriptParserMixin.parseBlockBody (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12789:10)
+      at TypeScriptParserMixin.parseProgram (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12117:10)
+      at TypeScriptParserMixin.parseTopLevel (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12107:25)
+      at TypeScriptParserMixin.parse (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:13923:10)
+      at TypeScriptParserMixin.parse (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:9771:18)
+      at parse (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:13957:38)
+      at parser (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/core/lib/parser/index.js:41:34)
+      at parser.next (<anonymous>)
+      at normalizeFile (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/core/lib/transformation/normalize-file.js:64:37)
+      at normalizeFile.next (<anonymous>)
+      at run (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/core/lib/transformation/index.js:21:50)
+      at run.next (<anonymous>)
+      at transform (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/core/lib/transform.js:22:33)
+      at transform.next (<anonymous>)
+      at step (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/gensync/index.js:261:32)
+      at /Users/josephagunbiade/Desktop/studio/onyx/node_modules/gensync/index.js:273:13
+      at async.call.result.err.err (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/gensync/index.js:223:11)
+      at /Users/josephagunbiade/Desktop/studio/onyx/node_modules/gensync/index.js:189:28
+      at /Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/core/lib/gensync-utils/async.js:67:7
+      at /Users/josephagunbiade/Desktop/studio/onyx/node_modules/gensync/index.js:113:33
+      at step (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/gensync/index.js:287:14)
+      at /Users/josephagunbiade/Desktop/studio/onyx/node_modules/gensync/index.js:273:13
+      at async.call.result.err.err (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/gensync/index.js:223:11)
+18:36:30 [vite] hmr update /src/pages/assessments/pre-assessment.tsx, /src/index.css
+18:36:35 [vite] hmr update /src/pages/assessments/pre-assessment.tsx, /src/index.css
+18:36:39 [vite] hmr update /src/pages/assessments/pre-assessment.tsx, /src/index.css
+18:36:44 [vite] hmr update /src/pages/assessments/pre-assessment.tsx, /src/index.css
+18:36:49 [vite] hmr update /src/pages/assessments/pre-assessment.tsx, /src/index.css
+18:36:53 [vite] hmr update /src/pages/assessments/pre-assessment.tsx, /src/index.css
+18:37:04 [vite] hmr update /src/pages/assessments/pre-assessment.tsx, /src/index.css
+18:37:11 [vite] hmr update /src/pages/assessments/field-assessment.tsx, /src/index.css
+18:37:15 [vite] hmr update /src/pages/assessments/field-assessment.tsx, /src/index.css
+19:02:33 [vite] hmr update /src/components/assessment-workflow.tsx, /src/index.css
+19:02:41 [vite] hmr update /src/components/assessment-workflow.tsx, /src/index.css
+19:12:36 [vite] hmr update /src/routes/index.tsx, /src/index.css
+19:12:41 [vite] hmr update /src/routes/index.tsx, /src/index.css
+21:01:47 [vite] hmr update /src/components/assessment-workflow.tsx, /src/index.css
+06:11:42 [vite] hmr update /src/index.css
+06:11:56 [vite] hmr update /src/index.css
+06:11:56 [vite] hmr update /src/index.css
+06:12:04 [vite] hmr update /src/index.css
+06:12:46 [vite] hmr update /src/index.css
+06:19:00 [vite] hmr update /src/index.css
+06:19:58 [vite] hmr update /src/index.css
+06:20:23 [vite] hmr update /src/layouts/dashboard-layout.tsx, /src/index.css
+06:21:46 [vite] hmr update /src/layouts/dashboard-layout.tsx, /src/index.css
+06:22:23 [vite] hmr update /src/layouts/dashboard-layout.tsx, /src/index.css
+06:23:42 [vite] hmr update /src/layouts/dashboard-layout.tsx, /src/index.css
+21:50:08 [vite] hmr update /src/pages/dashboard/index.tsx, /src/index.css
+21:50:40 [vite] hmr update /src/pages/dashboard/index.tsx, /src/index.css
+21:51:09 [vite] hmr update /src/components/ui/card.tsx, /src/index.css
+21:51:50 [vite] hmr update /src/components/ui/button.tsx, /src/index.css
+21:51:50 [vite] hmr invalidate /src/components/ui/button.tsx Could not Fast Refresh ("buttonVariants" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+21:51:50 [vite] hmr update /src/index.css, /src/layouts/auth-layout.tsx, /src/pages/auth/register.tsx, /src/layouts/dashboard-layout.tsx, /src/pages/auth/login.tsx, /src/pages/auth/forgot-password.tsx, /src/pages/dashboard/index.tsx, /src/pages/buildings/new-building.tsx, /src/pages/buildings/index.tsx, /src/pages/buildings/building-details.tsx, /src/pages/buildings/edit-building.tsx, /src/pages/assessments/index.tsx, /src/pages/assessments/pre-assessment.tsx, /src/pages/assessments/field-assessment.tsx, /src/pages/reports/report-details.tsx, /src/pages/profile/index.tsx, /src/pages/not-found.tsx, /src/pages/settings/index.tsx, /src/pages/reports/index.tsx, /src/pages/team/index.tsx, /src/components/org-switcher.tsx, /src/pages/assessments/new.tsx, /src/pages/reports/new.tsx
+21:52:05 [vite] hmr update /src/components/ui/button.tsx, /src/index.css
+21:52:05 [vite] hmr invalidate /src/components/ui/button.tsx Could not Fast Refresh ("buttonVariants" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+21:52:05 [vite] hmr update /src/index.css, /src/layouts/auth-layout.tsx, /src/pages/auth/register.tsx, /src/layouts/dashboard-layout.tsx, /src/pages/auth/login.tsx, /src/pages/auth/forgot-password.tsx, /src/pages/dashboard/index.tsx, /src/pages/buildings/new-building.tsx, /src/pages/buildings/index.tsx, /src/pages/buildings/building-details.tsx, /src/pages/buildings/edit-building.tsx, /src/pages/assessments/index.tsx, /src/pages/assessments/pre-assessment.tsx, /src/pages/assessments/field-assessment.tsx, /src/pages/reports/report-details.tsx, /src/pages/profile/index.tsx, /src/pages/not-found.tsx, /src/pages/settings/index.tsx, /src/pages/reports/index.tsx, /src/pages/team/index.tsx, /src/components/org-switcher.tsx, /src/pages/assessments/new.tsx, /src/pages/reports/new.tsx
+21:52:21 [vite] hmr update /src/index.css
+21:52:43 [vite] hmr update /src/index.css
+21:53:08 [vite] hmr update /src/components/ui/input.tsx, /src/index.css
+21:54:38 [vite] hmr update /src/pages/auth/login.tsx, /src/index.css
+21:55:04 [vite] hmr update /src/index.css
+21:55:17 [vite] hmr update /src/index.css
+11:34:00 [vite] hmr update /src/context/auth-context.tsx, /src/index.css
+11:34:00 [vite] Pre-transform error: Failed to resolve import "axios" from "src/services/api.ts". Does the file exist?
+11:34:00 [vite] Internal server error: Failed to resolve import "axios" from "src/services/api.ts". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /Users/josephagunbiade/Desktop/studio/onyx/src/services/api.ts:1:77
+  1  |  import axios from "axios";
+     |                     ^
+  2  |  const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+  3  |  const api = axios.create({
+      at TransformPluginContext._formatError (file:///Users/josephagunbiade/Desktop/studio/onyx/node_modules/vite/dist/node/chunks/dep-CDnG8rE7.js:49193:41)
+      at TransformPluginContext.error (file:///Users/josephagunbiade/Desktop/studio/onyx/node_modules/vite/dist/node/chunks/dep-CDnG8rE7.js:49188:16)
+      at normalizeUrl (file:///Users/josephagunbiade/Desktop/studio/onyx/node_modules/vite/dist/node/chunks/dep-CDnG8rE7.js:63984:23)
+      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+      at async file:///Users/josephagunbiade/Desktop/studio/onyx/node_modules/vite/dist/node/chunks/dep-CDnG8rE7.js:64116:39
+      at async Promise.all (index 0)
+      at async TransformPluginContext.transform (file:///Users/josephagunbiade/Desktop/studio/onyx/node_modules/vite/dist/node/chunks/dep-CDnG8rE7.js:64043:7)
+      at async PluginContainer.transform (file:///Users/josephagunbiade/Desktop/studio/onyx/node_modules/vite/dist/node/chunks/dep-CDnG8rE7.js:49034:18)
+      at async loadAndTransform (file:///Users/josephagunbiade/Desktop/studio/onyx/node_modules/vite/dist/node/chunks/dep-CDnG8rE7.js:51867:27)
+      at async viteTransformMiddleware (file:///Users/josephagunbiade/Desktop/studio/onyx/node_modules/vite/dist/node/chunks/dep-CDnG8rE7.js:61824:24)
+11:34:18 [vite] .env changed, restarting server...
+11:34:18 [vite] .env changed, restarting server...
+11:34:18 [vite] server restarted.
+14:08:59 [vite] .env changed, restarting server...
+14:08:59 [vite] server restarted.
+14:54:31 [vite] Internal server error: Failed to resolve import "axios" from "src/services/api.ts". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /Users/josephagunbiade/Desktop/studio/onyx/src/services/api.ts:1:77
+  1  |  import axios from "axios";
+     |                     ^
+  2  |  const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+  3  |  const api = axios.create({
+      at TransformPluginContext._formatError (file:///Users/josephagunbiade/Desktop/studio/onyx/node_modules/vite/dist/node/chunks/dep-CDnG8rE7.js:49193:41)
+      at TransformPluginContext.error (file:///Users/josephagunbiade/Desktop/studio/onyx/node_modules/vite/dist/node/chunks/dep-CDnG8rE7.js:49188:16)
+      at normalizeUrl (file:///Users/josephagunbiade/Desktop/studio/onyx/node_modules/vite/dist/node/chunks/dep-CDnG8rE7.js:63984:23)
+      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+      at async file:///Users/josephagunbiade/Desktop/studio/onyx/node_modules/vite/dist/node/chunks/dep-CDnG8rE7.js:64116:39
+      at async Promise.all (index 0)
+      at async TransformPluginContext.transform (file:///Users/josephagunbiade/Desktop/studio/onyx/node_modules/vite/dist/node/chunks/dep-CDnG8rE7.js:64043:7)
+      at async PluginContainer.transform (file:///Users/josephagunbiade/Desktop/studio/onyx/node_modules/vite/dist/node/chunks/dep-CDnG8rE7.js:49034:18)
+      at async loadAndTransform (file:///Users/josephagunbiade/Desktop/studio/onyx/node_modules/vite/dist/node/chunks/dep-CDnG8rE7.js:51867:27)
+14:54:31 [vite] Pre-transform error: Failed to resolve import "axios" from "src/services/api.ts". Does the file exist?
+14:54:38 [vite] Internal server error: Failed to resolve import "axios" from "src/services/api.ts". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /Users/josephagunbiade/Desktop/studio/onyx/src/services/api.ts:1:77
+  1  |  import axios from "axios";
+     |                     ^
+  2  |  const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+  3  |  const api = axios.create({
+      at TransformPluginContext._formatError (file:///Users/josephagunbiade/Desktop/studio/onyx/node_modules/vite/dist/node/chunks/dep-CDnG8rE7.js:49193:41)
+      at TransformPluginContext.error (file:///Users/josephagunbiade/Desktop/studio/onyx/node_modules/vite/dist/node/chunks/dep-CDnG8rE7.js:49188:16)
+      at normalizeUrl (file:///Users/josephagunbiade/Desktop/studio/onyx/node_modules/vite/dist/node/chunks/dep-CDnG8rE7.js:63984:23)
+      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+      at async file:///Users/josephagunbiade/Desktop/studio/onyx/node_modules/vite/dist/node/chunks/dep-CDnG8rE7.js:64116:39
+      at async Promise.all (index 0)
+      at async TransformPluginContext.transform (file:///Users/josephagunbiade/Desktop/studio/onyx/node_modules/vite/dist/node/chunks/dep-CDnG8rE7.js:64043:7)
+      at async PluginContainer.transform (file:///Users/josephagunbiade/Desktop/studio/onyx/node_modules/vite/dist/node/chunks/dep-CDnG8rE7.js:49034:18)
+      at async loadAndTransform (file:///Users/josephagunbiade/Desktop/studio/onyx/node_modules/vite/dist/node/chunks/dep-CDnG8rE7.js:51867:27)
+      at async viteTransformMiddleware (file:///Users/josephagunbiade/Desktop/studio/onyx/node_modules/vite/dist/node/chunks/dep-CDnG8rE7.js:61824:24)
+14:54:41 [vite] Internal server error: Failed to resolve import "axios" from "src/services/api.ts". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /Users/josephagunbiade/Desktop/studio/onyx/src/services/api.ts:1:77
+  1  |  import axios from "axios";
+     |                     ^
+  2  |  const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+  3  |  const api = axios.create({
+      at TransformPluginContext._formatError (file:///Users/josephagunbiade/Desktop/studio/onyx/node_modules/vite/dist/node/chunks/dep-CDnG8rE7.js:49193:41)
+      at TransformPluginContext.error (file:///Users/josephagunbiade/Desktop/studio/onyx/node_modules/vite/dist/node/chunks/dep-CDnG8rE7.js:49188:16)
+      at normalizeUrl (file:///Users/josephagunbiade/Desktop/studio/onyx/node_modules/vite/dist/node/chunks/dep-CDnG8rE7.js:63984:23)
+      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+      at async file:///Users/josephagunbiade/Desktop/studio/onyx/node_modules/vite/dist/node/chunks/dep-CDnG8rE7.js:64116:39
+      at async Promise.all (index 0)
+      at async TransformPluginContext.transform (file:///Users/josephagunbiade/Desktop/studio/onyx/node_modules/vite/dist/node/chunks/dep-CDnG8rE7.js:64043:7)
+      at async PluginContainer.transform (file:///Users/josephagunbiade/Desktop/studio/onyx/node_modules/vite/dist/node/chunks/dep-CDnG8rE7.js:49034:18)
+      at async loadAndTransform (file:///Users/josephagunbiade/Desktop/studio/onyx/node_modules/vite/dist/node/chunks/dep-CDnG8rE7.js:51867:27)
+      at async viteTransformMiddleware (file:///Users/josephagunbiade/Desktop/studio/onyx/node_modules/vite/dist/node/chunks/dep-CDnG8rE7.js:61824:24)
+14:54:47 [vite] hmr update /src/index.css, /src/context/auth-context.tsx
+14:54:47 [vite] Pre-transform error: Failed to resolve import "axios" from "src/services/api.ts". Does the file exist?
+14:54:47 [vite] Internal server error: Failed to resolve import "axios" from "src/services/api.ts". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /Users/josephagunbiade/Desktop/studio/onyx/src/services/api.ts:1:77
+  1  |  import axios from "axios";
+     |                     ^
+  2  |  const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+  3  |  const api = axios.create({
+      at TransformPluginContext._formatError (file:///Users/josephagunbiade/Desktop/studio/onyx/node_modules/vite/dist/node/chunks/dep-CDnG8rE7.js:49193:41)
+      at TransformPluginContext.error (file:///Users/josephagunbiade/Desktop/studio/onyx/node_modules/vite/dist/node/chunks/dep-CDnG8rE7.js:49188:16)
+      at normalizeUrl (file:///Users/josephagunbiade/Desktop/studio/onyx/node_modules/vite/dist/node/chunks/dep-CDnG8rE7.js:63984:23)
+      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+      at async file:///Users/josephagunbiade/Desktop/studio/onyx/node_modules/vite/dist/node/chunks/dep-CDnG8rE7.js:64116:39
+      at async Promise.all (index 0)
+      at async TransformPluginContext.transform (file:///Users/josephagunbiade/Desktop/studio/onyx/node_modules/vite/dist/node/chunks/dep-CDnG8rE7.js:64043:7)
+      at async PluginContainer.transform (file:///Users/josephagunbiade/Desktop/studio/onyx/node_modules/vite/dist/node/chunks/dep-CDnG8rE7.js:49034:18)
+      at async loadAndTransform (file:///Users/josephagunbiade/Desktop/studio/onyx/node_modules/vite/dist/node/chunks/dep-CDnG8rE7.js:51867:27)
+      at async viteTransformMiddleware (file:///Users/josephagunbiade/Desktop/studio/onyx/node_modules/vite/dist/node/chunks/dep-CDnG8rE7.js:61824:24)
+14:55:21 [vite] hmr update /src/index.css, /src/context/auth-context.tsx
+14:55:21 [vite] Pre-transform error: Failed to resolve import "axios" from "src/services/api.ts". Does the file exist?
+14:55:22 [vite] Internal server error: Failed to resolve import "axios" from "src/services/api.ts". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /Users/josephagunbiade/Desktop/studio/onyx/src/services/api.ts:1:77
+  1  |  import axios from "axios";
+     |                     ^
+  2  |  const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+  3  |  const api = axios.create({
+      at TransformPluginContext._formatError (file:///Users/josephagunbiade/Desktop/studio/onyx/node_modules/vite/dist/node/chunks/dep-CDnG8rE7.js:49193:41)
+      at TransformPluginContext.error (file:///Users/josephagunbiade/Desktop/studio/onyx/node_modules/vite/dist/node/chunks/dep-CDnG8rE7.js:49188:16)
+      at normalizeUrl (file:///Users/josephagunbiade/Desktop/studio/onyx/node_modules/vite/dist/node/chunks/dep-CDnG8rE7.js:63984:23)
+      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+      at async file:///Users/josephagunbiade/Desktop/studio/onyx/node_modules/vite/dist/node/chunks/dep-CDnG8rE7.js:64116:39
+      at async Promise.all (index 0)
+      at async TransformPluginContext.transform (file:///Users/josephagunbiade/Desktop/studio/onyx/node_modules/vite/dist/node/chunks/dep-CDnG8rE7.js:64043:7)
+      at async PluginContainer.transform (file:///Users/josephagunbiade/Desktop/studio/onyx/node_modules/vite/dist/node/chunks/dep-CDnG8rE7.js:49034:18)
+      at async loadAndTransform (file:///Users/josephagunbiade/Desktop/studio/onyx/node_modules/vite/dist/node/chunks/dep-CDnG8rE7.js:51867:27)
+      at async viteTransformMiddleware (file:///Users/josephagunbiade/Desktop/studio/onyx/node_modules/vite/dist/node/chunks/dep-CDnG8rE7.js:61824:24)
+14:57:03 [vite] Internal server error: Failed to resolve import "axios" from "src/services/api.ts". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /Users/josephagunbiade/Desktop/studio/onyx/src/services/api.ts:1:77
+  1  |  import axios from "axios";
+     |                     ^
+  2  |  const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+  3  |  const api = axios.create({
+      at TransformPluginContext._formatError (file:///Users/josephagunbiade/Desktop/studio/onyx/node_modules/vite/dist/node/chunks/dep-CDnG8rE7.js:49193:41)
+      at TransformPluginContext.error (file:///Users/josephagunbiade/Desktop/studio/onyx/node_modules/vite/dist/node/chunks/dep-CDnG8rE7.js:49188:16)
+      at normalizeUrl (file:///Users/josephagunbiade/Desktop/studio/onyx/node_modules/vite/dist/node/chunks/dep-CDnG8rE7.js:63984:23)
+      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+      at async file:///Users/josephagunbiade/Desktop/studio/onyx/node_modules/vite/dist/node/chunks/dep-CDnG8rE7.js:64116:39
+      at async Promise.all (index 0)
+      at async TransformPluginContext.transform (file:///Users/josephagunbiade/Desktop/studio/onyx/node_modules/vite/dist/node/chunks/dep-CDnG8rE7.js:64043:7)
+      at async PluginContainer.transform (file:///Users/josephagunbiade/Desktop/studio/onyx/node_modules/vite/dist/node/chunks/dep-CDnG8rE7.js:49034:18)
+      at async loadAndTransform (file:///Users/josephagunbiade/Desktop/studio/onyx/node_modules/vite/dist/node/chunks/dep-CDnG8rE7.js:51867:27)
+      at async viteTransformMiddleware (file:///Users/josephagunbiade/Desktop/studio/onyx/node_modules/vite/dist/node/chunks/dep-CDnG8rE7.js:61824:24)
+15:10:00 [vite] ✨ new dependencies optimized: axios
+15:10:00 [vite] ✨ optimized dependencies changed. reloading
+17:08:34 [vite] hmr update /src/context/auth-context.tsx, /src/index.css
+17:08:34 [vite] hmr invalidate /src/context/auth-context.tsx Could not Fast Refresh ("useAuth" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+17:08:34 [vite] hmr update /src/App.tsx, /src/index.css, /src/routes/index.tsx, /src/context/org-context.tsx, /src/pages/auth/login.tsx, /src/pages/auth/register.tsx, /src/layouts/dashboard-layout.tsx, /src/pages/dashboard/index.tsx, /src/pages/assessments/index.tsx, /src/pages/profile/index.tsx, /src/pages/settings/index.tsx
+17:08:34 [vite] hmr invalidate /src/context/org-context.tsx Could not Fast Refresh ("useOrg" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+17:08:34 [vite] hmr update /src/App.tsx, /src/index.css, /src/layouts/dashboard-layout.tsx, /src/pages/settings/index.tsx, /src/components/org-switcher.tsx
+17:08:48 [vite] hmr update /src/context/auth-context.tsx, /src/index.css
+17:08:49 [vite] hmr invalidate /src/context/auth-context.tsx Could not Fast Refresh ("useAuth" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+17:08:49 [vite] hmr update /src/App.tsx, /src/index.css, /src/routes/index.tsx, /src/context/org-context.tsx, /src/pages/auth/login.tsx, /src/pages/auth/register.tsx, /src/layouts/dashboard-layout.tsx, /src/pages/dashboard/index.tsx, /src/pages/assessments/index.tsx, /src/pages/profile/index.tsx, /src/pages/settings/index.tsx
+17:08:49 [vite] hmr invalidate /src/context/org-context.tsx Could not Fast Refresh ("useOrg" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+17:08:49 [vite] hmr update /src/App.tsx, /src/index.css, /src/layouts/dashboard-layout.tsx, /src/pages/settings/index.tsx, /src/components/org-switcher.tsx
+21:14:29 [vite] hmr update /src/pages/buildings/index.tsx, /src/index.css
+21:20:33 [vite] hmr update /src/pages/buildings/index.tsx, /src/index.css
+21:21:41 [vite] hmr update /src/pages/buildings/index.tsx, /src/index.css
+21:55:45 [vite] hmr update /src/pages/buildings/building-details.tsx, /src/index.css
+21:56:50 [vite] hmr update /src/pages/buildings/building-details.tsx, /src/index.css
+20:33:46 [vite] hmr update /src/pages/buildings/index.tsx, /src/index.css
+20:33:54 [vite] hmr update /src/pages/buildings/index.tsx, /src/index.css
+20:34:04 [vite] hmr update /src/pages/buildings/index.tsx, /src/index.css
+20:39:03 [vite] hmr update /src/index.css, /src/pages/buildings/index.tsx
+20:39:18 [vite] hmr update /src/pages/buildings/index.tsx, /src/index.css
+20:39:22 [vite] hmr update /src/pages/buildings/index.tsx, /src/index.css
+20:49:16 [vite] hmr update /src/index.css, /src/pages/buildings/index.tsx
+20:49:21 [vite] hmr update /src/index.css, /src/pages/buildings/index.tsx
+20:49:27 [vite] hmr update /src/pages/buildings/index.tsx, /src/index.css
+20:49:37 [vite] hmr update /src/pages/buildings/index.tsx, /src/index.css
+21:10:12 [vite] hmr update /src/index.css, /src/pages/buildings/building-details.tsx, /src/pages/buildings/index.tsx
+21:10:17 [vite] hmr update /src/index.css, /src/pages/buildings/building-details.tsx, /src/pages/buildings/index.tsx
+21:10:25 [vite] hmr update /src/index.css, /src/pages/buildings/building-details.tsx, /src/pages/buildings/index.tsx
+21:10:37 [vite] hmr update /src/index.css, /src/pages/buildings/building-details.tsx, /src/pages/buildings/index.tsx
+21:10:49 [vite] hmr update /src/index.css, /src/pages/buildings/building-details.tsx, /src/pages/buildings/index.tsx
+21:25:46 [vite] hmr update /src/pages/buildings/new-building.tsx, /src/index.css
+21:25:50 [vite] hmr update /src/pages/buildings/new-building.tsx, /src/index.css
+21:26:05 [vite] hmr update /src/pages/buildings/new-building.tsx, /src/index.css
+21:26:22 [vite] hmr update /src/pages/buildings/new-building.tsx, /src/index.css
+21:26:22 [vite] hmr update /src/pages/buildings/new-building.tsx, /src/index.css
+19:39:07 [vite] page reload src/services/api.ts
+19:45:29 [vite] hmr update /src/pages/assessments/index.tsx, /src/index.css
+19:45:34 [vite] hmr update /src/pages/assessments/index.tsx, /src/index.css
+19:45:41 [vite] hmr update /src/pages/assessments/index.tsx, /src/index.css
+19:45:47 [vite] hmr update /src/pages/assessments/index.tsx, /src/index.css
+19:45:54 [vite] hmr update /src/pages/assessments/index.tsx, /src/index.css
+19:46:01 [vite] hmr update /src/pages/assessments/index.tsx, /src/index.css
+19:46:04 [vite] hmr update /src/pages/assessments/index.tsx, /src/index.css
+19:46:13 [vite] hmr update /src/pages/assessments/new.tsx, /src/index.css
+19:46:25 [vite] hmr update /src/pages/assessments/new.tsx, /src/index.css
+19:46:41 [vite] hmr update /src/pages/assessments/new.tsx, /src/index.css
+19:46:54 [vite] hmr update /src/pages/assessments/new.tsx, /src/index.css
+22:53:45 [vite] page reload src/services/api.ts
+22:53:51 [vite] page reload src/services/api.ts
+00:07:15 [vite] hmr update /src/pages/assessments/new.tsx, /src/index.css
+00:07:26 [vite] hmr update /src/index.css, /src/pages/assessments/index.tsx, /src/pages/assessments/new.tsx
+00:07:30 [vite] hmr update /src/index.css, /src/pages/assessments/index.tsx, /src/pages/assessments/new.tsx
+17:40:13 [vite] hmr update /src/pages/assessments/new.tsx, /src/index.css
+17:40:54 [vite] hmr update /src/pages/assessments/pre-assessment.tsx, /src/index.css
+17:41:18 [vite] hmr update /src/pages/assessments/pre-assessment.tsx, /src/index.css
+17:50:32 [vite] hmr update /src/pages/assessments/pre-assessment.tsx, /src/index.css
+17:50:43 [vite] hmr update /src/pages/assessments/pre-assessment.tsx, /src/index.css
+17:50:49 [vite] hmr update /src/pages/assessments/pre-assessment.tsx, /src/index.css
+17:51:04 [vite] hmr update /src/pages/assessments/pre-assessment.tsx, /src/index.css
+17:51:20 [vite] hmr update /src/pages/assessments/pre-assessment.tsx, /src/index.css
+17:51:33 [vite] hmr update /src/pages/assessments/pre-assessment.tsx, /src/index.css
+17:51:44 [vite] hmr update /src/pages/assessments/pre-assessment.tsx, /src/index.css
+17:55:58 [vite] hmr update /src/pages/assessments/pre-assessment.tsx, /src/index.css
+18:20:23 [vite] hmr update /src/pages/assessments/field-assessment.tsx, /src/index.css
+21:35:41 [vite] hmr update /src/pages/assessments/field-assessment.tsx, /src/index.css
+21:36:10 [vite] hmr update /src/pages/assessments/field-assessment.tsx, /src/index.css
+21:36:10 [vite] Internal server error: /Users/josephagunbiade/Desktop/studio/onyx/src/pages/assessments/field-assessment.tsx: Missing catch or finally clause. (290:4)
+
+  288 |
+  289 |   const handleComplete = async () => {
+> 290 |     try {
+      |     ^
+  291 |       const data = form.getValues();
+  292 |       
+  293 |       // Validate the current element data
+  Plugin: vite:react-babel
+  File: /Users/josephagunbiade/Desktop/studio/onyx/src/pages/assessments/field-assessment.tsx:290:4
+  288|  
+  289|    const handleComplete = async () => {
+  290|      try {
+     |      ^
+  291|        const data = form.getValues();
+  292|        
+      at constructor (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:362:19)
+      at TypeScriptParserMixin.raise (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:3259:19)
+      at TypeScriptParserMixin.parseTryStatement (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12704:12)
+      at TypeScriptParserMixin.parseStatementContent (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12280:21)
+      at TypeScriptParserMixin.parseStatementContent (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:9157:18)
+      at TypeScriptParserMixin.parseStatementLike (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12243:17)
+      at TypeScriptParserMixin.parseStatementListItem (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12223:17)
+      at TypeScriptParserMixin.parseBlockOrModuleBlockBody (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12796:61)
+      at TypeScriptParserMixin.parseBlockBody (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12789:10)
+      at TypeScriptParserMixin.parseBlock (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12777:10)
+      at TypeScriptParserMixin.parseFunctionBody (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:11620:24)
+      at TypeScriptParserMixin.parseArrowExpression (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:11595:10)
+      at TypeScriptParserMixin.parseAsyncArrowFromCallExpression (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10782:10)
+      at TypeScriptParserMixin.parseAsyncArrowFromCallExpression (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:9412:18)
+      at TypeScriptParserMixin.parseCoverCallAndAsyncArrowHead (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10702:27)
+      at TypeScriptParserMixin.parseSubscript (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10631:19)
+      at TypeScriptParserMixin.parseSubscript (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:8992:18)
+      at TypeScriptParserMixin.parseSubscripts (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10604:19)
+      at TypeScriptParserMixin.parseExprSubscripts (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10595:17)
+      at TypeScriptParserMixin.parseUpdate (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10576:21)
+      at TypeScriptParserMixin.parseMaybeUnary (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10556:23)
+      at TypeScriptParserMixin.parseMaybeUnary (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:9483:18)
+      at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10410:61)
+      at TypeScriptParserMixin.parseExprOps (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10415:23)
+      at TypeScriptParserMixin.parseMaybeConditional (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10392:23)
+      at TypeScriptParserMixin.parseMaybeAssign (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10355:21)
+      at TypeScriptParserMixin.parseMaybeAssign (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:9432:20)
+      at /Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10325:39
+      at TypeScriptParserMixin.allowInAnd (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:11932:16)
+      at TypeScriptParserMixin.parseMaybeAssignAllowIn (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10325:17)
+      at TypeScriptParserMixin.parseVar (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12864:91)
+      at TypeScriptParserMixin.parseVarStatement (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12710:10)
+      at TypeScriptParserMixin.parseVarStatement (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:9127:31)
+      at TypeScriptParserMixin.parseStatementContent (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12326:23)
+      at TypeScriptParserMixin.parseStatementContent (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:9157:18)
+      at TypeScriptParserMixin.parseStatementLike (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12243:17)
+      at TypeScriptParserMixin.parseStatementListItem (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12223:17)
+      at TypeScriptParserMixin.parseBlockOrModuleBlockBody (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12796:61)
+      at TypeScriptParserMixin.parseBlockBody (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12789:10)
+      at TypeScriptParserMixin.parseBlock (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12777:10)
+      at TypeScriptParserMixin.parseFunctionBody (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:11620:24)
+      at TypeScriptParserMixin.parseFunctionBodyAndFinish (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:11606:10)
+      at TypeScriptParserMixin.parseFunctionBodyAndFinish (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:8898:18)
+      at /Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12921:12
+      at TypeScriptParserMixin.withSmartMixTopicForbiddingContext (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:11914:14)
+      at TypeScriptParserMixin.parseFunction (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12920:10)
+      at TypeScriptParserMixin.parseFunctionStatement (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12605:17)
+      at TypeScriptParserMixin.parseStatementContent (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12267:21)
+      at TypeScriptParserMixin.parseStatementContent (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:9157:18)
+      at TypeScriptParserMixin.parseStatementLike (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12243:17)
+21:36:10 [vite] Internal server error: /Users/josephagunbiade/Desktop/studio/onyx/src/pages/assessments/field-assessment.tsx: Missing catch or finally clause. (290:4)
+
+  288 |
+  289 |   const handleComplete = async () => {
+> 290 |     try {
+      |     ^
+  291 |       const data = form.getValues();
+  292 |       
+  293 |       // Validate the current element data
+  Plugin: vite:react-babel
+  File: /Users/josephagunbiade/Desktop/studio/onyx/src/pages/assessments/field-assessment.tsx:290:4
+  288|  
+  289|    const handleComplete = async () => {
+  290|      try {
+     |      ^
+  291|        const data = form.getValues();
+  292|        
+      at constructor (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:362:19)
+      at TypeScriptParserMixin.raise (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:3259:19)
+      at TypeScriptParserMixin.parseTryStatement (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12704:12)
+      at TypeScriptParserMixin.parseStatementContent (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12280:21)
+      at TypeScriptParserMixin.parseStatementContent (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:9157:18)
+      at TypeScriptParserMixin.parseStatementLike (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12243:17)
+      at TypeScriptParserMixin.parseStatementListItem (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12223:17)
+      at TypeScriptParserMixin.parseBlockOrModuleBlockBody (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12796:61)
+      at TypeScriptParserMixin.parseBlockBody (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12789:10)
+      at TypeScriptParserMixin.parseBlock (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12777:10)
+      at TypeScriptParserMixin.parseFunctionBody (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:11620:24)
+      at TypeScriptParserMixin.parseArrowExpression (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:11595:10)
+      at TypeScriptParserMixin.parseAsyncArrowFromCallExpression (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10782:10)
+      at TypeScriptParserMixin.parseAsyncArrowFromCallExpression (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:9412:18)
+      at TypeScriptParserMixin.parseCoverCallAndAsyncArrowHead (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10702:27)
+      at TypeScriptParserMixin.parseSubscript (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10631:19)
+      at TypeScriptParserMixin.parseSubscript (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:8992:18)
+      at TypeScriptParserMixin.parseSubscripts (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10604:19)
+      at TypeScriptParserMixin.parseExprSubscripts (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10595:17)
+      at TypeScriptParserMixin.parseUpdate (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10576:21)
+      at TypeScriptParserMixin.parseMaybeUnary (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10556:23)
+      at TypeScriptParserMixin.parseMaybeUnary (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:9483:18)
+      at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10410:61)
+      at TypeScriptParserMixin.parseExprOps (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10415:23)
+      at TypeScriptParserMixin.parseMaybeConditional (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10392:23)
+      at TypeScriptParserMixin.parseMaybeAssign (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10355:21)
+      at TypeScriptParserMixin.parseMaybeAssign (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:9432:20)
+      at /Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10325:39
+      at TypeScriptParserMixin.allowInAnd (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:11932:16)
+      at TypeScriptParserMixin.parseMaybeAssignAllowIn (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10325:17)
+      at TypeScriptParserMixin.parseVar (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12864:91)
+      at TypeScriptParserMixin.parseVarStatement (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12710:10)
+      at TypeScriptParserMixin.parseVarStatement (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:9127:31)
+      at TypeScriptParserMixin.parseStatementContent (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12326:23)
+      at TypeScriptParserMixin.parseStatementContent (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:9157:18)
+      at TypeScriptParserMixin.parseStatementLike (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12243:17)
+      at TypeScriptParserMixin.parseStatementListItem (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12223:17)
+      at TypeScriptParserMixin.parseBlockOrModuleBlockBody (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12796:61)
+      at TypeScriptParserMixin.parseBlockBody (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12789:10)
+      at TypeScriptParserMixin.parseBlock (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12777:10)
+      at TypeScriptParserMixin.parseFunctionBody (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:11620:24)
+      at TypeScriptParserMixin.parseFunctionBodyAndFinish (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:11606:10)
+      at TypeScriptParserMixin.parseFunctionBodyAndFinish (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:8898:18)
+      at /Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12921:12
+      at TypeScriptParserMixin.withSmartMixTopicForbiddingContext (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:11914:14)
+      at TypeScriptParserMixin.parseFunction (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12920:10)
+      at TypeScriptParserMixin.parseFunctionStatement (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12605:17)
+      at TypeScriptParserMixin.parseStatementContent (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12267:21)
+      at TypeScriptParserMixin.parseStatementContent (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:9157:18)
+      at TypeScriptParserMixin.parseStatementLike (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12243:17)
+21:36:10 [vite] Internal server error: /Users/josephagunbiade/Desktop/studio/onyx/src/pages/assessments/field-assessment.tsx: Missing catch or finally clause. (290:4)
+
+  288 |
+  289 |   const handleComplete = async () => {
+> 290 |     try {
+      |     ^
+  291 |       const data = form.getValues();
+  292 |       
+  293 |       // Validate the current element data
+  Plugin: vite:react-babel
+  File: /Users/josephagunbiade/Desktop/studio/onyx/src/pages/assessments/field-assessment.tsx:290:4
+  288|  
+  289|    const handleComplete = async () => {
+  290|      try {
+     |      ^
+  291|        const data = form.getValues();
+  292|        
+      at constructor (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:362:19)
+      at TypeScriptParserMixin.raise (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:3259:19)
+      at TypeScriptParserMixin.parseTryStatement (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12704:12)
+      at TypeScriptParserMixin.parseStatementContent (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12280:21)
+      at TypeScriptParserMixin.parseStatementContent (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:9157:18)
+      at TypeScriptParserMixin.parseStatementLike (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12243:17)
+      at TypeScriptParserMixin.parseStatementListItem (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12223:17)
+      at TypeScriptParserMixin.parseBlockOrModuleBlockBody (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12796:61)
+      at TypeScriptParserMixin.parseBlockBody (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12789:10)
+      at TypeScriptParserMixin.parseBlock (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12777:10)
+      at TypeScriptParserMixin.parseFunctionBody (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:11620:24)
+      at TypeScriptParserMixin.parseArrowExpression (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:11595:10)
+      at TypeScriptParserMixin.parseAsyncArrowFromCallExpression (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10782:10)
+      at TypeScriptParserMixin.parseAsyncArrowFromCallExpression (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:9412:18)
+      at TypeScriptParserMixin.parseCoverCallAndAsyncArrowHead (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10702:27)
+      at TypeScriptParserMixin.parseSubscript (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10631:19)
+      at TypeScriptParserMixin.parseSubscript (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:8992:18)
+      at TypeScriptParserMixin.parseSubscripts (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10604:19)
+      at TypeScriptParserMixin.parseExprSubscripts (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10595:17)
+      at TypeScriptParserMixin.parseUpdate (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10576:21)
+      at TypeScriptParserMixin.parseMaybeUnary (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10556:23)
+      at TypeScriptParserMixin.parseMaybeUnary (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:9483:18)
+      at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10410:61)
+      at TypeScriptParserMixin.parseExprOps (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10415:23)
+      at TypeScriptParserMixin.parseMaybeConditional (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10392:23)
+      at TypeScriptParserMixin.parseMaybeAssign (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10355:21)
+      at TypeScriptParserMixin.parseMaybeAssign (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:9432:20)
+      at /Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10325:39
+      at TypeScriptParserMixin.allowInAnd (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:11932:16)
+      at TypeScriptParserMixin.parseMaybeAssignAllowIn (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10325:17)
+      at TypeScriptParserMixin.parseVar (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12864:91)
+      at TypeScriptParserMixin.parseVarStatement (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12710:10)
+      at TypeScriptParserMixin.parseVarStatement (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:9127:31)
+      at TypeScriptParserMixin.parseStatementContent (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12326:23)
+      at TypeScriptParserMixin.parseStatementContent (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:9157:18)
+      at TypeScriptParserMixin.parseStatementLike (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12243:17)
+      at TypeScriptParserMixin.parseStatementListItem (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12223:17)
+      at TypeScriptParserMixin.parseBlockOrModuleBlockBody (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12796:61)
+      at TypeScriptParserMixin.parseBlockBody (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12789:10)
+      at TypeScriptParserMixin.parseBlock (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12777:10)
+      at TypeScriptParserMixin.parseFunctionBody (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:11620:24)
+      at TypeScriptParserMixin.parseFunctionBodyAndFinish (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:11606:10)
+      at TypeScriptParserMixin.parseFunctionBodyAndFinish (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:8898:18)
+      at /Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12921:12
+      at TypeScriptParserMixin.withSmartMixTopicForbiddingContext (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:11914:14)
+      at TypeScriptParserMixin.parseFunction (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12920:10)
+      at TypeScriptParserMixin.parseFunctionStatement (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12605:17)
+      at TypeScriptParserMixin.parseStatementContent (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12267:21)
+      at TypeScriptParserMixin.parseStatementContent (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:9157:18)
+      at TypeScriptParserMixin.parseStatementLike (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12243:17)
+21:36:10 [vite] Internal server error: /Users/josephagunbiade/Desktop/studio/onyx/src/pages/assessments/field-assessment.tsx: Missing catch or finally clause. (290:4)
+
+  288 |
+  289 |   const handleComplete = async () => {
+> 290 |     try {
+      |     ^
+  291 |       const data = form.getValues();
+  292 |       
+  293 |       // Validate the current element data
+  Plugin: vite:react-babel
+  File: /Users/josephagunbiade/Desktop/studio/onyx/src/pages/assessments/field-assessment.tsx:290:4
+  288|  
+  289|    const handleComplete = async () => {
+  290|      try {
+     |      ^
+  291|        const data = form.getValues();
+  292|        
+      at constructor (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:362:19)
+      at TypeScriptParserMixin.raise (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:3259:19)
+      at TypeScriptParserMixin.parseTryStatement (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12704:12)
+      at TypeScriptParserMixin.parseStatementContent (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12280:21)
+      at TypeScriptParserMixin.parseStatementContent (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:9157:18)
+      at TypeScriptParserMixin.parseStatementLike (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12243:17)
+      at TypeScriptParserMixin.parseStatementListItem (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12223:17)
+      at TypeScriptParserMixin.parseBlockOrModuleBlockBody (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12796:61)
+      at TypeScriptParserMixin.parseBlockBody (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12789:10)
+      at TypeScriptParserMixin.parseBlock (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12777:10)
+      at TypeScriptParserMixin.parseFunctionBody (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:11620:24)
+      at TypeScriptParserMixin.parseArrowExpression (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:11595:10)
+      at TypeScriptParserMixin.parseAsyncArrowFromCallExpression (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10782:10)
+      at TypeScriptParserMixin.parseAsyncArrowFromCallExpression (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:9412:18)
+      at TypeScriptParserMixin.parseCoverCallAndAsyncArrowHead (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10702:27)
+      at TypeScriptParserMixin.parseSubscript (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10631:19)
+      at TypeScriptParserMixin.parseSubscript (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:8992:18)
+      at TypeScriptParserMixin.parseSubscripts (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10604:19)
+      at TypeScriptParserMixin.parseExprSubscripts (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10595:17)
+      at TypeScriptParserMixin.parseUpdate (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10576:21)
+      at TypeScriptParserMixin.parseMaybeUnary (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10556:23)
+      at TypeScriptParserMixin.parseMaybeUnary (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:9483:18)
+      at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10410:61)
+      at TypeScriptParserMixin.parseExprOps (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10415:23)
+      at TypeScriptParserMixin.parseMaybeConditional (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10392:23)
+      at TypeScriptParserMixin.parseMaybeAssign (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10355:21)
+      at TypeScriptParserMixin.parseMaybeAssign (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:9432:20)
+      at /Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10325:39
+      at TypeScriptParserMixin.allowInAnd (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:11932:16)
+      at TypeScriptParserMixin.parseMaybeAssignAllowIn (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10325:17)
+      at TypeScriptParserMixin.parseVar (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12864:91)
+      at TypeScriptParserMixin.parseVarStatement (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12710:10)
+      at TypeScriptParserMixin.parseVarStatement (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:9127:31)
+      at TypeScriptParserMixin.parseStatementContent (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12326:23)
+      at TypeScriptParserMixin.parseStatementContent (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:9157:18)
+      at TypeScriptParserMixin.parseStatementLike (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12243:17)
+      at TypeScriptParserMixin.parseStatementListItem (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12223:17)
+      at TypeScriptParserMixin.parseBlockOrModuleBlockBody (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12796:61)
+      at TypeScriptParserMixin.parseBlockBody (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12789:10)
+      at TypeScriptParserMixin.parseBlock (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12777:10)
+      at TypeScriptParserMixin.parseFunctionBody (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:11620:24)
+      at TypeScriptParserMixin.parseFunctionBodyAndFinish (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:11606:10)
+      at TypeScriptParserMixin.parseFunctionBodyAndFinish (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:8898:18)
+      at /Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12921:12
+      at TypeScriptParserMixin.withSmartMixTopicForbiddingContext (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:11914:14)
+      at TypeScriptParserMixin.parseFunction (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12920:10)
+      at TypeScriptParserMixin.parseFunctionStatement (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12605:17)
+      at TypeScriptParserMixin.parseStatementContent (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12267:21)
+      at TypeScriptParserMixin.parseStatementContent (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:9157:18)
+      at TypeScriptParserMixin.parseStatementLike (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12243:17)
+21:36:13 [vite] hmr update /src/pages/assessments/field-assessment.tsx, /src/index.css
+21:36:13 [vite] Internal server error: /Users/josephagunbiade/Desktop/studio/onyx/src/pages/assessments/field-assessment.tsx: Missing catch or finally clause. (290:4)
+
+  288 |
+  289 |   const handleComplete = async () => {
+> 290 |     try {
+      |     ^
+  291 |       const data = form.getValues();
+  292 |       
+  293 |       // Validate the current element data
+  Plugin: vite:react-babel
+  File: /Users/josephagunbiade/Desktop/studio/onyx/src/pages/assessments/field-assessment.tsx:290:4
+  288|  
+  289|    const handleComplete = async () => {
+  290|      try {
+     |      ^
+  291|        const data = form.getValues();
+  292|        
+      at constructor (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:362:19)
+      at TypeScriptParserMixin.raise (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:3259:19)
+      at TypeScriptParserMixin.parseTryStatement (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12704:12)
+      at TypeScriptParserMixin.parseStatementContent (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12280:21)
+      at TypeScriptParserMixin.parseStatementContent (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:9157:18)
+      at TypeScriptParserMixin.parseStatementLike (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12243:17)
+      at TypeScriptParserMixin.parseStatementListItem (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12223:17)
+      at TypeScriptParserMixin.parseBlockOrModuleBlockBody (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12796:61)
+      at TypeScriptParserMixin.parseBlockBody (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12789:10)
+      at TypeScriptParserMixin.parseBlock (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12777:10)
+      at TypeScriptParserMixin.parseFunctionBody (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:11620:24)
+      at TypeScriptParserMixin.parseArrowExpression (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:11595:10)
+      at TypeScriptParserMixin.parseAsyncArrowFromCallExpression (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10782:10)
+      at TypeScriptParserMixin.parseAsyncArrowFromCallExpression (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:9412:18)
+      at TypeScriptParserMixin.parseCoverCallAndAsyncArrowHead (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10702:27)
+      at TypeScriptParserMixin.parseSubscript (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10631:19)
+      at TypeScriptParserMixin.parseSubscript (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:8992:18)
+      at TypeScriptParserMixin.parseSubscripts (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10604:19)
+      at TypeScriptParserMixin.parseExprSubscripts (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10595:17)
+      at TypeScriptParserMixin.parseUpdate (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10576:21)
+      at TypeScriptParserMixin.parseMaybeUnary (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10556:23)
+      at TypeScriptParserMixin.parseMaybeUnary (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:9483:18)
+      at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10410:61)
+      at TypeScriptParserMixin.parseExprOps (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10415:23)
+      at TypeScriptParserMixin.parseMaybeConditional (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10392:23)
+      at TypeScriptParserMixin.parseMaybeAssign (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10355:21)
+      at TypeScriptParserMixin.parseMaybeAssign (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:9432:20)
+      at /Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10325:39
+      at TypeScriptParserMixin.allowInAnd (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:11932:16)
+      at TypeScriptParserMixin.parseMaybeAssignAllowIn (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10325:17)
+      at TypeScriptParserMixin.parseVar (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12864:91)
+      at TypeScriptParserMixin.parseVarStatement (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12710:10)
+      at TypeScriptParserMixin.parseVarStatement (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:9127:31)
+      at TypeScriptParserMixin.parseStatementContent (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12326:23)
+      at TypeScriptParserMixin.parseStatementContent (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:9157:18)
+      at TypeScriptParserMixin.parseStatementLike (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12243:17)
+      at TypeScriptParserMixin.parseStatementListItem (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12223:17)
+      at TypeScriptParserMixin.parseBlockOrModuleBlockBody (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12796:61)
+      at TypeScriptParserMixin.parseBlockBody (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12789:10)
+      at TypeScriptParserMixin.parseBlock (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12777:10)
+      at TypeScriptParserMixin.parseFunctionBody (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:11620:24)
+      at TypeScriptParserMixin.parseFunctionBodyAndFinish (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:11606:10)
+      at TypeScriptParserMixin.parseFunctionBodyAndFinish (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:8898:18)
+      at /Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12921:12
+      at TypeScriptParserMixin.withSmartMixTopicForbiddingContext (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:11914:14)
+      at TypeScriptParserMixin.parseFunction (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12920:10)
+      at TypeScriptParserMixin.parseFunctionStatement (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12605:17)
+      at TypeScriptParserMixin.parseStatementContent (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12267:21)
+      at TypeScriptParserMixin.parseStatementContent (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:9157:18)
+      at TypeScriptParserMixin.parseStatementLike (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12243:17)
+21:36:13 [vite] Internal server error: /Users/josephagunbiade/Desktop/studio/onyx/src/pages/assessments/field-assessment.tsx: Missing catch or finally clause. (290:4)
+
+  288 |
+  289 |   const handleComplete = async () => {
+> 290 |     try {
+      |     ^
+  291 |       const data = form.getValues();
+  292 |       
+  293 |       // Validate the current element data
+  Plugin: vite:react-babel
+  File: /Users/josephagunbiade/Desktop/studio/onyx/src/pages/assessments/field-assessment.tsx:290:4
+  288|  
+  289|    const handleComplete = async () => {
+  290|      try {
+     |      ^
+  291|        const data = form.getValues();
+  292|        
+      at constructor (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:362:19)
+      at TypeScriptParserMixin.raise (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:3259:19)
+      at TypeScriptParserMixin.parseTryStatement (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12704:12)
+      at TypeScriptParserMixin.parseStatementContent (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12280:21)
+      at TypeScriptParserMixin.parseStatementContent (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:9157:18)
+      at TypeScriptParserMixin.parseStatementLike (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12243:17)
+      at TypeScriptParserMixin.parseStatementListItem (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12223:17)
+      at TypeScriptParserMixin.parseBlockOrModuleBlockBody (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12796:61)
+      at TypeScriptParserMixin.parseBlockBody (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12789:10)
+      at TypeScriptParserMixin.parseBlock (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12777:10)
+      at TypeScriptParserMixin.parseFunctionBody (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:11620:24)
+      at TypeScriptParserMixin.parseArrowExpression (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:11595:10)
+      at TypeScriptParserMixin.parseAsyncArrowFromCallExpression (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10782:10)
+      at TypeScriptParserMixin.parseAsyncArrowFromCallExpression (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:9412:18)
+      at TypeScriptParserMixin.parseCoverCallAndAsyncArrowHead (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10702:27)
+      at TypeScriptParserMixin.parseSubscript (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10631:19)
+      at TypeScriptParserMixin.parseSubscript (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:8992:18)
+      at TypeScriptParserMixin.parseSubscripts (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10604:19)
+      at TypeScriptParserMixin.parseExprSubscripts (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10595:17)
+      at TypeScriptParserMixin.parseUpdate (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10576:21)
+      at TypeScriptParserMixin.parseMaybeUnary (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10556:23)
+      at TypeScriptParserMixin.parseMaybeUnary (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:9483:18)
+      at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10410:61)
+      at TypeScriptParserMixin.parseExprOps (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10415:23)
+      at TypeScriptParserMixin.parseMaybeConditional (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10392:23)
+      at TypeScriptParserMixin.parseMaybeAssign (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10355:21)
+      at TypeScriptParserMixin.parseMaybeAssign (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:9432:20)
+      at /Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10325:39
+      at TypeScriptParserMixin.allowInAnd (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:11932:16)
+      at TypeScriptParserMixin.parseMaybeAssignAllowIn (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10325:17)
+      at TypeScriptParserMixin.parseVar (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12864:91)
+      at TypeScriptParserMixin.parseVarStatement (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12710:10)
+      at TypeScriptParserMixin.parseVarStatement (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:9127:31)
+      at TypeScriptParserMixin.parseStatementContent (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12326:23)
+      at TypeScriptParserMixin.parseStatementContent (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:9157:18)
+      at TypeScriptParserMixin.parseStatementLike (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12243:17)
+      at TypeScriptParserMixin.parseStatementListItem (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12223:17)
+      at TypeScriptParserMixin.parseBlockOrModuleBlockBody (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12796:61)
+      at TypeScriptParserMixin.parseBlockBody (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12789:10)
+      at TypeScriptParserMixin.parseBlock (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12777:10)
+      at TypeScriptParserMixin.parseFunctionBody (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:11620:24)
+      at TypeScriptParserMixin.parseFunctionBodyAndFinish (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:11606:10)
+      at TypeScriptParserMixin.parseFunctionBodyAndFinish (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:8898:18)
+      at /Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12921:12
+      at TypeScriptParserMixin.withSmartMixTopicForbiddingContext (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:11914:14)
+      at TypeScriptParserMixin.parseFunction (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12920:10)
+      at TypeScriptParserMixin.parseFunctionStatement (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12605:17)
+      at TypeScriptParserMixin.parseStatementContent (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12267:21)
+      at TypeScriptParserMixin.parseStatementContent (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:9157:18)
+      at TypeScriptParserMixin.parseStatementLike (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12243:17)
+21:36:13 [vite] Internal server error: /Users/josephagunbiade/Desktop/studio/onyx/src/pages/assessments/field-assessment.tsx: Missing catch or finally clause. (290:4)
+
+  288 |
+  289 |   const handleComplete = async () => {
+> 290 |     try {
+      |     ^
+  291 |       const data = form.getValues();
+  292 |       
+  293 |       // Validate the current element data
+  Plugin: vite:react-babel
+  File: /Users/josephagunbiade/Desktop/studio/onyx/src/pages/assessments/field-assessment.tsx:290:4
+  288|  
+  289|    const handleComplete = async () => {
+  290|      try {
+     |      ^
+  291|        const data = form.getValues();
+  292|        
+      at constructor (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:362:19)
+      at TypeScriptParserMixin.raise (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:3259:19)
+      at TypeScriptParserMixin.parseTryStatement (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12704:12)
+      at TypeScriptParserMixin.parseStatementContent (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12280:21)
+      at TypeScriptParserMixin.parseStatementContent (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:9157:18)
+      at TypeScriptParserMixin.parseStatementLike (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12243:17)
+      at TypeScriptParserMixin.parseStatementListItem (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12223:17)
+      at TypeScriptParserMixin.parseBlockOrModuleBlockBody (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12796:61)
+      at TypeScriptParserMixin.parseBlockBody (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12789:10)
+      at TypeScriptParserMixin.parseBlock (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12777:10)
+      at TypeScriptParserMixin.parseFunctionBody (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:11620:24)
+      at TypeScriptParserMixin.parseArrowExpression (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:11595:10)
+      at TypeScriptParserMixin.parseAsyncArrowFromCallExpression (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10782:10)
+      at TypeScriptParserMixin.parseAsyncArrowFromCallExpression (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:9412:18)
+      at TypeScriptParserMixin.parseCoverCallAndAsyncArrowHead (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10702:27)
+      at TypeScriptParserMixin.parseSubscript (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10631:19)
+      at TypeScriptParserMixin.parseSubscript (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:8992:18)
+      at TypeScriptParserMixin.parseSubscripts (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10604:19)
+      at TypeScriptParserMixin.parseExprSubscripts (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10595:17)
+      at TypeScriptParserMixin.parseUpdate (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10576:21)
+      at TypeScriptParserMixin.parseMaybeUnary (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10556:23)
+      at TypeScriptParserMixin.parseMaybeUnary (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:9483:18)
+      at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10410:61)
+      at TypeScriptParserMixin.parseExprOps (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10415:23)
+      at TypeScriptParserMixin.parseMaybeConditional (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10392:23)
+      at TypeScriptParserMixin.parseMaybeAssign (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10355:21)
+      at TypeScriptParserMixin.parseMaybeAssign (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:9432:20)
+      at /Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10325:39
+      at TypeScriptParserMixin.allowInAnd (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:11932:16)
+      at TypeScriptParserMixin.parseMaybeAssignAllowIn (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10325:17)
+      at TypeScriptParserMixin.parseVar (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12864:91)
+      at TypeScriptParserMixin.parseVarStatement (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12710:10)
+      at TypeScriptParserMixin.parseVarStatement (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:9127:31)
+      at TypeScriptParserMixin.parseStatementContent (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12326:23)
+      at TypeScriptParserMixin.parseStatementContent (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:9157:18)
+      at TypeScriptParserMixin.parseStatementLike (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12243:17)
+      at TypeScriptParserMixin.parseStatementListItem (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12223:17)
+      at TypeScriptParserMixin.parseBlockOrModuleBlockBody (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12796:61)
+      at TypeScriptParserMixin.parseBlockBody (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12789:10)
+      at TypeScriptParserMixin.parseBlock (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12777:10)
+      at TypeScriptParserMixin.parseFunctionBody (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:11620:24)
+      at TypeScriptParserMixin.parseFunctionBodyAndFinish (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:11606:10)
+      at TypeScriptParserMixin.parseFunctionBodyAndFinish (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:8898:18)
+      at /Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12921:12
+      at TypeScriptParserMixin.withSmartMixTopicForbiddingContext (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:11914:14)
+      at TypeScriptParserMixin.parseFunction (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12920:10)
+      at TypeScriptParserMixin.parseFunctionStatement (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12605:17)
+      at TypeScriptParserMixin.parseStatementContent (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12267:21)
+      at TypeScriptParserMixin.parseStatementContent (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:9157:18)
+      at TypeScriptParserMixin.parseStatementLike (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12243:17)
+21:36:13 [vite] Internal server error: /Users/josephagunbiade/Desktop/studio/onyx/src/pages/assessments/field-assessment.tsx: Missing catch or finally clause. (290:4)
+
+  288 |
+  289 |   const handleComplete = async () => {
+> 290 |     try {
+      |     ^
+  291 |       const data = form.getValues();
+  292 |       
+  293 |       // Validate the current element data
+  Plugin: vite:react-babel
+  File: /Users/josephagunbiade/Desktop/studio/onyx/src/pages/assessments/field-assessment.tsx:290:4
+  288|  
+  289|    const handleComplete = async () => {
+  290|      try {
+     |      ^
+  291|        const data = form.getValues();
+  292|        
+      at constructor (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:362:19)
+      at TypeScriptParserMixin.raise (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:3259:19)
+      at TypeScriptParserMixin.parseTryStatement (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12704:12)
+      at TypeScriptParserMixin.parseStatementContent (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12280:21)
+      at TypeScriptParserMixin.parseStatementContent (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:9157:18)
+      at TypeScriptParserMixin.parseStatementLike (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12243:17)
+      at TypeScriptParserMixin.parseStatementListItem (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12223:17)
+      at TypeScriptParserMixin.parseBlockOrModuleBlockBody (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12796:61)
+      at TypeScriptParserMixin.parseBlockBody (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12789:10)
+      at TypeScriptParserMixin.parseBlock (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12777:10)
+      at TypeScriptParserMixin.parseFunctionBody (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:11620:24)
+      at TypeScriptParserMixin.parseArrowExpression (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:11595:10)
+      at TypeScriptParserMixin.parseAsyncArrowFromCallExpression (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10782:10)
+      at TypeScriptParserMixin.parseAsyncArrowFromCallExpression (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:9412:18)
+      at TypeScriptParserMixin.parseCoverCallAndAsyncArrowHead (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10702:27)
+      at TypeScriptParserMixin.parseSubscript (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10631:19)
+      at TypeScriptParserMixin.parseSubscript (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:8992:18)
+      at TypeScriptParserMixin.parseSubscripts (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10604:19)
+      at TypeScriptParserMixin.parseExprSubscripts (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10595:17)
+      at TypeScriptParserMixin.parseUpdate (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10576:21)
+      at TypeScriptParserMixin.parseMaybeUnary (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10556:23)
+      at TypeScriptParserMixin.parseMaybeUnary (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:9483:18)
+      at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10410:61)
+      at TypeScriptParserMixin.parseExprOps (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10415:23)
+      at TypeScriptParserMixin.parseMaybeConditional (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10392:23)
+      at TypeScriptParserMixin.parseMaybeAssign (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10355:21)
+      at TypeScriptParserMixin.parseMaybeAssign (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:9432:20)
+      at /Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10325:39
+      at TypeScriptParserMixin.allowInAnd (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:11932:16)
+      at TypeScriptParserMixin.parseMaybeAssignAllowIn (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:10325:17)
+      at TypeScriptParserMixin.parseVar (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12864:91)
+      at TypeScriptParserMixin.parseVarStatement (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12710:10)
+      at TypeScriptParserMixin.parseVarStatement (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:9127:31)
+      at TypeScriptParserMixin.parseStatementContent (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12326:23)
+      at TypeScriptParserMixin.parseStatementContent (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:9157:18)
+      at TypeScriptParserMixin.parseStatementLike (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12243:17)
+      at TypeScriptParserMixin.parseStatementListItem (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12223:17)
+      at TypeScriptParserMixin.parseBlockOrModuleBlockBody (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12796:61)
+      at TypeScriptParserMixin.parseBlockBody (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12789:10)
+      at TypeScriptParserMixin.parseBlock (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12777:10)
+      at TypeScriptParserMixin.parseFunctionBody (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:11620:24)
+      at TypeScriptParserMixin.parseFunctionBodyAndFinish (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:11606:10)
+      at TypeScriptParserMixin.parseFunctionBodyAndFinish (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:8898:18)
+      at /Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12921:12
+      at TypeScriptParserMixin.withSmartMixTopicForbiddingContext (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:11914:14)
+      at TypeScriptParserMixin.parseFunction (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12920:10)
+      at TypeScriptParserMixin.parseFunctionStatement (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12605:17)
+      at TypeScriptParserMixin.parseStatementContent (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12267:21)
+      at TypeScriptParserMixin.parseStatementContent (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:9157:18)
+      at TypeScriptParserMixin.parseStatementLike (/Users/josephagunbiade/Desktop/studio/onyx/node_modules/@babel/parser/lib/index.js:12243:17)
+21:36:37 [vite] hmr update /src/pages/assessments/field-assessment.tsx, /src/index.css
+21:36:41 [vite] hmr update /src/pages/assessments/field-assessment.tsx, /src/index.css
+21:36:54 [vite] hmr update /src/pages/assessments/field-assessment.tsx, /src/index.css
+21:38:02 [vite] hmr update /src/pages/assessments/field-assessment.tsx, /src/index.css
+21:38:32 [vite] hmr update /src/pages/assessments/field-assessment.tsx, /src/index.css
+21:39:05 [vite] hmr update /src/pages/assessments/pre-assessment.tsx, /src/index.css
+22:43:40 [vite] hmr update /src/pages/assessments/index.tsx, /src/index.css
+22:43:52 [vite] hmr update /src/pages/assessments/index.tsx, /src/index.css
+22:44:19 [vite] hmr update /src/pages/assessments/index.tsx, /src/index.css
+22:44:50 [vite] hmr update /src/pages/assessments/index.tsx, /src/index.css
+23:37:49 [vite] hmr update /src/pages/assessments/index.tsx, /src/index.css
+23:39:45 [vite] hmr update /src/pages/assessments/index.tsx, /src/index.css
