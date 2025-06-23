@@ -1,0 +1,15 @@
+# Netlify configuration for Vite app
+defaults = { }
+
+[build]
+  publish = "dist"
+  command = "npm run build"
+
+[dev]
+  command = "vite"
+  port = 5173
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

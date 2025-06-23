@@ -875,3 +875,5 @@ Browserslist: caniuse-lite is outdated. Please run:
 22:44:50 [vite] hmr update /src/pages/assessments/index.tsx, /src/index.css
 23:37:49 [vite] hmr update /src/pages/assessments/index.tsx, /src/index.css
 23:39:45 [vite] hmr update /src/pages/assessments/index.tsx, /src/index.css
+01:12:45 [vite] .env changed, restarting server...
+01:12:45 [vite] server restarted.
