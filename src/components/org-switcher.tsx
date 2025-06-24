@@ -33,8 +33,8 @@ import { toast } from 'sonner';
 type Organization = {
   id: string;
   name: string;
-  plan: string;
-  role: string;
+  subscription: 'free' | 'professional' | 'enterprise';
+  createdAt: string;
 };
 
 // Mock organizations - in real app, this would come from API
@@ -42,20 +42,20 @@ const mockOrganizations: Organization[] = [
   {
     id: '1',
     name: 'Acme Construction Corp',
-    plan: 'Professional',
-    role: 'Admin',
+    subscription: 'professional',
+    createdAt: '2023-01-15T00:00:00.000Z',
   },
   {
     id: '2',
     name: 'BuildTech Solutions',
-    plan: 'Enterprise',
-    role: 'Manager',
+    subscription: 'enterprise',
+    createdAt: '2023-04-22T00:00:00.000Z',
   },
   {
     id: '3',
     name: 'Urban Development LLC',
-    plan: 'Professional',
-    role: 'Assessor',
+    subscription: 'professional',
+    createdAt: '2024-01-05T00:00:00.000Z',
   },
 ];
 
@@ -72,6 +72,8 @@ export function OrgSwitcher() {
     setCurrentOrg({
       id: org.id,
       name: org.name,
+      subscription: org.subscription,
+      createdAt: org.createdAt,
     });
     setOpen(false);
     toast.success(`Switched to ${org.name}`);
@@ -84,19 +86,16 @@ export function OrgSwitcher() {
     }
 
     // In real app, this would make an API call
-    const newOrg = {
+    const newOrg: Organization = {
       id: Date.now().toString(),
       name: newOrgName.trim(),
-      plan: 'Professional',
-      role: 'Admin',
+      subscription: 'professional',
+      createdAt: new Date().toISOString(),
     };
 
     mockOrganizations.push(newOrg);
     
-    setCurrentOrg({
-      id: newOrg.id,
-      name: newOrg.name,
-    });
+    setCurrentOrg(newOrg);
 
     toast.success(`Created and switched to ${newOrg.name}`);
     setShowNewOrgDialog(false);
@@ -139,7 +138,7 @@ export function OrgSwitcher() {
                       <div className="flex-1 truncate">
                         <div className="font-medium truncate">{org.name}</div>
                         <div className="text-xs text-muted-foreground">
-                          {org.plan} • {org.role}
+                          {org.subscription} • {new Date(org.createdAt).toLocaleDateString()}
                         </div>
                       </div>
                     </div>
