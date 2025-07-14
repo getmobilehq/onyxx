@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Building2, Loader2, MapPin, Upload, X, Camera } from 'lucide-react';
 import { useBuildings } from '@/hooks/use-buildings';
+import { buildingsAPI } from '@/services/api';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -49,17 +50,34 @@ const buildingSchema = z.object({
 
 type BuildingFormValues = z.infer<typeof buildingSchema>;
 
+// Building types from buildingtype.md with their costs per sq ft
 const buildingTypes = [
-  'Commercial',
-  'Residential',
-  'Industrial',
-  'Retail',
-  'Healthcare',
-  'Education',
-  'Hospitality',
-  'Mixed-Use',
-  'Government',
-  'Other',
+  { value: 'Single-story Office', label: 'Single-story Office ($297.50/sq ft)', cost: 297.5 },
+  { value: 'Mid-rise Office', label: 'Mid-rise Office ($605.00/sq ft)', cost: 605 },
+  { value: 'High-rise Office', label: 'High-rise Office ($737.50/sq ft)', cost: 737.5 },
+  { value: 'High-end Executive Office', label: 'High-end Executive Office ($300.00/sq ft)', cost: 300 },
+  { value: 'Basic Warehouse', label: 'Basic Warehouse ($140.00/sq ft)', cost: 140 },
+  { value: 'Light Industrial Warehouse', label: 'Light Industrial Warehouse ($280.00/sq ft)', cost: 280 },
+  { value: 'Manufacturing Facility', label: 'Manufacturing Facility ($545.00/sq ft)', cost: 545 },
+  { value: 'Laboratory Facility', label: 'Laboratory Facility ($800.00/sq ft)', cost: 800 },
+  { value: 'Medical Office Building', label: 'Medical Office Building ($750.50/sq ft)', cost: 750.5 },
+  { value: 'Specialty Clinic', label: 'Specialty Clinic ($704.50/sq ft)', cost: 704.5 },
+  { value: 'Acute Care Hospital', label: 'Acute Care Hospital ($1,086.50/sq ft)', cost: 1086.5 },
+  { value: 'Motel (2–3 stories)', label: 'Motel (2–3 stories) ($160.00/sq ft)', cost: 160 },
+  { value: '3-star Hotel', label: '3-star Hotel ($559.00/sq ft)', cost: 559 },
+  { value: '5-star Hotel', label: '5-star Hotel ($802.50/sq ft)', cost: 802.5 },
+  { value: 'Primary/Secondary School', label: 'Primary/Secondary School ($362.50/sq ft)', cost: 362.5 },
+  { value: 'University Classroom/Lab', label: 'University Classroom/Lab ($675.00/sq ft)', cost: 675 },
+  { value: 'Dormitories', label: 'Dormitories ($353.50/sq ft)', cost: 353.5 },
+  { value: 'Neighborhood Strip Center', label: 'Neighborhood Strip Center ($409.50/sq ft)', cost: 409.5 },
+  { value: 'Shopping Mall', label: 'Shopping Mall ($526.00/sq ft)', cost: 526 },
+  { value: 'Standalone Retail Store', label: 'Standalone Retail Store ($331.50/sq ft)', cost: 331.5 },
+  { value: 'Standard Apartments', label: 'Standard Apartments ($295.00/sq ft)', cost: 295 },
+  { value: 'Community Centers', label: 'Community Centers ($913.50/sq ft)', cost: 913.5 },
+  { value: 'Museums/Performing Arts Centers', label: 'Museums/Performing Arts Centers ($1,010.00/sq ft)', cost: 1010 },
+  { value: 'Police Stations', label: 'Police Stations ($580.00/sq ft)', cost: 580 },
+  { value: 'Multi-level Garage (Basic)', label: 'Multi-level Garage (Basic) ($150.50/sq ft)', cost: 150.5 },
+  { value: 'Low-grade Parking Garage', label: 'Low-grade Parking Garage ($143.00/sq ft)', cost: 143 },
 ];
 
 export function NewBuildingPage() {
@@ -87,6 +105,10 @@ export function NewBuildingPage() {
   async function onSubmit(values: BuildingFormValues) {
     setIsLoading(true);
     try {
+      // Find the cost per sqft for the selected building type
+      const selectedBuildingType = buildingTypes.find(type => type.value === values.type);
+      const costPerSqft = selectedBuildingType ? selectedBuildingType.cost : 300; // Default fallback
+      
       // Transform data to match API expectations
       const buildingData = {
         name: values.name,
@@ -100,8 +122,8 @@ export function NewBuildingPage() {
         description: values.description,
         // Use first photo as main image or default
         image_url: buildingPhotos.length > 0 ? buildingPhotos[0].url : 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab',
-        // Cost per sqft - you can add a field for this or calculate it
-        cost_per_sqft: 200, // Default value
+        // Cost per sqft based on selected building type
+        cost_per_sqft: costPerSqft,
       };
       
       await createBuilding(buildingData);
@@ -115,35 +137,51 @@ export function NewBuildingPage() {
     }
   }
 
-  const handlePhotoUpload = (files: FileList | null) => {
+  const handlePhotoUpload = async (files: FileList | null) => {
     if (!files) return;
 
-    const maxFileSize = 5 * 1024 * 1024; // 5MB
+    const maxFileSize = 10 * 1024 * 1024; // 10MB (same as backend)
     const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
 
-    Array.from(files).forEach(file => {
+    for (const file of Array.from(files)) {
       if (file.size > maxFileSize) {
-        toast.error(`File ${file.name} is too large. Max size is 5MB.`);
-        return;
+        toast.error(`File ${file.name} is too large. Max size is 10MB.`);
+        continue;
       }
 
       if (!allowedTypes.includes(file.type)) {
         toast.error(`File ${file.name} is not a supported image format.`);
-        return;
+        continue;
       }
 
-      // Create preview URL
-      const url = URL.createObjectURL(file);
-      const newPhoto = {
-        id: crypto.randomUUID(),
-        name: file.name,
-        url,
-        size: file.size
-      };
+      try {
+        const loadingToast = toast.loading(`Uploading ${file.name}...`);
 
-      setBuildingPhotos(prev => [...prev, newPhoto]);
-      toast.success(`Photo ${file.name} added successfully`);
-    });
+        // Upload to Cloudinary via API
+        const response = await buildingsAPI.uploadImage(file);
+        
+        // Dismiss the loading toast
+        toast.dismiss(loadingToast);
+        
+        if (response.data.success) {
+          const newPhoto = {
+            id: crypto.randomUUID(),
+            name: file.name,
+            url: response.data.data.url, // Cloudinary URL
+            size: file.size,
+            public_id: response.data.data.public_id
+          };
+
+          setBuildingPhotos(prev => [...prev, newPhoto]);
+          toast.success(`Photo ${file.name} uploaded successfully`);
+        } else {
+          toast.error(`Failed to upload ${file.name}`);
+        }
+      } catch (error: any) {
+        console.error('Upload error:', error);
+        toast.error(`Failed to upload ${file.name}: ${error.response?.data?.message || error.message}`);
+      }
+    }
   };
 
   const removePhoto = (photoId: string) => {
@@ -304,8 +342,8 @@ export function NewBuildingPage() {
                     </FormControl>
                     <SelectContent>
                       {buildingTypes.map((type) => (
-                        <SelectItem key={type} value={type}>
-                          {type}
+                        <SelectItem key={type.value} value={type.value}>
+                          {type.label}
                         </SelectItem>
                       ))}
                     </SelectContent>

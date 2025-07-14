@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { toast } from 'sonner';
+import { EmailSubscriptions } from '@/components/email-subscriptions';
 import { Link } from 'react-router-dom';
 import { 
   ArrowUpDown,
@@ -12,6 +14,7 @@ import {
   X 
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { getFCIStatus, formatFCI } from '@/lib/fci-utils';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -92,18 +95,24 @@ const reportsData = [
 
 // Helper function to determine FCI status color
 const getFciStatusColor = (fci: number) => {
-  if (fci <= 0.1) return 'text-green-500';
-  if (fci <= 0.2) return 'text-blue-500';
-  if (fci <= 0.3) return 'text-yellow-500';
-  return 'text-red-500';
+  const status = getFCIStatus(fci);
+  switch (status.label) {
+    case 'Excellent':
+      return 'text-green-600';
+    case 'Good':
+      return 'text-green-500';
+    case 'Fair':
+      return 'text-yellow-500';
+    case 'Critical':
+      return 'text-red-500';
+    default:
+      return 'text-gray-500';
+  }
 };
 
 // Helper function to determine FCI label
 const getFciLabel = (fci: number) => {
-  if (fci <= 0.1) return 'Excellent';
-  if (fci <= 0.2) return 'Good';
-  if (fci <= 0.3) return 'Fair';
-  return 'Poor';
+  return getFCIStatus(fci).label;
 };
 
 export function ReportsPage() {
@@ -113,6 +122,7 @@ export function ReportsPage() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [sortField, setSortField] = useState<string>('assessmentDate');
   const [filterOpen, setFilterOpen] = useState(false);
+  const [downloading, setDownloading] = useState(false);
 
   // Filter reports based on search query, status, and FCI range
   const filteredReports = reportsData.filter((report) => {
@@ -169,14 +179,68 @@ export function ReportsPage() {
     setSortOrder('desc');
   };
 
+  const handleDownloadExcel = async () => {
+    try {
+      setDownloading(true);
+      
+      // Build query parameters based on current filters
+      const params = new URLSearchParams();
+      if (selectedStatus !== 'all') params.append('status', selectedStatus);
+      
+      const response = await fetch(`/api/reports/excel?${params.toString()}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      
+      if (!response.ok) throw new Error('Failed to generate Excel report');
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `assessment-reports-${new Date().toISOString().split('T')[0]}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      toast.success('Excel report downloaded successfully');
+    } catch (error) {
+      console.error('Excel download failed:', error);
+      toast.error('Failed to download Excel report');
+    } finally {
+      setDownloading(false);
+    }
+  };
+
   return (
     <div className="space-y-6 p-6 pb-16">
       <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Reports</h2>
           <p className="text-muted-foreground">
-            View and manage assessment reports.
+            View and manage assessment reports for capital planning decisions.
           </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button 
+            onClick={handleDownloadExcel}
+            disabled={downloading}
+            variant="outline"
+          >
+            {downloading ? (
+              <>
+                <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-primary" />
+                Generating...
+              </>
+            ) : (
+              <>
+                <Download className="mr-2 h-4 w-4" />
+                Export Excel
+              </>
+            )}
+          </Button>
         </div>
       </div>
 
@@ -520,6 +584,9 @@ export function ReportsPage() {
           </TableBody>
         </Table>
       </Card>
+
+      {/* Email Subscriptions */}
+      <EmailSubscriptions />
     </div>
   );
 }

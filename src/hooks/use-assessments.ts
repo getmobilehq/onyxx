@@ -144,6 +144,39 @@ export function useAssessments() {
     }
   };
 
+  const calculateFCI = async (assessmentId: string) => {
+    try {
+      const response = await assessmentsAPI.calculateFCI(assessmentId);
+      if (response.data.success) {
+        return response.data.data.fci_results;
+      } else {
+        throw new Error('Failed to calculate FCI');
+      }
+    } catch (err: any) {
+      toast.error('Failed to calculate FCI');
+      throw err;
+    }
+  };
+
+  const completeAssessment = async (assessmentId: string) => {
+    try {
+      const response = await assessmentsAPI.completeAssessment(assessmentId);
+      if (response.data.success) {
+        toast.success('Assessment completed successfully with FCI calculation');
+        await fetchAssessments(); // Refresh the assessments list
+        return {
+          assessment: response.data.data.assessment,
+          fci_results: response.data.data.fci_results
+        };
+      } else {
+        throw new Error('Failed to complete assessment');
+      }
+    } catch (err: any) {
+      toast.error('Failed to complete assessment');
+      throw err;
+    }
+  };
+
   return {
     assessments,
     loading,
@@ -155,6 +188,8 @@ export function useAssessments() {
     deleteAssessment,
     getAssessmentElements,
     updateAssessmentElement,
+    calculateFCI,
+    completeAssessment,
   };
 }
 

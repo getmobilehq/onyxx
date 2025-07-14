@@ -1,5 +1,7 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './auth-context';
+import { organizationsAPI } from '@/services/api';
+import { toast } from 'sonner';
 
 type Organization = {
   id: string;
@@ -12,58 +14,57 @@ type OrgContextType = {
   currentOrg: Organization | null;
   setCurrentOrg: (org: Organization) => void;
   organizations: Organization[];
+  loading: boolean;
 };
 
 const OrgContext = createContext<OrgContextType | undefined>(undefined);
-
-// Mock organizations
-const MOCK_ORGANIZATIONS: Organization[] = [
-  {
-    id: '1',
-    name: 'Acme Properties',
-    subscription: 'professional',
-    createdAt: '2023-01-15T00:00:00.000Z',
-  },
-  {
-    id: '2',
-    name: 'Evergreen Facilities',
-    subscription: 'enterprise',
-    createdAt: '2023-04-22T00:00:00.000Z',
-  },
-  {
-    id: '3',
-    name: 'Metro Building Group',
-    subscription: 'free',
-    createdAt: '2024-01-05T00:00:00.000Z',
-  },
-];
 
 export function OrgProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const [currentOrg, setCurrentOrg] = useState<Organization | null>(null);
   const [organizations, setOrganizations] = useState<Organization[]>([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (user) {
-      // In a real app, we would fetch organizations based on user's access
-      // For this demo, we're using mock data
-      const userOrgs = MOCK_ORGANIZATIONS;
-      setOrganizations(userOrgs);
-      
-      // Set current org if not already set
-      if (!currentOrg && userOrgs.length > 0) {
-        const userOrgId = user.organizationId;
-        const userOrg = userOrgs.find(org => org.id === userOrgId) || userOrgs[0];
-        setCurrentOrg(userOrg);
+    const fetchOrganizations = async () => {
+      if (user) {
+        setLoading(true);
+        try {
+          // Try to get current organization first
+          const currentResponse = await organizationsAPI.getCurrent();
+          if (currentResponse.data.success && currentResponse.data.data.organization) {
+            setCurrentOrg(currentResponse.data.data.organization);
+          }
+          
+          // Get all organizations user has access to
+          const response = await organizationsAPI.getAll();
+          if (response.data.success) {
+            const orgs = response.data.data.organizations;
+            setOrganizations(orgs);
+            
+            // If no current org set, use the first one
+            if (!currentOrg && orgs.length > 0) {
+              setCurrentOrg(orgs[0]);
+            }
+          }
+        } catch (error: any) {
+          console.error('Failed to fetch organizations:', error);
+          // If API fails, keep empty state
+          setOrganizations([]);
+        } finally {
+          setLoading(false);
+        }
+      } else {
+        setCurrentOrg(null);
+        setOrganizations([]);
       }
-    } else {
-      setCurrentOrg(null);
-      setOrganizations([]);
-    }
-  }, [user, currentOrg]);
+    };
+
+    fetchOrganizations();
+  }, [user]);
 
   return (
-    <OrgContext.Provider value={{ currentOrg, setCurrentOrg, organizations }}>
+    <OrgContext.Provider value={{ currentOrg, setCurrentOrg, organizations, loading }}>
       {children}
     </OrgContext.Provider>
   );

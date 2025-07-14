@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Building2, Upload, Camera, X } from 'lucide-react';
+import { ArrowLeft, Upload, Camera, X, Building2, Loader2 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -33,6 +33,8 @@ import {
 } from '@/components/ui/breadcrumb';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
+import { useBuildings } from '@/hooks/use-buildings';
+import { buildingsAPI } from '@/services/api';
 
 // Form validation schema
 const buildingSchema = z.object({
@@ -78,31 +80,21 @@ const constructionTypes = [
   'Mixed Construction'
 ];
 
-// Mock existing building data - in real app, this would come from API
-const mockBuildingData = {
-  id: '1',
-  name: 'Oak Tower Office Complex',
-  type: 'office-midrise',
-  constructionType: 'Steel Frame',
-  yearBuilt: 1998,
-  squareFootage: 450000,
-  costPerSqft: 605.00,
-  streetAddress: '123 Broadway',
-  city: 'New York',
-  state: 'NY',
-  zipCode: '10001',
-  description: 'A modern office complex in downtown Manhattan with premium amenities and excellent accessibility.',
-};
-
 export function EditBuildingPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { getBuilding, updateBuilding } = useBuildings();
+  
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [buildingData, setBuildingData] = useState<any>(null);
+  const [saving, setSaving] = useState(false);
   const [buildingPhotos, setBuildingPhotos] = useState<{ id: string; name: string; url: string; size: number }[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<BuildingForm>({
     resolver: zodResolver(buildingSchema),
+    mode: "onSubmit",
     defaultValues: {
       name: '',
       type: '',
@@ -118,74 +110,136 @@ export function EditBuildingPage() {
     },
   });
 
-  // Load existing building data
+  // Load existing building data from API
   useEffect(() => {
-    // In a real app, this would be an API call
-    setTimeout(() => {
-      form.reset({
-        name: mockBuildingData.name,
-        type: mockBuildingData.type,
-        constructionType: mockBuildingData.constructionType,
-        yearBuilt: mockBuildingData.yearBuilt,
-        squareFootage: mockBuildingData.squareFootage,
-        costPerSqft: mockBuildingData.costPerSqft,
-        streetAddress: mockBuildingData.streetAddress,
-        city: mockBuildingData.city,
-        state: mockBuildingData.state,
-        zipCode: mockBuildingData.zipCode,
-        description: mockBuildingData.description,
-      });
-      setLoading(false);
-    }, 500);
-  }, [form, id]);
+    const fetchBuilding = async () => {
+      if (!id) {
+        setError('Building ID is required');
+        setLoading(false);
+        return;
+      }
 
-  const onSubmit = (data: BuildingForm) => {
-    console.log('Updating building:', data);
-    
-    // Save to localStorage (would be API call)
-    localStorage.setItem(`building-${id}`, JSON.stringify({
-      ...data,
-      id,
-      photos: buildingPhotos,
-      updatedAt: new Date().toISOString(),
-    }));
-    
-    toast.success('Building updated successfully');
-    
-    // Navigate back to building details
-    setTimeout(() => {
-      navigate(`/buildings/${id}`);
-    }, 1000);
+
+      try {
+        setLoading(true);
+        const building = await getBuilding(id);
+        setBuildingData(building);
+        
+        // Reset form with fetched data only once
+        form.reset({
+          name: building.name || '',
+          type: building.type || '',
+          constructionType: building.construction_type || '',
+          yearBuilt: building.year_built || new Date().getFullYear(),
+          squareFootage: building.square_footage || 0,
+          costPerSqft: building.cost_per_sqft || 0,
+          streetAddress: building.street_address || '',
+          city: building.city || '',
+          state: building.state || '',
+          zipCode: building.zip_code || '',
+          description: building.description || '',
+        });
+        
+      } catch (err) {
+        console.error('Failed to fetch building:', err);
+        setError('Failed to load building data');
+        toast.error('Failed to load building data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBuilding();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
+
+  const onSubmit = async (data: BuildingForm) => {
+    if (!id) {
+      toast.error('Building ID is required');
+      return;
+    }
+
+    try {
+      setSaving(true);
+      
+      // Transform form data to match API schema
+      const updateData = {
+        name: data.name,
+        type: data.type,
+        construction_type: data.constructionType,
+        year_built: data.yearBuilt,
+        square_footage: data.squareFootage,
+        cost_per_sqft: data.costPerSqft,
+        street_address: data.streetAddress,
+        city: data.city,
+        state: data.state,
+        zip_code: data.zipCode,
+        description: data.description,
+        // Include image_url if we have valid photos (Cloudinary URLs)
+        ...(buildingPhotos.length > 0 
+          ? { image_url: buildingPhotos[0].url } 
+          : {}),
+      };
+      
+      console.log('Updating building with data:', updateData);
+      
+      // Call API to update building
+      await updateBuilding(id, updateData);
+      
+      // Navigate back to building details after a short delay
+      setTimeout(() => {
+        navigate(`/buildings/${id}`);
+      }, 1000);
+    } catch (err) {
+      console.error('Failed to update building:', err);
+      // Error toast is already shown by the hook
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handlePhotoUpload = (files: FileList | null) => {
+  const handlePhotoUpload = async (files: FileList | null) => {
     if (!files) return;
 
-    const maxFileSize = 5 * 1024 * 1024; // 5MB
+    const maxFileSize = 10 * 1024 * 1024; // 10MB (same as backend)
     const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
 
-    Array.from(files).forEach(file => {
+    for (const file of Array.from(files)) {
       if (file.size > maxFileSize) {
-        toast.error(`File ${file.name} is too large. Max size is 5MB.`);
-        return;
+        toast.error(`File ${file.name} is too large. Max size is 10MB.`);
+        continue;
       }
 
       if (!allowedTypes.includes(file.type)) {
         toast.error(`File ${file.name} is not a supported image format.`);
-        return;
+        continue;
       }
 
-      const url = URL.createObjectURL(file);
-      const newPhoto = {
-        id: crypto.randomUUID(),
-        name: file.name,
-        url,
-        size: file.size
-      };
+      try {
+        toast.loading(`Uploading ${file.name}...`);
 
-      setBuildingPhotos(prev => [...prev, newPhoto]);
-      toast.success(`Photo ${file.name} added successfully`);
-    });
+        // Upload to Cloudinary via API
+        const response = await buildingsAPI.uploadImage(file);
+        
+        if (response.data.success) {
+          const newPhoto = {
+            id: crypto.randomUUID(),
+            name: file.name,
+            url: response.data.data.url, // Cloudinary URL
+            size: file.size,
+            public_id: response.data.data.public_id
+          };
+
+          setBuildingPhotos(prev => [...prev, newPhoto]);
+          toast.success(`Photo ${file.name} uploaded successfully`);
+        } else {
+          toast.error(`Failed to upload ${file.name}`);
+        }
+      } catch (error: any) {
+        console.error('Upload error:', error);
+        toast.error(`Failed to upload ${file.name}: ${error.response?.data?.message || error.message}`);
+      }
+    }
   };
 
   const removePhoto = (photoId: string) => {
@@ -226,8 +280,26 @@ export function EditBuildingPage() {
     return (
       <div className="space-y-6 p-6">
         <div className="text-center">
-          <Building2 className="mx-auto h-8 w-8 animate-pulse text-muted-foreground" />
+          <Loader2 className="mx-auto h-8 w-8 animate-spin text-muted-foreground" />
           <p className="mt-2 text-sm text-muted-foreground">Loading building data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6 p-6">
+        <div className="text-center">
+          <Building2 className="mx-auto h-8 w-8 text-red-500" />
+          <p className="mt-2 text-sm text-red-600">Error: {error}</p>
+          <Button 
+            variant="outline" 
+            className="mt-4"
+            onClick={() => navigate('/buildings')}
+          >
+            Back to Buildings
+          </Button>
         </div>
       </div>
     );
@@ -238,15 +310,15 @@ export function EditBuildingPage() {
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
-            <BreadcrumbLink as={Link} to="/dashboard">Dashboard</BreadcrumbLink>
+            <BreadcrumbLink asChild><Link to="/dashboard">Dashboard</Link></BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbLink as={Link} to="/buildings">Buildings</BreadcrumbLink>
+            <BreadcrumbLink asChild><Link to="/buildings">Buildings</Link></BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbLink as={Link} to={`/buildings/${id}`}>Building Details</BreadcrumbLink>
+            <BreadcrumbLink asChild><Link to={`/buildings/${id}`}>Building Details</Link></BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
@@ -545,7 +617,14 @@ export function EditBuildingPage() {
                   <div className="text-center">
                     <Camera className="mx-auto h-8 w-8 text-muted-foreground" />
                     <div className="mt-4">
-                      <Button variant="secondary" onClick={(e) => e.stopPropagation()}>
+                      <Button 
+                        type="button" 
+                        variant="secondary" 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          triggerFileInput();
+                        }}
+                      >
                         <Upload className="mr-2 h-4 w-4" />
                         Upload Photos
                       </Button>
@@ -603,8 +682,15 @@ export function EditBuildingPage() {
             <Button type="button" variant="outline" asChild>
               <Link to={`/buildings/${id}`}>Cancel</Link>
             </Button>
-            <Button type="submit">
-              Update Building
+            <Button type="submit" disabled={saving}>
+              {saving ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Updating...
+                </>
+              ) : (
+                'Update Building'
+              )}
             </Button>
           </div>
         </form>

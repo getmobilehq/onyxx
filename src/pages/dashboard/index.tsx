@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/context/auth-context';
+import { useDashboard } from '@/hooks/use-dashboard';
 import { cn } from '@/lib/utils';
 import { 
   Activity,
@@ -20,47 +21,22 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
-
-// Mock data for the dashboard
-const buildingsData = [
-  { id: '1', name: 'Oak Tower Office Complex', location: 'New York, NY', type: 'Commercial', fci: 0.12, lastAssessment: '2024-04-10' },
-  { id: '2', name: 'Riverside Apartments', location: 'Chicago, IL', type: 'Residential', fci: 0.34, lastAssessment: '2024-03-22' },
-  { id: '3', name: 'Sunset Mall', location: 'Miami, FL', type: 'Retail', fci: 0.08, lastAssessment: '2024-05-01' },
-  { id: '4', name: 'Central Hospital', location: 'Boston, MA', type: 'Healthcare', fci: 0.22, lastAssessment: '2024-02-15' },
-];
-
-const recentAssessments = [
-  { id: '1', buildingName: 'Central Hospital', date: '2024-05-15', status: 'completed', assessor: 'Alex Johnson' },
-  { id: '2', buildingName: 'Oak Tower Office Complex', date: '2024-05-10', status: 'in_progress', assessor: 'Maria Garcia' },
-  { id: '3', buildingName: 'Riverside Apartments', date: '2024-05-05', status: 'pending', assessor: 'David Chen' },
-];
-
-const upcomingAssessments = [
-  { id: '4', buildingName: 'Sunset Mall', date: '2024-05-25', assessor: 'Alex Johnson' },
-  { id: '5', buildingName: 'Green Hills School', date: '2024-06-02', assessor: 'Sarah Williams' },
-];
-
-const chartData = [
-  { name: 'Excellent', value: 45, fill: '#22c55e' },
-  { name: 'Good', value: 30, fill: '#3b82f6' },
-  { name: 'Fair', value: 15, fill: '#f59e0b' },
-  { name: 'Poor', value: 10, fill: '#ef4444' },
-];
-
-const fciTrendData = [
-  { month: 'Jan', fci: 0.21 },
-  { month: 'Feb', fci: 0.22 },
-  { month: 'Mar', fci: 0.20 },
-  { month: 'Apr', fci: 0.18 },
-  { month: 'May', fci: 0.15 },
-];
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, LineChart, Line } from 'recharts';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export function DashboardPage() {
   const { user } = useAuth();
   const [greeting, setGreeting] = useState('');
-  const [loading, setLoading] = useState(true);
+  const {
+    metrics,
+    buildingsAtRisk,
+    recentAssessments,
+    upcomingAssessments,
+    fciDistribution,
+    fciTrend,
+    loading
+  } = useDashboard();
 
   // Set greeting based on time of day
   useEffect(() => {
@@ -68,30 +44,8 @@ export function DashboardPage() {
     if (hour < 12) setGreeting('Good morning');
     else if (hour < 18) setGreeting('Good afternoon');
     else setGreeting('Good evening');
-    
-    // Simulate data loading
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 1000);
-    
-    return () => clearTimeout(timer);
   }, []);
 
-  // Helper function to determine FCI status color
-  const getFciStatusColor = (fci: number) => {
-    if (fci <= 0.1) return 'text-green-500';
-    if (fci <= 0.2) return 'text-blue-500';
-    if (fci <= 0.3) return 'text-yellow-500';
-    return 'text-red-500';
-  };
-
-  // Helper function to determine FCI label
-  const getFciLabel = (fci: number) => {
-    if (fci <= 0.1) return 'Excellent';
-    if (fci <= 0.2) return 'Good';
-    if (fci <= 0.3) return 'Fair';
-    return 'Poor';
-  };
 
   // Status color for assessments
   const getStatusColor = (status: string) => {
@@ -127,7 +81,7 @@ export function DashboardPage() {
         <div>
           <h2 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">{greeting}, {user?.name}</h2>
           <p className="text-muted-foreground mt-2 text-base">
-            Here's what's happening across your facilities today.
+            Here's what's happening across your facilities today for capital planning.
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -154,9 +108,13 @@ export function DashboardPage() {
             <Building2 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">24</div>
+            {loading ? (
+              <Skeleton className="h-8 w-16" />
+            ) : (
+              <div className="text-2xl font-bold">{metrics.totalBuildings}</div>
+            )}
             <p className="text-xs text-muted-foreground">
-              +2 from last month
+              Active facilities
             </p>
           </CardContent>
         </Card>
@@ -166,9 +124,13 @@ export function DashboardPage() {
             <ClipboardList className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">45</div>
+            {loading ? (
+              <Skeleton className="h-8 w-16" />
+            ) : (
+              <div className="text-2xl font-bold">{metrics.assessmentsYTD}</div>
+            )}
             <p className="text-xs text-muted-foreground">
-              +8 from last quarter
+              Completed this year
             </p>
           </CardContent>
         </Card>
@@ -178,9 +140,13 @@ export function DashboardPage() {
             <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">0.18</div>
+            {loading ? (
+              <Skeleton className="h-8 w-16" />
+            ) : (
+              <div className="text-2xl font-bold">{metrics.averageFCI.toFixed(2)}</div>
+            )}
             <p className="text-xs text-muted-foreground">
-              -0.03 improvement from last year
+              Facility condition index
             </p>
           </CardContent>
         </Card>
@@ -190,9 +156,13 @@ export function DashboardPage() {
             <BarChart3 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">$2.4M</div>
+            {loading ? (
+              <Skeleton className="h-8 w-24" />
+            ) : (
+              <div className="text-2xl font-bold">${(metrics.estimatedRepairs / 1000000).toFixed(1)}M</div>
+            )}
             <p className="text-xs text-muted-foreground">
-              +$320k from last assessment
+              Total repair costs
             </p>
           </CardContent>
         </Card>
@@ -210,10 +180,19 @@ export function DashboardPage() {
           </CardHeader>
           <CardContent className="p-0">
             <div className="space-y-4">
-              {buildingsData
-                .sort((a, b) => b.fci - a.fci)
-                .slice(0, 4)
-                .map((building) => (
+              {loading ? (
+                <>
+                  <Skeleton className="h-20" />
+                  <Skeleton className="h-20" />
+                  <Skeleton className="h-20" />
+                  <Skeleton className="h-20" />
+                </>
+              ) : buildingsAtRisk.length === 0 ? (
+                <div className="p-8 text-center text-muted-foreground">
+                  No buildings with FCI {'>'} 0.10
+                </div>
+              ) : (
+                buildingsAtRisk.map((building) => (
                   <div
                     key={building.id}
                     className="flex items-center justify-between border-b p-4 last:border-0"
@@ -221,26 +200,25 @@ export function DashboardPage() {
                     <div className="space-y-1">
                       <p className="font-medium leading-none">{building.name}</p>
                       <p className="text-sm text-muted-foreground">
-                        {building.location}
+                        FCI Score: {(building.fci * 100).toFixed(1)}%
                       </p>
                     </div>
                     <div className="flex flex-col items-end">
-                      <div className={cn("font-medium", getFciStatusColor(building.fci))}>
-                        {building.fci.toFixed(2)} ({getFciLabel(building.fci)})
+                      <div className={cn("font-medium", 
+                        building.status === 'critical' ? 'text-red-500' :
+                        building.status === 'warning' ? 'text-orange-500' :
+                        'text-yellow-500'
+                      )}>
+                        {building.status.charAt(0).toUpperCase() + building.status.slice(1)}
                       </div>
                       <Progress
                         value={building.fci * 100}
                         className="h-2 w-24"
-                        indicatorClassName={cn(
-                          building.fci <= 0.1 ? "bg-green-500" :
-                          building.fci <= 0.2 ? "bg-blue-500" :
-                          building.fci <= 0.3 ? "bg-yellow-500" :
-                          "bg-red-500"
-                        )}
                       />
                     </div>
                   </div>
-                ))}
+                ))
+              )}
             </div>
           </CardContent>
           <CardFooter className="pt-0">
@@ -271,7 +249,18 @@ export function DashboardPage() {
               </div>
               <TabsContent value="recent" className="p-0">
                 <div className="space-y-4 p-4">
-                  {recentAssessments.map((assessment) => (
+                  {loading ? (
+                    <>
+                      <Skeleton className="h-16" />
+                      <Skeleton className="h-16" />
+                      <Skeleton className="h-16" />
+                    </>
+                  ) : recentAssessments.length === 0 ? (
+                    <div className="p-8 text-center text-muted-foreground">
+                      No recent assessments
+                    </div>
+                  ) : (
+                    recentAssessments.map((assessment) => (
                     <div
                       key={assessment.id}
                       className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0"
@@ -281,11 +270,11 @@ export function DashboardPage() {
                           <ClipboardList className="h-5 w-5 text-primary" />
                         </div>
                         <div>
-                          <p className="font-medium">{assessment.buildingName}</p>
+                          <p className="font-medium">{assessment.building?.name || 'Unknown Building'}</p>
                           <div className="flex items-center gap-2">
                             <CalendarRange className="h-3.5 w-3.5 text-muted-foreground" />
                             <p className="text-sm text-muted-foreground">
-                              {new Date(assessment.date).toLocaleDateString()}
+                              {new Date(assessment.scheduled_date || assessment.created_at).toLocaleDateString()}
                             </p>
                           </div>
                         </div>
@@ -305,21 +294,33 @@ export function DashboardPage() {
                         <div className="flex items-center gap-1.5">
                           <Avatar className="h-5 w-5">
                             <AvatarFallback className="text-xs">
-                              {assessment.assessor.split(' ').map(n => n[0]).join('')}
+                              {assessment.assigned_to?.name?.split(' ').map((n: string) => n[0]).join('') || '?'}
                             </AvatarFallback>
                           </Avatar>
                           <span className="text-xs text-muted-foreground">
-                            {assessment.assessor}
+                            {assessment.assigned_to?.name || 'Unassigned'}
                           </span>
                         </div>
                       </div>
                     </div>
-                  ))}
+                  ))
+                  )}
                 </div>
               </TabsContent>
               <TabsContent value="upcoming" className="p-0">
                 <div className="space-y-4 p-4">
-                  {upcomingAssessments.map((assessment) => (
+                  {loading ? (
+                    <>
+                      <Skeleton className="h-16" />
+                      <Skeleton className="h-16" />
+                      <Skeleton className="h-16" />
+                    </>
+                  ) : upcomingAssessments.length === 0 ? (
+                    <div className="p-8 text-center text-muted-foreground">
+                      No upcoming assessments
+                    </div>
+                  ) : (
+                    upcomingAssessments.map((assessment) => (
                     <div
                       key={assessment.id}
                       className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0"
@@ -329,11 +330,11 @@ export function DashboardPage() {
                           <CalendarRange className="h-5 w-5 text-primary" />
                         </div>
                         <div>
-                          <p className="font-medium">{assessment.buildingName}</p>
+                          <p className="font-medium">{assessment.building?.name || 'Unknown Building'}</p>
                           <div className="flex items-center gap-2">
                             <Clock className="h-3.5 w-3.5 text-muted-foreground" />
                             <p className="text-sm text-muted-foreground">
-                              {new Date(assessment.date).toLocaleDateString()}
+                              {new Date(assessment.scheduled_date || assessment.created_at).toLocaleDateString()}
                             </p>
                           </div>
                         </div>
@@ -343,16 +344,17 @@ export function DashboardPage() {
                         <div className="flex items-center gap-1.5">
                           <Avatar className="h-5 w-5">
                             <AvatarFallback className="text-xs">
-                              {assessment.assessor.split(' ').map(n => n[0]).join('')}
+                              {assessment.assigned_to?.name?.split(' ').map((n: string) => n[0]).join('') || '?'}
                             </AvatarFallback>
                           </Avatar>
                           <span className="text-xs text-muted-foreground">
-                            {assessment.assessor}
+                            {assessment.assigned_to?.name || 'Unassigned'}
                           </span>
                         </div>
                       </div>
                     </div>
-                  ))}
+                  ))
+                  )}
                 </div>
               </TabsContent>
             </Tabs>
@@ -378,8 +380,11 @@ export function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="h-[240px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData}>
+              {loading ? (
+                <Skeleton className="h-full w-full" />
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={fciDistribution}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
                   <XAxis dataKey="name" />
                   <YAxis />
@@ -387,9 +392,10 @@ export function DashboardPage() {
                     formatter={(value) => [`${value} buildings`, 'Count']}
                     contentStyle={{ backgroundColor: 'var(--background)', borderColor: 'var(--border)' }}
                   />
-                  <Bar dataKey="value" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="value" radius={[4, 4, 0, 0]} fill="currentColor" className="fill-primary" />
                 </BarChart>
               </ResponsiveContainer>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -402,18 +408,22 @@ export function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="h-[240px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={fciTrendData}>
+              {loading ? (
+                <Skeleton className="h-full w-full" />
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={fciTrend}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
                   <XAxis dataKey="month" />
-                  <YAxis domain={[0, 0.5]} tickFormatter={(value) => value.toFixed(1)} />
+                  <YAxis domain={[0, 'dataMax + 5']} />
                   <Tooltip 
-                    formatter={(value) => [value.toFixed(2), 'FCI Score']}
+                    formatter={(value) => [`${value}%`, 'FCI Score']}
                     contentStyle={{ backgroundColor: 'var(--background)', borderColor: 'var(--border)' }}
                   />
-                  <Bar dataKey="fci" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                </BarChart>
+                  <Line type="monotone" dataKey="fci" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ fill: 'hsl(var(--primary))' }} />
+                </LineChart>
               </ResponsiveContainer>
+              )}
             </div>
           </CardContent>
         </Card>

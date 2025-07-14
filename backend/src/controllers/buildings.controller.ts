@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import pool from '../config/database';
 import { validationResult } from 'express-validator';
+import { uploadImageToCloudinary } from '../services/cloudinary.service';
 
 // Get all buildings
 export const getAllBuildings = async (
@@ -256,6 +257,49 @@ export const deleteBuilding = async (
       message: 'Building deleted successfully',
     });
   } catch (error) {
+    next(error);
+  }
+};
+
+// Upload building image to Cloudinary
+export const uploadBuildingImage = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'No image file provided',
+      });
+    }
+
+    // Upload image to Cloudinary
+    const uploadResult = await uploadImageToCloudinary(
+      req.file.buffer,
+      'onyx/buildings', // Cloudinary folder
+      undefined // Let Cloudinary generate the public_id
+    );
+
+    if (!uploadResult.success) {
+      return res.status(500).json({
+        success: false,
+        message: uploadResult.error || 'Failed to upload image',
+      });
+    }
+
+    // Return the Cloudinary URL
+    res.json({
+      success: true,
+      message: 'Image uploaded successfully',
+      data: {
+        url: uploadResult.url,
+        public_id: uploadResult.public_id,
+      },
+    });
+  } catch (error) {
+    console.error('Image upload error:', error);
     next(error);
   }
 };

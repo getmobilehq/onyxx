@@ -20,7 +20,10 @@ import { AssessmentsPage } from '@/pages/assessments';
 import { NewAssessmentPage } from '@/pages/assessments/new';
 import { PreAssessmentPage } from '@/pages/assessments/pre-assessment';
 import { FieldAssessmentPage } from '@/pages/assessments/field-assessment';
+import { AssessmentDetailsPage } from '@/pages/assessments/assessment-details';
+import { EditAssessmentPage } from '@/pages/assessments/edit-assessment';
 import { ReportsPage } from '@/pages/reports';
+import { ReportsDashboard } from '@/pages/reports/reports-dashboard';
 import { NewReportPage } from '@/pages/reports/new';
 import { ReportDetailsPage } from '@/pages/reports/report-details';
 import { SettingsPage } from '@/pages/settings';
@@ -97,11 +100,14 @@ export const AppRoutes = () => {
         {/* Assessments */}
         <Route path="assessments" element={<AssessmentsPage />} />
         <Route path="assessments/new" element={<NewAssessmentPage />} />
+        <Route path="assessments/:id" element={<AssessmentDetailsPage />} />
+        <Route path="assessments/:id/edit" element={<EditAssessmentPage />} />
         <Route path="assessments/pre-assessment" element={<PreAssessmentPage />} />
         <Route path="assessments/field-assessment" element={<FieldAssessmentPage />} />
         
         {/* Reports */}
-        <Route path="reports" element={<ReportsPage />} />
+        <Route path="reports" element={<ReportsDashboard />} />
+        <Route path="reports/list" element={<ReportsPage />} />
         <Route path="reports/new" element={<NewReportPage />} />
         <Route path="reports/:id" element={<ReportDetailsPage />} />
         

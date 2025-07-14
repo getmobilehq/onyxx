@@ -6,8 +6,14 @@ import {
   createBuilding,
   updateBuilding,
   deleteBuilding,
+  uploadBuildingImage,
 } from '../controllers/buildings.controller';
 import { authenticate, authorize } from '../middleware/auth.middleware';
+import { 
+  uploadSingleImage, 
+  handleUploadError, 
+  validateUploadedFile 
+} from '../middleware/upload.middleware';
 
 const router = Router();
 
@@ -59,6 +65,16 @@ const buildingValidation = [
 // Routes
 router.get('/', getAllBuildings);
 router.get('/:id', getBuildingById);
+
+// Image upload endpoint - must come before other POST routes
+router.post('/upload-image', 
+  authorize('admin', 'manager'), 
+  uploadSingleImage, 
+  handleUploadError,
+  validateUploadedFile,
+  uploadBuildingImage
+);
+
 router.post('/', authorize('admin', 'manager'), buildingValidation, createBuilding);
 router.put('/:id', authorize('admin', 'manager'), updateBuilding);
 router.delete('/:id', authorize('admin'), deleteBuilding);

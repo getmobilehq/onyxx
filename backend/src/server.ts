@@ -15,6 +15,9 @@ import userRoutes from './routes/user.routes';
 import buildingsRoutes from './routes/buildings.routes';
 import elementsRoutes from './routes/elements.routes';
 import assessmentsRoutes from './routes/assessments.routes';
+import reportsRoutes from './routes/reports';
+import analyticsRoutes from './routes/analytics.routes';
+import mailgunEmailService from './services/mailgun-email.service';
 
 // Import middleware
 import { errorHandler } from './middleware/error.middleware';
@@ -49,6 +52,8 @@ app.use('/api/users', userRoutes);
 app.use('/api/buildings', buildingsRoutes);
 app.use('/api/elements', elementsRoutes);
 app.use('/api/assessments', assessmentsRoutes);
+app.use('/api/reports', reportsRoutes);
+app.use('/api/analytics', analyticsRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

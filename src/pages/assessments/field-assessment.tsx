@@ -54,14 +54,23 @@ const conditionRatings = [
 // Form validation schema for element assessment
 const elementAssessmentSchema = z.object({
   condition: z.string().min(1, 'Condition rating is required'),
-  quantity: z.number().min(1, 'Quantity must be at least 1'),
-  unitCost: z.number().min(0.01, 'Unit cost is required and must be greater than $0.01'),
   notes: z.string().optional(),
   deficiencies: z.array(z.object({
     description: z.string().min(1, 'Deficiency description is required'),
-    severity: z.enum(['low', 'medium', 'high']),
-    cost: z.number().min(0, 'Cost must be positive'),
+    cost: z.number().min(0.01, 'Cost must be greater than 0'),
+    category: z.string().min(1, 'Category is required'),
+    photos: z.array(z.any()).optional(),
   })).optional(),
+}).refine((data) => {
+  // Require at least one deficiency for all conditions except new/excellent
+  if (data.condition && data.condition !== 'new') {
+    return data.deficiencies && data.deficiencies.length > 0 && 
+           data.deficiencies.every(d => d.description && d.description.trim() !== '' && d.cost > 0);
+  }
+  return true;
+}, {
+  message: 'At least one deficiency is required for this condition rating',
+  path: ['deficiencies'],
 });
 
 type ElementAssessmentForm = z.infer<typeof elementAssessmentSchema>;
@@ -91,19 +100,28 @@ export function FieldAssessmentPage() {
       const preData = JSON.parse(preAssessment);
       setPreAssessmentData(preData);
       
-      // Initialize element assessments array
-      const initialAssessments = preData.selectedElements.map((element: any) => ({
-        elementId: element.id,
-        elementName: element.name,
-        condition: '',
-        quantity: element.quantity || 1,
-        unitCost: 0,
-        totalCost: 0,
-        notes: '',
-        photos: [],
-        deficiencies: [],
-        assessed: false,
-      }));
+      // Initialize element assessments array - create separate instances for quantity > 1
+      const initialAssessments: any[] = [];
+      preData.selectedElements.forEach((element: any) => {
+        const quantity = element.quantity || 1;
+        for (let i = 0; i < quantity; i++) {
+          initialAssessments.push({
+            elementId: element.id,
+            elementName: element.label || element.name,
+            elementLabel: quantity > 1 ? `${element.label || element.name} - Unit ${i + 1}` : (element.label || element.name),
+            originalElement: element,
+            instanceNumber: i + 1,
+            totalQuantity: quantity,
+            condition: '',
+            quantity: 1, // Each instance represents 1 unit
+            totalCost: 0,
+            notes: '',
+            photos: [],
+            deficiencies: [],
+            assessed: false,
+          });
+        }
+      });
       setElementAssessments(initialAssessments);
     } else {
       // Redirect if no pre-assessment data
@@ -115,8 +133,6 @@ export function FieldAssessmentPage() {
     resolver: zodResolver(elementAssessmentSchema),
     defaultValues: {
       condition: '',
-      quantity: 1,
-      unitCost: 0,
       notes: '',
       deficiencies: [],
     },
@@ -128,8 +144,6 @@ export function FieldAssessmentPage() {
       const element = elementAssessments[currentElementIndex];
       form.reset({
         condition: element.condition || '',
-        quantity: element.quantity || 1,
-        unitCost: element.unitCost || 0,
         notes: element.notes || '',
         deficiencies: element.deficiencies || [],
       });
@@ -137,8 +151,8 @@ export function FieldAssessmentPage() {
     }
   }, [currentElementIndex, elementAssessments, form]);
 
-  const currentElement = preAssessmentData?.selectedElements[currentElementIndex];
   const currentAssessment = elementAssessments[currentElementIndex];
+  const currentElement = currentAssessment?.originalElement;
   const progress = elementAssessments.length > 0 
     ? (elementAssessments.filter(e => e.assessed).length / elementAssessments.length) * 100 
     : 0;
@@ -200,8 +214,9 @@ export function FieldAssessmentPage() {
     const newDeficiency = {
       id: Date.now().toString(),
       description: '',
-      severity: 'medium',
       cost: 0,
+      category: '',
+      photos: [], // Add photos array for each deficiency
     };
     setDeficiencies([...deficiencies, newDeficiency]);
   };
@@ -219,21 +234,17 @@ export function FieldAssessmentPage() {
   const saveCurrentElement = (data: ElementAssessmentForm) => {
     if (!currentElement) return;
 
-    // Calculate total cost
-    const totalCost = data.quantity * data.unitCost;
+    // Pass deficiencies to the form data
+    const formDataWithDeficiencies = {
+      ...data,
+      deficiencies: deficiencies.filter(d => d.description && d.description.trim() !== '')
+    };
+
+    // Calculate total cost as sum of all deficiency costs
+    const totalCost = deficiencies.reduce((sum, d) => sum + (d.cost || 0), 0);
     
-    // Calculate repair costs from deficiencies
-    const immediateCost = deficiencies
-      .filter(d => d.severity === 'high')
-      .reduce((sum, d) => sum + (d.cost || 0), 0);
-    
-    const shortTermCost = deficiencies
-      .filter(d => d.severity === 'medium')
-      .reduce((sum, d) => sum + (d.cost || 0), 0);
-    
-    const longTermCost = deficiencies
-      .filter(d => d.severity === 'low')
-      .reduce((sum, d) => sum + (d.cost || 0), 0);
+    // Total repair cost is now just the sum of deficiency costs
+    const totalRepairCost = totalCost;
 
     // Update element assessment
     const updatedAssessments = [...elementAssessments];
@@ -241,10 +252,8 @@ export function FieldAssessmentPage() {
       ...updatedAssessments[currentElementIndex],
       ...data,
       totalCost,
+      totalRepairCost,
       deficiencies,
-      immediateCost,
-      shortTermCost,
-      longTermCost,
       assessed: true,
     };
     setElementAssessments(updatedAssessments);
@@ -263,12 +272,18 @@ export function FieldAssessmentPage() {
     try {
       const data = form.getValues();
       
+      // Include deficiencies in validation
+      const dataWithDeficiencies = {
+        ...data,
+        deficiencies: deficiencies.filter(d => d.description && d.description.trim() !== '')
+      };
+      
       // Validate the current element data
-      await elementAssessmentSchema.parseAsync(data);
+      await elementAssessmentSchema.parseAsync(dataWithDeficiencies);
       
       saveCurrentElement(data);
 
-      if (currentElementIndex < preAssessmentData.selectedElements.length - 1) {
+      if (currentElementIndex < elementAssessments.length - 1) {
         setCurrentElementIndex(currentElementIndex + 1);
       }
     } catch (error) {
@@ -293,8 +308,14 @@ export function FieldAssessmentPage() {
     try {
       const data = form.getValues();
       
+      // Include deficiencies in validation
+      const dataWithDeficiencies = {
+        ...data,
+        deficiencies: deficiencies.filter(d => d.description && d.description.trim() !== '')
+      };
+      
       // Validate the current element data
-      await elementAssessmentSchema.parseAsync(data);
+      await elementAssessmentSchema.parseAsync(dataWithDeficiencies);
       
       saveCurrentElement(data);
 
@@ -305,11 +326,8 @@ export function FieldAssessmentPage() {
       return;
     }
 
-    // Calculate total costs
-    const totalImmediateCost = elementAssessments.reduce((sum, e) => sum + (e.immediateCost || 0), 0);
-    const totalShortTermCost = elementAssessments.reduce((sum, e) => sum + (e.shortTermCost || 0), 0);
-    const totalLongTermCost = elementAssessments.reduce((sum, e) => sum + (e.longTermCost || 0), 0);
-    const totalRepairCost = totalImmediateCost + totalShortTermCost + totalLongTermCost;
+    // Calculate total costs - sum of all element costs (which are sum of deficiency costs)
+    const totalRepairCost = elementAssessments.reduce((sum, e) => sum + (e.totalCost || 0), 0);
     
     // Calculate FCI
     const replacementValue = preAssessmentData.replacementValue || 0;
@@ -322,9 +340,6 @@ export function FieldAssessmentPage() {
       currentStep: 3,
       fieldAssessmentData: {
         elementAssessments,
-        totalImmediateCost,
-        totalShortTermCost,
-        totalLongTermCost,
         totalRepairCost,
         fci,
         completedAt: new Date().toISOString(),
@@ -343,7 +358,7 @@ export function FieldAssessmentPage() {
           notes: `Assessment completed with FCI of ${fci.toFixed(4)}. Total repair cost: $${totalRepairCost.toLocaleString()}`
         });
         
-        toast.success('Field assessment completed and saved to database!');
+        toast.success('Field assessment completed! FCI data ready for capital planning.');
       } catch (error) {
         console.error('Failed to update assessment in backend:', error);
         toast.warning('Assessment completed locally but failed to save to database');
@@ -420,7 +435,20 @@ export function FieldAssessmentPage() {
       {/* Progress */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Assessment Progress</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base">Assessment Progress</CardTitle>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                // This would open a dialog to add new elements
+                toast.info('Add element functionality - to be implemented');
+              }}
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Add Element
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
@@ -439,15 +467,20 @@ export function FieldAssessmentPage() {
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="flex items-center gap-2">
-                Element {currentElementIndex + 1} of {preAssessmentData?.selectedElements.length}
+                Element {currentElementIndex + 1} of {elementAssessments.length}
               </CardTitle>
               <CardDescription className="mt-1">
-                {currentElement.id} - {currentElement.name}
+                {currentElement?.id} - {currentAssessment?.elementLabel}
+                {currentAssessment?.totalQuantity > 1 && (
+                  <span className="ml-2 text-xs text-muted-foreground">
+                    (Unit {currentAssessment?.instanceNumber} of {currentAssessment?.totalQuantity})
+                  </span>
+                )}
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
-              <Badge variant="outline">{currentElement.majorGroup}</Badge>
-              <Badge variant="outline">{currentElement.group}</Badge>
+              <Badge variant="outline">{currentElement?.majorGroup}</Badge>
+              <Badge variant="outline">{currentElement?.group}</Badge>
             </div>
           </div>
         </CardHeader>
@@ -487,120 +520,49 @@ export function FieldAssessmentPage() {
                 )}
               />
 
-              <div className="grid gap-4 md:grid-cols-2">
-                {/* Quantity */}
-                <FormField
-                  control={form.control}
-                  name="quantity"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Quantity</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          min="1"
-                          {...field}
-                          onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {/* Unit Cost */}
-                <FormField
-                  control={form.control}
-                  name="unitCost"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Unit Cost ($)</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          {...field}
-                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                        />
-                      </FormControl>
-                      <FormDescription>Replacement cost per unit</FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              {/* Photos */}
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <Label>Photos</Label>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                    <Camera className="mr-2 h-4 w-4" />
-                    Add Photos
-                  </Button>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    className="hidden"
-                    onChange={(e) => handlePhotoUpload(e.target.files)}
-                  />
-                </div>
-                
-                {photos[currentElement.id]?.length > 0 && (
-                  <div className="grid grid-cols-3 gap-4">
-                    {photos[currentElement.id].map((photo, index) => (
-                      <div key={index} className="relative group">
-                        <img
-                          src={URL.createObjectURL(photo)}
-                          alt={`Photo ${index + 1}`}
-                          className="w-full h-24 object-cover rounded-lg"
-                        />
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          size="icon"
-                          className="absolute top-2 right-2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                          onClick={() => removePhoto(currentElement.id, index)}
-                        >
-                          <X className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+              {/* Photos section removed - photos now only available within deficiencies */}
 
               {/* Deficiencies */}
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <Label>Deficiencies</Label>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={addDeficiency}
-                  >
-                    <Plus className="mr-2 h-4 w-4" />
-                    Add Deficiency
-                  </Button>
+                  {/* Only show Add Deficiency button if condition is not New/Excellent */}
+                  {form.watch('condition') && form.watch('condition') !== 'new' && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={addDeficiency}
+                    >
+                      <Plus className="mr-2 h-4 w-4" />
+                      Add Deficiency
+                    </Button>
+                  )}
                 </div>
+                
+                {/* Show message for New/Excellent condition */}
+                {form.watch('condition') === 'new' && (
+                  <div className="text-center py-6 text-muted-foreground bg-muted/30 rounded-lg">
+                    <p className="text-sm">✨ No deficiencies needed for New/Excellent condition</p>
+                  </div>
+                )}
+                
+                {/* Show message when no deficiencies but condition requires them */}
+                {form.watch('condition') && form.watch('condition') !== 'new' && deficiencies.length === 0 && (
+                  <div className="text-center py-6 text-muted-foreground bg-orange-50/50 border border-orange-200 rounded-lg">
+                    <p className="text-sm">⚠️ At least one deficiency is required for this condition rating</p>
+                    <p className="text-xs mt-1">Click "Add Deficiency" to get started</p>
+                  </div>
+                )}
                 
                 {deficiencies.length > 0 && (
                   <div className="space-y-3">
                     {deficiencies.map((deficiency) => (
                       <Card key={deficiency.id}>
-                        <CardContent className="p-4 space-y-3">
-                          <div className="grid gap-3 md:grid-cols-2">
+                        <CardContent className="p-4 space-y-4">
+                          <div className="grid gap-4 md:grid-cols-2">
                             <div className="space-y-2">
-                              <Label>Description</Label>
+                              <Label>Description *</Label>
                               <Textarea
                                 placeholder="Describe the deficiency..."
                                 value={deficiency.description}
@@ -611,32 +573,91 @@ export function FieldAssessmentPage() {
                             <div className="space-y-3">
                               <div className="grid grid-cols-2 gap-3">
                                 <div className="space-y-2">
-                                  <Label>Severity</Label>
-                                  <Select
-                                    value={deficiency.severity}
-                                    onValueChange={(value) => updateDeficiency(deficiency.id, 'severity', value)}
-                                  >
-                                    <SelectTrigger>
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="low">Low</SelectItem>
-                                      <SelectItem value="medium">Medium</SelectItem>
-                                      <SelectItem value="high">High</SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                                <div className="space-y-2">
-                                  <Label>Cost ($)</Label>
+                                  <Label>Cost ($) *</Label>
                                   <Input
                                     type="number"
-                                    min="0"
+                                    min="0.01"
                                     step="0.01"
-                                    value={deficiency.cost}
+                                    placeholder="0.00"
+                                    value={deficiency.cost || ''}
                                     onChange={(e) => updateDeficiency(deficiency.id, 'cost', parseFloat(e.target.value) || 0)}
                                   />
                                 </div>
+                                <div className="space-y-2">
+                                  <Label>Category *</Label>
+                                  <Select
+                                    value={deficiency.category || ''}
+                                    onValueChange={(value) => updateDeficiency(deficiency.id, 'category', value)}
+                                  >
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Select category" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="life-safety">Life Safety & Code Compliance</SelectItem>
+                                      <SelectItem value="critical-systems">Critical Systems & Operational Continuity</SelectItem>
+                                      <SelectItem value="energy-efficiency">Energy Efficiency & Sustainability</SelectItem>
+                                      <SelectItem value="asset-lifecycle">Asset Life Cycle & Deferred Maintenance</SelectItem>
+                                      <SelectItem value="user-experience">User Experience & Aesthetic Enhancement</SelectItem>
+                                      <SelectItem value="equity-accessibility">Equity & Accessibility</SelectItem>
+                                      <SelectItem value="other">Other</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
                               </div>
+                              
+                              {/* Deficiency Photos */}
+                              <div className="space-y-2">
+                                <Label>Photos</Label>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    const input = document.createElement('input');
+                                    input.type = 'file';
+                                    input.accept = 'image/*';
+                                    input.multiple = true;
+                                    input.onchange = (e) => {
+                                      const files = (e.target as HTMLInputElement).files;
+                                      if (files) {
+                                        const newPhotos = [...(deficiency.photos || []), ...Array.from(files)];
+                                        updateDeficiency(deficiency.id, 'photos', newPhotos);
+                                      }
+                                    };
+                                    input.click();
+                                  }}
+                                >
+                                  <Camera className="mr-2 h-4 w-4" />
+                                  Add Photos
+                                </Button>
+                                
+                                {deficiency.photos && deficiency.photos.length > 0 && (
+                                  <div className="grid grid-cols-2 gap-2 mt-2">
+                                    {deficiency.photos.map((photo: File, photoIndex: number) => (
+                                      <div key={photoIndex} className="relative group">
+                                        <img
+                                          src={URL.createObjectURL(photo)}
+                                          alt={`Deficiency photo ${photoIndex + 1}`}
+                                          className="w-full h-16 object-cover rounded"
+                                        />
+                                        <Button
+                                          type="button"
+                                          variant="destructive"
+                                          size="icon"
+                                          className="absolute top-1 right-1 h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity"
+                                          onClick={() => {
+                                            const newPhotos = deficiency.photos.filter((_: any, i: number) => i !== photoIndex);
+                                            updateDeficiency(deficiency.id, 'photos', newPhotos);
+                                          }}
+                                        >
+                                          <X className="h-3 w-3" />
+                                        </Button>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                              
                               <Button
                                 type="button"
                                 variant="ghost"
@@ -645,7 +666,7 @@ export function FieldAssessmentPage() {
                                 onClick={() => removeDeficiency(deficiency.id)}
                               >
                                 <X className="mr-2 h-4 w-4" />
-                                Remove
+                                Remove Deficiency
                               </Button>
                             </div>
                           </div>
@@ -699,7 +720,7 @@ export function FieldAssessmentPage() {
           )}
         </div>
 
-        {currentElementIndex === preAssessmentData.selectedElements.length - 1 ? (
+        {currentElementIndex === elementAssessments.length - 1 ? (
           <Button onClick={handleComplete}>
             <FileText className="mr-2 h-4 w-4" />
             Complete Assessment

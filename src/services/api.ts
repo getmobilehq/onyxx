@@ -1,7 +1,8 @@
 import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'axios';
 
 // API base URL - can be configured via environment variables
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+// Using port 5002 to avoid conflicts with other applications
+const API_BASE_URL = 'http://localhost:5002/api';
 
 // Debug: Log the API URL being used
 console.log('🔗 API Base URL:', API_BASE_URL);
@@ -153,6 +154,15 @@ export const buildingsAPI = {
   create: (data: any) => api.post('/buildings', data),
   update: (id: string, data: any) => api.put(`/buildings/${id}`, data),
   delete: (id: string) => api.delete(`/buildings/${id}`),
+  uploadImage: (file: File) => {
+    const formData = new FormData();
+    formData.append('image', file);
+    return api.post('/buildings/upload-image', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
 };
 
 export const assessmentsAPI = {
@@ -175,6 +185,10 @@ export const assessmentsAPI = {
     notes?: string;
     photo_urls?: string[];
   }) => api.put(`/assessments/${assessmentId}/elements/${elementId}`, data),
+  calculateFCI: (assessmentId: string) => 
+    api.get(`/assessments/${assessmentId}/calculate-fci`),
+  completeAssessment: (assessmentId: string) => 
+    api.post(`/assessments/${assessmentId}/complete`),
 };
 
 export const elementsAPI = {
@@ -204,6 +218,15 @@ export const usersAPI = {
 export const referenceAPI = {
   getBuildingCosts: () => api.get('/reference/building-costs'),
   getElements: () => api.get('/reference/elements'),
+};
+
+export const organizationsAPI = {
+  getAll: () => api.get('/organizations'),
+  getById: (id: string) => api.get(`/organizations/${id}`),
+  getCurrent: () => api.get('/organizations/current'),
+  create: (data: { name: string; subscription?: string }) => api.post('/organizations', data),
+  update: (id: string, data: any) => api.put(`/organizations/${id}`, data),
+  delete: (id: string) => api.delete(`/organizations/${id}`),
 };
 
 export default api;

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Building2, Info, CheckCircle2, Circle, Plus, X } from 'lucide-react';
+import { ArrowLeft, Building2, CheckCircle2, Plus, X } from 'lucide-react';
 import { useBuildings } from '@/hooks/use-buildings';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -8,6 +8,7 @@ import { z } from 'zod';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import {
   Form,
   FormControl,
@@ -19,7 +20,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
+
 import {
   Select,
   SelectContent,
@@ -57,7 +58,6 @@ const preAssessmentSchema = z.object({
   assessmentType: z.string().min(1, 'Assessment type is required'),
   assessmentDate: z.string().min(1, 'Assessment date is required'),
   assessmentScope: z.string().min(1, 'Assessment scope is required'),
-  buildingType: z.string().min(1, 'Building type is required'),
   buildingSize: z.number().min(1, 'Building size is required'),
   checklist: z.object({
     buildingPlans: z.boolean(),
@@ -180,7 +180,7 @@ export function PreAssessmentPage() {
     };
 
     loadBuilding();
-  }, [buildingId, getBuilding]);
+  }, [buildingId]); // Removed getBuilding from dependencies to prevent re-renders
   
   const form = useForm<PreAssessmentForm>({
     resolver: zodResolver(preAssessmentSchema),
@@ -188,7 +188,6 @@ export function PreAssessmentPage() {
       assessmentType: 'Annual',
       assessmentDate: new Date().toISOString().split('T')[0],
       assessmentScope: 'Full',
-      buildingType: '',
       buildingSize: buildingData?.size || 0,
       checklist: {
         buildingPlans: false,
@@ -209,28 +208,24 @@ export function PreAssessmentPage() {
     if (buildingData) {
       form.setValue('buildingSize', buildingData.size);
     }
-  }, [buildingData, form]);
+  }, [buildingData]); // Removed form from dependencies
 
   const onSubmit = (data: PreAssessmentForm) => {
-    // Check if all checklist items are completed
-    const checklistComplete = Object.values(data.checklist).every(Boolean);
-    
-    if (!checklistComplete) {
-      toast.error('Please complete all checklist items before proceeding');
-      return;
-    }
+    // Checklist is now optional - removed the requirement check
 
     if (selectedElements.length === 0) {
       toast.error('Please add at least one building element');
       return;
     }
 
-    // Calculate replacement value
-    const replacementValue = data.buildingSize * (buildingTypeCosts[data.buildingType as keyof typeof buildingTypeCosts] || 300);
+    // Calculate replacement value using building's type (not from form)
+    const buildingType = buildingData?.type || '';
+    const replacementValue = data.buildingSize * (buildingTypeCosts[buildingType as keyof typeof buildingTypeCosts] || 300);
 
     // Save pre-assessment data
     const preAssessmentData = {
       ...data,
+      buildingType, // Use building's type from database
       buildingId: buildingId || assessmentData?.buildingId,
       buildingName: buildingData?.name,
       selectedElements,
@@ -281,7 +276,8 @@ export function PreAssessmentPage() {
       majorGroup,
       quantity: 1,
       unitCost: 0,
-      notes: ''
+      notes: '',
+      label: element.name // Default label to element name
     };
     
     setSelectedElements(prev => [...prev, newElement]);
@@ -295,6 +291,12 @@ export function PreAssessmentPage() {
   const updateElementQuantity = (elementId: string, quantity: number) => {
     setSelectedElements(prev => 
       prev.map(el => el.id === elementId ? { ...el, quantity } : el)
+    );
+  };
+
+  const updateElementLabel = (elementId: string, label: string) => {
+    setSelectedElements(prev => 
+      prev.map(el => el.id === elementId ? { ...el, label } : el)
     );
   };
 
@@ -316,11 +318,11 @@ export function PreAssessmentPage() {
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
-            <BreadcrumbLink as={Link} to="/dashboard">Dashboard</BreadcrumbLink>
+            <BreadcrumbLink asChild><Link to="/dashboard">Dashboard</Link></BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbLink as={Link} to="/assessments">Assessments</BreadcrumbLink>
+            <BreadcrumbLink asChild><Link to="/assessments">Assessments</Link></BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
@@ -455,39 +457,16 @@ export function PreAssessmentPage() {
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="buildingType"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Building Type (for costing)</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select building type" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {getBuildingTypesForDropdown().map((type) => (
-                          <SelectItem key={type.value} value={type.value}>
-                            {type.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {/* Building Type - Hidden, automatically used from building data */}
             </CardContent>
           </Card>
 
-          {/* Pre-Assessment Checklist */}
-          <Card>
+          {/* Pre-Assessment Checklist - COMMENTED OUT PER USER REQUEST */}
+          {/* <Card>
             <CardHeader>
-              <CardTitle>Pre-Assessment Checklist</CardTitle>
+              <CardTitle>Pre-Assessment Checklist (Optional)</CardTitle>
               <CardDescription>
-                Ensure all items are completed before proceeding to field assessment
+                Recommended items to review before field assessment
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -513,7 +492,7 @@ export function PreAssessmentPage() {
                 />
               ))}
             </CardContent>
-          </Card>
+          </Card> */}
 
           {/* Building Elements */}
           <Card>
@@ -538,51 +517,68 @@ export function PreAssessmentPage() {
                       </DialogDescription>
                     </DialogHeader>
                     <ScrollArea className="h-[500px] pr-4">
-                      <div className="space-y-6">
+                      <Accordion type="multiple" className="w-full">
                         {uniformatData.map((major) => (
-                          <div key={major.id}>
-                            <h3 className="font-semibold text-lg mb-3">{major.name}</h3>
-                            <div className="space-y-4">
-                              {major.groups.map((group) => (
-                                <div key={group.id}>
-                                  <h4 className="font-medium text-sm text-muted-foreground mb-2">
-                                    {group.name}
-                                  </h4>
-                                  <div className="grid gap-2">
-                                    {group.elements.map((element) => {
-                                      const isSelected = selectedElements.some(el => el.id === element.id);
-                                      return (
-                                        <div
-                                          key={element.id}
-                                          className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer hover:bg-accent ${
-                                            isSelected ? 'bg-accent border-primary' : ''
-                                          }`}
-                                          onClick={() => !isSelected && addElement(element, group.name, major.name)}
-                                        >
-                                          <div className="flex items-center gap-3">
-                                            <div>
-                                              <p className="font-medium">{element.id}</p>
-                                              <p className="text-sm text-muted-foreground">{element.name}</p>
+                          <AccordionItem key={major.id} value={major.id}>
+                            <AccordionTrigger className="font-semibold text-lg">
+                              {major.name}
+                            </AccordionTrigger>
+                            <AccordionContent>
+                              <Accordion type="multiple" className="w-full pl-4">
+                                {major.groups.map((group) => (
+                                  <AccordionItem key={group.id} value={group.id}>
+                                    <AccordionTrigger className="font-medium text-sm">
+                                      {group.name}
+                                    </AccordionTrigger>
+                                    <AccordionContent>
+                                      <div className="grid gap-2 pl-4">
+                                        {group.elements
+                                          .sort((a, b) => a.name.localeCompare(b.name))
+                                          .map((element, index) => {
+                                          const isSelected = selectedElements.some(el => el.id === element.id);
+                                          const colors = [
+                                            'border-l-blue-500 bg-blue-100 text-blue-900',
+                                            'border-l-green-500 bg-green-100 text-green-900', 
+                                            'border-l-purple-500 bg-purple-100 text-purple-900',
+                                            'border-l-orange-500 bg-orange-100 text-orange-900',
+                                            'border-l-pink-500 bg-pink-100 text-pink-900',
+                                            'border-l-cyan-500 bg-cyan-100 text-cyan-900',
+                                            'border-l-emerald-500 bg-emerald-100 text-emerald-900',
+                                            'border-l-amber-500 bg-amber-100 text-amber-900'
+                                          ];
+                                          const colorClass = colors[index % colors.length];
+                                          
+                                          return (
+                                            <div
+                                              key={element.id}
+                                              className={`flex items-center justify-between p-3 rounded-lg border-l-4 border-r border-t border-b cursor-pointer hover:bg-accent transition-colors ${
+                                                isSelected ? 'bg-primary text-primary-foreground border-primary shadow-md' : colorClass
+                                              }`}
+                                              onClick={() => isSelected ? removeElement(element.id) : addElement(element, group.name, major.name)}
+                                            >
+                                              <div className="flex items-center gap-3">
+                                                <div>
+                                                  <p className="font-medium text-sm">{element.id}</p>
+                                                  <p className="text-xs text-muted-foreground">{element.name}</p>
+                                                </div>
+                                              </div>
+                                              <div className="flex items-center gap-2">
+                                                {isSelected && (
+                                                  <CheckCircle2 className="h-4 w-4 text-primary" />
+                                                )}
+                                              </div>
                                             </div>
-                                          </div>
-                                          <div className="flex items-center gap-2">
-                                            <Badge variant="outline">
-                                              {element.usefulLife} years
-                                            </Badge>
-                                            {isSelected && (
-                                              <CheckCircle2 className="h-5 w-5 text-primary" />
-                                            )}
-                                          </div>
-                                        </div>
-                                      );
-                                    })}
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
+                                          );
+                                        })}
+                                      </div>
+                                    </AccordionContent>
+                                  </AccordionItem>
+                                ))}
+                              </Accordion>
+                            </AccordionContent>
+                          </AccordionItem>
                         ))}
-                      </div>
+                      </Accordion>
                     </ScrollArea>
                     <DialogFooter>
                       <Button onClick={() => setShowElementDialog(false)}>Done</Button>
@@ -599,14 +595,37 @@ export function PreAssessmentPage() {
               ) : (
                 <div className="space-y-2">
                   {selectedElements.map((element) => (
-                    <div key={element.id} className="flex items-center justify-between p-3 rounded-lg border">
-                      <div>
-                        <p className="font-medium">{element.id} - {element.name}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {element.majorGroup} • {element.group}
-                        </p>
+                    <div key={element.id} className="flex flex-col gap-3 p-3 rounded-lg border">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-medium">{element.id} - {element.name}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {element.majorGroup} • {element.group}
+                          </p>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => removeElement(element.id)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
                       </div>
-                      <div className="flex items-center gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="flex items-center gap-2">
+                          <Label htmlFor={`label-${element.id}`} className="text-sm">
+                            Label:
+                          </Label>
+                          <Input
+                            id={`label-${element.id}`}
+                            type="text"
+                            value={element.label || element.name}
+                            onChange={(e) => updateElementLabel(element.id, e.target.value)}
+                            className="flex-1"
+                            placeholder="Enter custom label"
+                          />
+                        </div>
                         <div className="flex items-center gap-2">
                           <Label htmlFor={`quantity-${element.id}`} className="text-sm">
                             Quantity:
@@ -620,14 +639,6 @@ export function PreAssessmentPage() {
                             className="w-20"
                           />
                         </div>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => removeElement(element.id)}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
                       </div>
                     </div>
                   ))}

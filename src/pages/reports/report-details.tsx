@@ -1,8 +1,6 @@
-import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import {
   ArrowLeft,
-  Building2,
   Calendar,
   Download,
   FileText,
@@ -166,11 +164,11 @@ export function ReportDetailsPage() {
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
-            <BreadcrumbLink as={Link} to="/dashboard">Dashboard</BreadcrumbLink>
+            <BreadcrumbLink asChild><Link to="/dashboard">Dashboard</Link></BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbLink as={Link} to="/reports">Reports</BreadcrumbLink>
+            <BreadcrumbLink asChild><Link to="/reports">Reports</Link></BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>

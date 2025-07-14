@@ -7,7 +7,9 @@ import {
   updateAssessment,
   deleteAssessment,
   getAssessmentElements,
-  updateAssessmentElement
+  updateAssessmentElement,
+  calculateFCI,
+  completeAssessment
 } from '../controllers/assessments.controller';
 
 const router = Router();
@@ -25,5 +27,9 @@ router.delete('/:id', deleteAssessment);
 // Assessment elements
 router.get('/:id/elements', getAssessmentElements);
 router.put('/:assessmentId/elements/:elementId', updateAssessmentElement);
+
+// FCI calculations
+router.get('/:id/calculate-fci', calculateFCI);
+router.post('/:id/complete', completeAssessment);
 
 export default router;

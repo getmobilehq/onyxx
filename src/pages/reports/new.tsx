@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Download, FileText, Building2, CheckCircle2, AlertTriangle, Calendar, User } from 'lucide-react';
+import { ArrowLeft, Download, FileText, CheckCircle2, AlertTriangle } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,7 +13,7 @@ import {
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
+
 import { toast } from 'sonner';
 import { AssessmentWorkflow } from '@/components/assessment-workflow';
 import {
@@ -27,11 +27,7 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
 } from 'recharts';
-
-// Chart colors
-const COLORS = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444'];
 
 // Helper functions
 const getFciStatusColor = (fci: number) => {
@@ -181,11 +177,11 @@ export function NewReportPage() {
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
-            <BreadcrumbLink as={Link} to="/dashboard">Dashboard</BreadcrumbLink>
+            <BreadcrumbLink asChild><Link to="/dashboard">Dashboard</Link></BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbLink as={Link} to="/reports">Reports</BreadcrumbLink>
+            <BreadcrumbLink asChild><Link to="/reports">Reports</Link></BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
@@ -331,7 +327,7 @@ export function NewReportPage() {
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(value) => [`${value} elements`, 'Count']} />
+                    <Tooltip formatter={(value: number) => [`${value} elements`, 'Count']} />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
@@ -358,8 +354,8 @@ export function NewReportPage() {
                   <BarChart data={costData}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="name" />
-                    <YAxis tickFormatter={(value) => `$${(value / 1000).toFixed(0)}K`} />
-                    <Tooltip formatter={(value) => [`$${Number(value).toLocaleString()}`, 'Cost']} />
+                    <YAxis tickFormatter={(value: number) => `$${(value / 1000).toFixed(0)}K`} />
+                    <Tooltip formatter={(value: number) => [`$${Number(value).toLocaleString()}`, 'Cost']} />
                     <Bar dataKey="amount" radius={[4, 4, 0, 0]}>
                       {costData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
@@ -419,7 +415,7 @@ export function NewReportPage() {
                           <div key={defIndex} className="text-sm p-2 bg-muted rounded flex justify-between">
                             <span>{deficiency.description}</span>
                             <div className="flex items-center gap-2">
-                              <Badge size="sm" variant={
+                              <Badge variant={
                                 deficiency.severity === 'high' ? 'destructive' :
                                 deficiency.severity === 'medium' ? 'default' : 'secondary'
                               }>

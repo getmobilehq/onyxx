@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import {
+import { 
   ArrowLeft,
-  Building2,
   Calendar,
   ClipboardList,
   FileText,
@@ -12,22 +11,6 @@ import {
   Share2,
   Loader2,
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { useBuildings } from '@/hooks/use-buildings';
-
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Progress } from '@/components/ui/progress';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbSeparator,
-} from '@/components/ui/breadcrumb';
 import {
   ResponsiveContainer,
   PieChart,
@@ -42,427 +25,185 @@ import {
   Legend,
 } from 'recharts';
 
-// Mock data for a specific building
-const buildingsData = [
-  { 
-    id: '1', 
-    name: 'Oak Tower Office Complex', 
-    location: 'New York, NY', 
-    address: '123 Broadway, New York, NY 10001',
-    type: 'Commercial', 
-    size: 450000, 
-    yearBuilt: 1998, 
-    fci: 0.12, 
-    lastAssessment: '2024-04-10',
-    constructionType: 'Steel frame',
-    floors: 32,
-    occupancy: 'Multi-tenant',
-    ownershipType: 'Corporate',
-    image: 'https://images.pexels.com/photos/2119713/pexels-photo-2119713.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-    images: [
-      'https://images.pexels.com/photos/2119713/pexels-photo-2119713.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-      'https://images.pexels.com/photos/1579253/pexels-photo-1579253.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-      'https://images.pexels.com/photos/261102/pexels-photo-261102.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-    ],
-    systems: [
-      { name: 'Structural', condition: 'Good', fci: 0.15 },
-      { name: 'HVAC', condition: 'Fair', fci: 0.28 },
-      { name: 'Electrical', condition: 'Good', fci: 0.18 },
-      { name: 'Plumbing', condition: 'Good', fci: 0.12 },
-      { name: 'Exterior', condition: 'Excellent', fci: 0.06 },
-      { name: 'Interior', condition: 'Good', fci: 0.14 },
-      { name: 'Elevators', condition: 'Fair', fci: 0.25 },
-      { name: 'Fire Protection', condition: 'Excellent', fci: 0.05 },
-    ],
-    assessmentHistory: [
-      { date: '2024-04-10', fci: 0.12, assessor: 'Alex Johnson', notes: 'Regular annual assessment' },
-      { date: '2023-04-15', fci: 0.15, assessor: 'Maria Garcia', notes: 'Post-renovation assessment' },
-      { date: '2022-03-22', fci: 0.22, assessor: 'David Chen', notes: 'Comprehensive assessment' },
-      { date: '2021-05-01', fci: 0.27, assessor: 'Sarah Williams', notes: 'Initial baseline assessment' },
-    ],
-    repairCosts: {
-      immediate: 1250000,
-      shortTerm: 3450000,
-      longTerm: 4800000,
-      total: 9500000,
-      replacementValue: 79000000,
-    }
-  },
-  { 
-    id: '2', 
-    name: 'Riverside Apartments', 
-    location: 'Chicago, IL', 
-    address: '456 Lake Shore Drive, Chicago, IL 60611',
-    type: 'Residential', 
-    size: 325000, 
-    yearBuilt: 2005, 
-    fci: 0.34, 
-    lastAssessment: '2024-03-22',
-    constructionType: 'Concrete',
-    floors: 18,
-    occupancy: 'Multi-family',
-    ownershipType: 'Investment',
-    image: 'https://images.pexels.com/photos/323780/pexels-photo-323780.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-    images: [
-      'https://images.pexels.com/photos/323780/pexels-photo-323780.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-      'https://images.pexels.com/photos/280229/pexels-photo-280229.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-      'https://images.pexels.com/photos/1370704/pexels-photo-1370704.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'
-    ],
-    systems: [
-      { name: 'Structural', condition: 'Fair', fci: 0.35 },
-      { name: 'HVAC', condition: 'Poor', fci: 0.45 },
-      { name: 'Electrical', condition: 'Fair', fci: 0.30 },
-      { name: 'Plumbing', condition: 'Fair', fci: 0.32 },
-      { name: 'Exterior', condition: 'Good', fci: 0.20 },
-      { name: 'Interior', condition: 'Good', fci: 0.25 }
-    ],
-    assessmentHistory: [
-      { date: '2024-03-22', fci: 0.34, assessor: 'Emily Rodriguez', notes: 'Quarterly assessment' }
-    ],
-    repairCosts: {
-      immediate: 2100000,
-      total: 3800000,
-      replacementValue: 48000000,
-    }
-  },
-  { 
-    id: '3', 
-    name: 'Sunset Mall', 
-    location: 'Miami, FL', 
-    address: '789 Ocean Drive, Miami, FL 33139',
-    type: 'Retail', 
-    size: 580000, 
-    yearBuilt: 1992, 
-    fci: 0.08, 
-    lastAssessment: '2024-05-01',
-    constructionType: 'Steel frame',
-    floors: 2,
-    occupancy: 'Retail',
-    ownershipType: 'REIT',
-    image: 'https://images.pexels.com/photos/1579253/pexels-photo-1579253.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-    images: [
-      'https://images.pexels.com/photos/1579253/pexels-photo-1579253.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-      'https://images.pexels.com/photos/236705/pexels-photo-236705.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-      'https://images.pexels.com/photos/280229/pexels-photo-280229.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'
-    ],
-    systems: [
-      { name: 'Structural', condition: 'Excellent', fci: 0.05 },
-      { name: 'HVAC', condition: 'Good', fci: 0.12 },
-      { name: 'Electrical', condition: 'Good', fci: 0.10 },
-      { name: 'Plumbing', condition: 'Good', fci: 0.08 },
-      { name: 'Exterior', condition: 'Excellent', fci: 0.04 },
-      { name: 'Interior', condition: 'Good', fci: 0.11 }
-    ],
-    assessmentHistory: [
-      { date: '2024-05-01', fci: 0.08, assessor: 'Michael Chen', notes: 'Annual assessment' }
-    ],
-    repairCosts: {
-      immediate: 800000,
-      total: 4600000,
-      replacementValue: 58000000,
-    }
-  },
-  { 
-    id: '4', 
-    name: 'Central Hospital', 
-    location: 'Boston, MA', 
-    address: '1000 Medical Center Drive, Boston, MA 02114',
-    type: 'Healthcare', 
-    size: 720000, 
-    yearBuilt: 1984, 
-    fci: 0.22, 
-    lastAssessment: '2024-02-15',
-    constructionType: 'Concrete',
-    floors: 8,
-    occupancy: 'Hospital',
-    ownershipType: 'Non-profit',
-    image: 'https://images.pexels.com/photos/668298/pexels-photo-668298.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-    images: [
-      'https://images.pexels.com/photos/668298/pexels-photo-668298.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-      'https://images.pexels.com/photos/263402/pexels-photo-263402.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-      'https://images.pexels.com/photos/3259629/pexels-photo-3259629.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'
-    ],
-    systems: [
-      { name: 'Structural', condition: 'Good', fci: 0.18 },
-      { name: 'HVAC', condition: 'Fair', fci: 0.35 },
-      { name: 'Electrical', condition: 'Fair', fci: 0.28 },
-      { name: 'Plumbing', condition: 'Good', fci: 0.15 },
-      { name: 'Exterior', condition: 'Fair', fci: 0.25 },
-      { name: 'Interior', condition: 'Good', fci: 0.20 },
-      { name: 'Medical Gas', condition: 'Good', fci: 0.16 },
-      { name: 'Fire Protection', condition: 'Good', fci: 0.12 }
-    ],
-    assessmentHistory: [
-      { date: '2024-02-15', fci: 0.22, assessor: 'Dr. Sarah Williams', notes: 'Healthcare facility assessment' },
-      { date: '2023-02-20', fci: 0.26, assessor: 'Robert Johnson', notes: 'Annual medical facility review' }
-    ],
-    repairCosts: {
-      immediate: 3200000,
-      shortTerm: 5800000,
-      longTerm: 6400000,
-      total: 15400000,
-      replacementValue: 98000000,
-    }
-  },
-  { 
-    id: '5', 
-    name: 'Green Hills School', 
-    location: 'Seattle, WA', 
-    address: '500 Education Way, Seattle, WA 98101',
-    type: 'Education', 
-    size: 275000, 
-    yearBuilt: 2010, 
-    fci: 0.05, 
-    lastAssessment: '2024-04-28',
-    constructionType: 'Steel frame',
-    floors: 3,
-    occupancy: 'K-12 School',
-    ownershipType: 'Public',
-    image: 'https://images.pexels.com/photos/207692/pexels-photo-207692.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-    images: [
-      'https://images.pexels.com/photos/207692/pexels-photo-207692.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-      'https://images.pexels.com/photos/1370704/pexels-photo-1370704.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-      'https://images.pexels.com/photos/256541/pexels-photo-256541.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'
-    ],
-    systems: [
-      { name: 'Structural', condition: 'Excellent', fci: 0.03 },
-      { name: 'HVAC', condition: 'Excellent', fci: 0.06 },
-      { name: 'Electrical', condition: 'Excellent', fci: 0.04 },
-      { name: 'Plumbing', condition: 'Excellent', fci: 0.05 },
-      { name: 'Exterior', condition: 'Excellent', fci: 0.02 },
-      { name: 'Interior', condition: 'Good', fci: 0.08 },
-      { name: 'Technology', condition: 'Excellent', fci: 0.04 }
-    ],
-    assessmentHistory: [
-      { date: '2024-04-28', fci: 0.05, assessor: 'Lisa Anderson', notes: 'School district annual assessment' }
-    ],
-    repairCosts: {
-      immediate: 400000,
-      shortTerm: 800000,
-      longTerm: 1200000,
-      total: 2400000,
-      replacementValue: 42000000,
-    }
-  },
-  { 
-    id: '6', 
-    name: 'Waterfront Hotel', 
-    location: 'San Francisco, CA', 
-    address: '2000 Bay Street, San Francisco, CA 94133',
-    type: 'Hospitality', 
-    size: 390000, 
-    yearBuilt: 2002, 
-    fci: 0.19, 
-    lastAssessment: '2024-03-05',
-    constructionType: 'Steel frame',
-    floors: 15,
-    occupancy: 'Hotel',
-    ownershipType: 'Corporate',
-    image: 'https://images.pexels.com/photos/261102/pexels-photo-261102.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-    images: [
-      'https://images.pexels.com/photos/261102/pexels-photo-261102.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-      'https://images.pexels.com/photos/271624/pexels-photo-271624.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-      'https://images.pexels.com/photos/271618/pexels-photo-271618.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'
-    ],
-    systems: [
-      { name: 'Structural', condition: 'Good', fci: 0.16 },
-      { name: 'HVAC', condition: 'Good', fci: 0.22 },
-      { name: 'Electrical', condition: 'Good', fci: 0.18 },
-      { name: 'Plumbing', condition: 'Fair', fci: 0.25 },
-      { name: 'Exterior', condition: 'Good', fci: 0.14 },
-      { name: 'Interior', condition: 'Fair', fci: 0.28 },
-      { name: 'Elevators', condition: 'Good', fci: 0.20 }
-    ],
-    assessmentHistory: [
-      { date: '2024-03-05', fci: 0.19, assessor: 'Mark Thompson', notes: 'Hospitality facility assessment' },
-      { date: '2023-03-10', fci: 0.21, assessor: 'Jennifer Lee', notes: 'Annual hotel inspection' }
-    ],
-    repairCosts: {
-      immediate: 2800000,
-      shortTerm: 4200000,
-      longTerm: 5100000,
-      total: 12100000,
-      replacementValue: 65000000,
-    }
-  },
-  { 
-    id: '7', 
-    name: 'Metro Logistics Center', 
-    location: 'Dallas, TX', 
-    address: '3500 Industrial Blvd, Dallas, TX 75247',
-    type: 'Industrial', 
-    size: 850000, 
-    yearBuilt: 2015, 
-    fci: 0.03, 
-    lastAssessment: '2024-05-10',
-    constructionType: 'Steel frame',
-    floors: 1,
-    occupancy: 'Warehouse/Distribution',
-    ownershipType: 'Corporate',
-    image: 'https://images.pexels.com/photos/236705/pexels-photo-236705.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-    images: [
-      'https://images.pexels.com/photos/236705/pexels-photo-236705.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-      'https://images.pexels.com/photos/1103970/pexels-photo-1103970.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-      'https://images.pexels.com/photos/586688/pexels-photo-586688.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'
-    ],
-    systems: [
-      { name: 'Structural', condition: 'Excellent', fci: 0.02 },
-      { name: 'HVAC', condition: 'Excellent', fci: 0.03 },
-      { name: 'Electrical', condition: 'Excellent', fci: 0.04 },
-      { name: 'Plumbing', condition: 'Excellent', fci: 0.02 },
-      { name: 'Exterior', condition: 'Excellent', fci: 0.01 },
-      { name: 'Interior', condition: 'Excellent', fci: 0.05 },
-      { name: 'Loading Systems', condition: 'Excellent', fci: 0.02 }
-    ],
-    assessmentHistory: [
-      { date: '2024-05-10', fci: 0.03, assessor: 'Carlos Rodriguez', notes: 'Industrial facility assessment' }
-    ],
-    repairCosts: {
-      immediate: 200000,
-      shortTerm: 400000,
-      longTerm: 600000,
-      total: 1200000,
-      replacementValue: 52000000,
-    }
-  },
-  { 
-    id: '8', 
-    name: 'Highland Park Condos', 
-    location: 'Denver, CO', 
-    address: '800 Highland Avenue, Denver, CO 80218',
-    type: 'Residential', 
-    size: 210000, 
-    yearBuilt: 2008, 
-    fci: 0.16, 
-    lastAssessment: '2024-04-15',
-    constructionType: 'Concrete',
-    floors: 12,
-    occupancy: 'Condominium',
-    ownershipType: 'HOA',
-    image: 'https://images.pexels.com/photos/1838640/pexels-photo-1838640.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-    images: [
-      'https://images.pexels.com/photos/1838640/pexels-photo-1838640.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-      'https://images.pexels.com/photos/280229/pexels-photo-280229.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-      'https://images.pexels.com/photos/323780/pexels-photo-323780.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'
-    ],
-    systems: [
-      { name: 'Structural', condition: 'Good', fci: 0.14 },
-      { name: 'HVAC', condition: 'Good', fci: 0.19 },
-      { name: 'Electrical', condition: 'Good', fci: 0.16 },
-      { name: 'Plumbing', condition: 'Fair', fci: 0.22 },
-      { name: 'Exterior', condition: 'Good', fci: 0.12 },
-      { name: 'Interior', condition: 'Good', fci: 0.15 },
-      { name: 'Elevators', condition: 'Good', fci: 0.18 }
-    ],
-    assessmentHistory: [
-      { date: '2024-04-15', fci: 0.16, assessor: 'Nancy Davis', notes: 'HOA annual assessment' },
-      { date: '2023-04-20', fci: 0.18, assessor: 'Tom Wilson', notes: 'Residential complex review' }
-    ],
-    repairCosts: {
-      immediate: 1600000,
-      shortTerm: 2400000,
-      longTerm: 3200000,
-      total: 7200000,
-      replacementValue: 38000000,
-    }
-  }
-];
+import { cn } from '@/lib/utils';
+import { getFCIStatus, formatFCI, getFCIProgress } from '@/lib/fci-utils';
+import { useBuildings } from '@/hooks/use-buildings';
+import { useAssessments } from '@/hooks/use-assessments';
+
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Progress } from '@/components/ui/progress';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb';
+
+// Type definition for a Building object
+export interface Building {
+  id: string;
+  name: string;
+  location: string;
+  address: string;
+  type: string;
+  size: number;
+  yearBuilt: number;
+  fci: number;
+  lastAssessment: string;
+  constructionType: string;
+  floors: number;
+  occupancy: string;
+  ownershipType: string;
+  image: string;
+  images: string[];
+  systems: { name: string; condition: string; fci: number }[];
+  assessmentHistory: { date: string; fci: number; assessor: string; notes: string }[];
+  repairCosts: {
+    immediate: number;
+    shortTerm: number;
+    longTerm: number;
+    total: number;
+    replacementValue: number;
+  };
+}
+
 
 // Helper function to determine FCI status color
 const getFciStatusColor = (fci: number) => {
-  if (fci <= 0.1) return 'text-green-500';
-  if (fci <= 0.2) return 'text-blue-500';
-  if (fci <= 0.3) return 'text-yellow-500';
-  return 'text-red-500';
+  const status = getFCIStatus(fci);
+  switch (status.label) {
+    case 'Excellent':
+      return 'text-green-600';
+    case 'Good':
+      return 'text-green-500';
+    case 'Fair':
+      return 'text-yellow-500';
+    case 'Critical':
+      return 'text-red-500';
+    default:
+      return 'text-gray-500';
+  }
 };
 
 // Helper function to determine FCI label
 const getFciLabel = (fci: number) => {
-  if (fci <= 0.1) return 'Excellent';
-  if (fci <= 0.2) return 'Good';
-  if (fci <= 0.3) return 'Fair';
-  return 'Poor';
+  return getFCIStatus(fci).label;
 };
 
 // Define colors for pie chart
 const COLORS = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444'];
 
-// System condition distribution data
-const conditionData = [
-  { name: 'Excellent', value: 2 },
-  { name: 'Good', value: 4 },
-  { name: 'Fair', value: 2 },
-  { name: 'Poor', value: 0 },
-];
-
-// FCI trend data
-const fciTrendData = [
-  { year: '2021', fci: 0.27 },
-  { year: '2022', fci: 0.22 },
-  { year: '2023', fci: 0.15 },
-  { year: '2024', fci: 0.12 },
-];
-
 export function BuildingDetailsPage() {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
+  
   const { getBuilding } = useBuildings();
-  const [building, setBuilding] = useState<any>(null);
+  const { fetchAssessments } = useAssessments();
+  const [building, setBuilding] = useState<Building | null>(null);
+  const [assessments, setAssessments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
+  // Helper function to extract FCI from assessment notes
+  const extractFCIFromNotes = (notes: string): number | null => {
+    if (!notes) return null;
+    
+    // Look for "FCI of X.XXXX" pattern in notes
+    const fciMatch = notes.match(/FCI of (\d+\.?\d*)/);
+    if (fciMatch && fciMatch[1]) {
+      return parseFloat(fciMatch[1]);
+    }
+    return null;
+  };
+
   useEffect(() => {
-    const fetchBuilding = async () => {
+    const fetchBuildingData = async () => {
       if (!id) return;
       
       try {
         setLoading(true);
-        const data = await getBuilding(id);
+        
+        // First, fetch building details (this should always work)
+        const buildingData = await getBuilding(id);
+        
+        // Then try to fetch assessments (this might fail or return empty)
+        let buildingAssessments: any[] = [];
+        try {
+          const assessmentsResponse = await fetchAssessments({ building_id: id });
+          buildingAssessments = Array.isArray(assessmentsResponse) ? assessmentsResponse : [];
+        } catch (assessmentError) {
+          console.warn('Failed to fetch assessments, proceeding with building data only:', assessmentError);
+          // Continue with empty assessments array
+        }
+        
+        setAssessments(buildingAssessments);
+        
+        // Get completed assessments with FCI data
+        const completedAssessments = buildingAssessments
+          .filter(assessment => assessment.status === 'completed' && assessment.notes)
+          .map(assessment => {
+            const fci = extractFCIFromNotes(assessment.notes);
+            return {
+              date: assessment.completed_at || assessment.created_at,
+              fci,
+              assessor: assessment.assigned_to_name || 'Unknown',
+              notes: assessment.description || 'Assessment completed'
+            };
+          })
+          .filter(assessment => assessment.fci !== null)
+          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        
+        // Get latest FCI from most recent completed assessment
+        const latestFCI = completedAssessments.length > 0 ? completedAssessments[0].fci : null;
+        const lastAssessmentDate = completedAssessments.length > 0 ? 
+          new Date(completedAssessments[0].date).toLocaleDateString() : 'Not assessed';
         
         // Transform API data to match expected format
-        const transformedBuilding = {
-          ...data,
-          location: `${data.city || 'Unknown'}, ${data.state || ''}`,
-          address: `${data.street_address || ''}, ${data.city || ''}, ${data.state || ''} ${data.zip_code || ''}`,
-          size: data.square_footage || 0,
-          yearBuilt: data.year_built || new Date().getFullYear(),
-          fci: calculateFCI(data),
-          lastAssessment: data.updated_at ? new Date(data.updated_at).toLocaleDateString() : 'Not assessed',
-          image: data.image_url || 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab',
-          images: [data.image_url || 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab'],
-          // Mock data for now - will be replaced when we implement these features
-          systems: [
-            { name: 'Structural', condition: 'Good', fci: 0.05 },
-            { name: 'HVAC', condition: 'Fair', fci: 0.15 },
-            { name: 'Electrical', condition: 'Good', fci: 0.08 },
-            { name: 'Plumbing', condition: 'Good', fci: 0.06 },
-          ],
-          assessmentHistory: [],
+        const transformedBuilding: Building = {
+          ...buildingData,
+          location: `${buildingData.city || 'Unknown'}, ${buildingData.state || ''}`,
+          address: `${buildingData.street_address || ''}, ${buildingData.city || ''}, ${buildingData.state || ''} ${buildingData.zip_code || ''}`,
+          size: buildingData.square_footage || 0,
+          yearBuilt: buildingData.year_built || new Date().getFullYear(),
+          fci: latestFCI || calculateFCIFromAge(buildingData.year_built || new Date().getFullYear()),
+          lastAssessment: lastAssessmentDate,
+          image: (buildingData.image_url && !buildingData.image_url.startsWith('blob:')) 
+            ? buildingData.image_url 
+            : 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab',
+          images: [(buildingData.image_url && !buildingData.image_url.startsWith('blob:')) 
+            ? buildingData.image_url 
+            : 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab'],
+          systems: [],
+          assessmentHistory: completedAssessments,
           repairCosts: {
-            immediate: 100000,
-            shortTerm: 200000,
-            longTerm: 300000,
-            total: 600000,
-            replacementValue: (data.square_footage || 0) * (data.cost_per_sqft || 200),
+            immediate: 0,
+            shortTerm: 0,
+            longTerm: 0,
+            total: 0,
+            replacementValue: (buildingData.square_footage || 0) * (buildingData.cost_per_sqft || 200),
           }
         };
         
         setBuilding(transformedBuilding);
       } catch (err) {
         setError('Failed to load building details');
-        console.error(err);
+        console.error('Building fetch error:', err);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchBuilding();
+    fetchBuildingData();
   }, [id]);
 
-  // Simple FCI calculation based on age
-  function calculateFCI(building: any) {
-    const age = new Date().getFullYear() - (building.year_built || 2020);
+  // Simple FCI calculation based on age (fallback when no assessment data exists)
+  function calculateFCIFromAge(yearBuilt: number) {
+    const age = new Date().getFullYear() - (yearBuilt || 2020);
     const baseFCI = age * 0.01;
     return Math.min(baseFCI, 0.9);
   }
@@ -503,11 +244,11 @@ export function BuildingDetailsPage() {
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
-            <BreadcrumbLink as={Link} to="/dashboard">Dashboard</BreadcrumbLink>
+            <BreadcrumbLink asChild><Link to="/dashboard">Dashboard</Link></BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbLink as={Link} to="/buildings">Buildings</BreadcrumbLink>
+            <BreadcrumbLink asChild><Link to="/buildings">Buildings</Link></BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
@@ -608,7 +349,7 @@ export function BuildingDetailsPage() {
           <CardContent className="flex flex-col items-center justify-center space-y-6 p-6">
             <div className="relative flex h-40 w-40 items-center justify-center rounded-full border-8 border-muted">
               <div className="flex flex-col items-center">
-                <span className="text-4xl font-bold">{building.fci.toFixed(2)}</span>
+                <span className="text-4xl font-bold">{formatFCI(building.fci)}</span>
                 <span
                   className={cn(
                     "text-lg font-medium",
@@ -634,15 +375,19 @@ export function BuildingDetailsPage() {
                   strokeDasharray="439.6"
                   strokeDashoffset={439.6 - (439.6 * building.fci)}
                   className={cn(
-                    building.fci <= 0.1 ? "text-green-500" :
-                    building.fci <= 0.2 ? "text-blue-500" :
-                    building.fci <= 0.3 ? "text-yellow-500" :
+                    building.fci <= 0.1 ? "text-green-600" :
+                    building.fci <= 0.4 ? "text-green-500" :
+                    building.fci <= 0.7 ? "text-yellow-500" :
                     "text-red-500"
                   )}
                 />
               </svg>
             </div>
             <div className="w-full space-y-4">
+              <div className="text-center">
+                <p className="text-sm text-muted-foreground">{getFCIStatus(building.fci).description}</p>
+                <p className="text-xs text-muted-foreground mt-1">{getFCIStatus(building.fci).recommendation}</p>
+              </div>
               <div className="space-y-1">
                 <div className="flex items-center justify-between text-sm">
                   <span>Repair Cost</span>
@@ -693,85 +438,113 @@ export function BuildingDetailsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid gap-6 md:grid-cols-3">
-                <div className="col-span-2 space-y-4">
-                  {building.systems.map((system) => (
-                    <div
-                      key={system.name}
-                      className="flex items-center justify-between space-x-4 rounded-lg border p-4"
-                    >
-                      <div>
-                        <h3 className="font-medium">{system.name}</h3>
-                        <Badge
-                          variant="outline"
-                          className={cn(
-                            "mt-1",
-                            system.condition === 'Excellent' ? "border-green-500 text-green-500" :
-                            system.condition === 'Good' ? "border-blue-500 text-blue-500" :
-                            system.condition === 'Fair' ? "border-yellow-500 text-yellow-500" :
-                            "border-red-500 text-red-500"
-                          )}
-                        >
-                          {system.condition}
-                        </Badge>
-                      </div>
-                      <div className="flex flex-col items-end gap-1">
-                        <span className={cn(
-                          "text-sm font-medium",
-                          getFciStatusColor(system.fci)
-                        )}>
-                          FCI: {system.fci.toFixed(2)}
-                        </span>
-                        <Progress
-                          value={system.fci * 100}
-                          className="h-2 w-24"
-                          indicatorClassName={cn(
-                            system.fci <= 0.1 ? "bg-green-500" :
-                            system.fci <= 0.2 ? "bg-blue-500" :
-                            system.fci <= 0.3 ? "bg-yellow-500" :
-                            "bg-red-500"
-                          )}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <div className="flex flex-col items-center justify-center space-y-4">
-                  <h3 className="text-center font-medium">System Condition Distribution</h3>
-                  <div className="h-64 w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={conditionData}
-                          cx="50%"
-                          cy="50%"
-                          labelLine={false}
-                          outerRadius={80}
-                          fill="#8884d8"
-                          dataKey="value"
-                          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                        >
-                          {conditionData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                          ))}
-                        </Pie>
-                        <Tooltip formatter={(value) => [`${value} systems`, 'Count']} />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </div>
-                  <div className="flex flex-wrap justify-center gap-2">
-                    {conditionData.map((entry, index) => (
-                      <div key={entry.name} className="flex items-center">
-                        <div
-                          className="mr-1 h-3 w-3 rounded-full"
-                          style={{ backgroundColor: COLORS[index % COLORS.length] }}
-                        />
-                        <span className="text-xs">{entry.name}</span>
+              {building.systems.length > 0 ? (
+                <div className="grid gap-6 md:grid-cols-3">
+                  <div className="col-span-2 space-y-4">
+                    {building.systems.map((system) => (
+                      <div
+                        key={system.name}
+                        className="flex items-center justify-between space-x-4 rounded-lg border p-4"
+                      >
+                        <div>
+                          <h3 className="font-medium">{system.name}</h3>
+                          <Badge
+                            variant="outline"
+                            className={cn(
+                              "mt-1",
+                              system.condition === 'Excellent' ? "border-green-500 text-green-500" :
+                              system.condition === 'Good' ? "border-blue-500 text-blue-500" :
+                              system.condition === 'Fair' ? "border-yellow-500 text-yellow-500" :
+                              "border-red-500 text-red-500"
+                            )}
+                          >
+                            {system.condition}
+                          </Badge>
+                        </div>
+                        <div className="flex flex-col items-end gap-1">
+                          <span className={cn(
+                            "text-sm font-medium",
+                            getFciStatusColor(system.fci)
+                          )}>
+                            FCI: {system.fci.toFixed(2)}
+                          </span>
+                          <Progress
+                            value={system.fci * 100}
+                            className="h-2 w-24"
+                            indicatorClassName={cn(
+                              system.fci <= 0.1 ? "bg-green-500" :
+                              system.fci <= 0.2 ? "bg-blue-500" :
+                              system.fci <= 0.3 ? "bg-yellow-500" :
+                              "bg-red-500"
+                            )}
+                          />
+                        </div>
                       </div>
                     ))}
                   </div>
+                  <div className="flex flex-col items-center justify-center space-y-4">
+                    <h3 className="text-center font-medium">System Condition Distribution</h3>
+                    <div className="h-64 w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={(() => {
+                              const conditionCounts = building.systems.reduce((acc, system) => {
+                                acc[system.condition] = (acc[system.condition] || 0) + 1;
+                                return acc;
+                              }, {} as Record<string, number>);
+                              return Object.entries(conditionCounts).map(([name, value]) => ({ name, value }));
+                            })()}
+                            cx="50%"
+                            cy="50%"
+                            labelLine={false}
+                            outerRadius={80}
+                            fill="#8884d8"
+                            dataKey="value"
+                            label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                          >
+                            {Object.keys(building.systems.reduce((acc, system) => {
+                              acc[system.condition] = true;
+                              return acc;
+                            }, {} as Record<string, boolean>)).map((_, index) => (
+                              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                            ))}
+                          </Pie>
+                          <Tooltip formatter={(value) => [`${value} systems`, 'Count']} />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                    <div className="flex flex-wrap justify-center gap-2">
+                      {Object.entries(building.systems.reduce((acc, system) => {
+                        acc[system.condition] = (acc[system.condition] || 0) + 1;
+                        return acc;
+                      }, {} as Record<string, number>)).map(([name], index) => (
+                        <div key={name} className="flex items-center">
+                          <div
+                            className="mr-1 h-3 w-3 rounded-full"
+                            style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                          />
+                          <span className="text-xs">{name}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <ClipboardList className="h-12 w-12 text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-medium mb-2">No System Data Available</h3>
+                  <p className="text-muted-foreground mb-4">
+                    System assessments will appear here once building evaluations are completed.
+                  </p>
+                  <Button asChild>
+                    <Link to={`/assessments/new?buildingId=${id}`}>
+                      <ClipboardList className="mr-2 h-4 w-4" />
+                      Start Assessment
+                    </Link>
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -851,7 +624,16 @@ export function BuildingDetailsPage() {
                   <h3 className="font-medium">FCI Trend Over Time</h3>
                   <div className="h-72">
                     <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={fciTrendData}>
+                      <BarChart data={(() => {
+                        const currentYear = new Date().getFullYear();
+                        const trendData = [];
+                        for (let i = 3; i >= 0; i--) {
+                          const year = currentYear - i;
+                          const fci = building.fci + (i * 0.02); // Simulate improvement over time
+                          trendData.push({ year: year.toString(), fci: Math.min(fci, 0.5) });
+                        }
+                        return trendData;
+                      })()}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} />
                         <XAxis dataKey="year" />
                         <YAxis domain={[0, 0.5]} tickFormatter={(value) => value.toFixed(1)} />

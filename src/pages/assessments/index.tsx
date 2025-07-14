@@ -56,52 +56,6 @@ import {
   TableRow,
 } from '@/components/ui/table';
 
-const assessmentsData = [
-  {
-    id: '1',
-    buildingName: 'Oak Tower Office Complex',
-    buildingId: '1',
-    location: 'New York, NY',
-    status: 'completed',
-    type: 'Annual',
-    date: '2024-04-10',
-    assessor: 'Alex Johnson',
-    fci: 0.12,
-  },
-  {
-    id: '2',
-    buildingName: 'Riverside Apartments',
-    buildingId: '2',
-    location: 'Chicago, IL',
-    status: 'in_progress',
-    type: 'Initial',
-    date: '2024-03-22',
-    assessor: 'Maria Garcia',
-    fci: 0.34,
-  },
-  {
-    id: '3',
-    buildingName: 'Sunset Mall',
-    buildingId: '3',
-    location: 'Miami, FL',
-    status: 'pending',
-    type: 'Follow-up',
-    date: '2024-05-01',
-    assessor: 'David Chen',
-    fci: 0.08,
-  },
-  {
-    id: '4',
-    buildingName: 'Central Hospital',
-    buildingId: '4',
-    location: 'Boston, MA',
-    status: 'completed',
-    type: 'Quarterly',
-    date: '2024-02-15',
-    assessor: 'Sarah Williams',
-    fci: 0.22,
-  },
-];
 
 const assessmentTypes = ['All Types', 'Pre-Assessment', 'Field Assessment'];
 const assessmentStatuses = ['All Statuses', 'Pending', 'In Progress', 'Completed'];
@@ -119,19 +73,35 @@ export function AssessmentsPage() {
     fetchAssessments();
   }, []); // Empty dependency array to run only once on mount
 
+  // Helper function to extract FCI from assessment notes
+  const extractFCIFromNotes = (notes: string): number | null => {
+    if (!notes) return null;
+    
+    // Look for "FCI of X.XXXX" pattern in notes
+    const fciMatch = notes.match(/FCI of (\d+\.?\d*)/);
+    if (fciMatch && fciMatch[1]) {
+      return parseFloat(fciMatch[1]);
+    }
+    return null;
+  };
+
   // Transform API data to match expected format
-  const assessmentsData = assessments.map(assessment => ({
-    id: assessment.id,
-    buildingName: assessment.building_name || 'Unknown Building',
-    buildingId: assessment.building_id,
-    location: `${assessment.city || 'Unknown'}, ${assessment.state || ''}`,
-    status: assessment.status || 'pending',
-    type: assessment.type === 'pre_assessment' ? 'Pre-Assessment' : 
-          assessment.type === 'field_assessment' ? 'Field Assessment' : 'Unknown',
-    date: assessment.scheduled_date || assessment.created_at,
-    assessor: assessment.assigned_to_name || 'Unassigned',
-    fci: 0.15, // Placeholder - will be calculated from assessment data
-  }));
+  const assessmentsData = assessments.map(assessment => {
+    const extractedFCI = extractFCIFromNotes(assessment.notes);
+    
+    return {
+      id: assessment.id,
+      buildingName: assessment.building_name || 'Unknown Building',
+      buildingId: assessment.building_id,
+      location: `${assessment.city || 'Unknown'}, ${assessment.state || ''}`,
+      status: assessment.status || 'pending',
+      type: assessment.type === 'pre_assessment' ? 'Pre-Assessment' : 
+            assessment.type === 'field_assessment' ? 'Field Assessment' : 'Unknown',
+      date: assessment.scheduled_date || assessment.created_at,
+      assessor: assessment.assigned_to_name || 'Unassigned',
+      fci: extractedFCI, // Use actual FCI from completed assessments or null for pending
+    };
+  });
 
   // Debug logging
   console.log('📊 All assessments:', assessments);
@@ -374,13 +344,14 @@ export function AssessmentsPage() {
               <TableHead>Status</TableHead>
               <TableHead>Date</TableHead>
               <TableHead>Assessor</TableHead>
+              <TableHead>FCI</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredAssessments.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="h-24 text-center">
+                <TableCell colSpan={7} className="h-24 text-center">
                   No assessments found matching your criteria.
                 </TableCell>
               </TableRow>
@@ -428,6 +399,26 @@ export function AssessmentsPage() {
                       </Avatar>
                       {assessment.assessor}
                     </div>
+                  </TableCell>
+                  <TableCell>
+                    {assessment.fci !== null ? (
+                      <div className="flex items-center gap-2">
+                        <div className={`text-sm font-medium ${
+                          assessment.fci <= 0.05 ? 'text-green-600' : 
+                          assessment.fci <= 0.10 ? 'text-yellow-600' : 
+                          assessment.fci <= 0.30 ? 'text-orange-600' : 'text-red-600'
+                        }`}>
+                          {assessment.fci.toFixed(3)}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {assessment.fci <= 0.05 ? 'Good' : 
+                           assessment.fci <= 0.10 ? 'Fair' : 
+                           assessment.fci <= 0.30 ? 'Poor' : 'Critical'}
+                        </div>
+                      </div>
+                    ) : (
+                      <span className="text-sm text-muted-foreground">—</span>
+                    )}
                   </TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>

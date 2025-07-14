@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import pool from '../config/database';
+import { calculateAssessmentFCI, completeAssessmentWithFCI } from '../services/fci.service';
 
 // Create a new assessment
 export const createAssessment = async (
@@ -493,6 +494,101 @@ export const updateAssessmentElement = async (
       }
     });
   } catch (error) {
+    next(error);
+  }
+};
+
+// Calculate FCI for an assessment
+export const calculateFCI = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { id } = req.params;
+
+    // Check if assessment exists
+    const assessmentCheck = await pool.query(
+      'SELECT id, status FROM assessments WHERE id = $1',
+      [id]
+    );
+
+    if (assessmentCheck.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Assessment not found'
+      });
+    }
+
+    // Calculate FCI
+    const fciResults = await calculateAssessmentFCI(id);
+
+    res.json({
+      success: true,
+      data: {
+        fci_results: fciResults
+      }
+    });
+  } catch (error) {
+    console.error('FCI calculation error:', error);
+    next(error);
+  }
+};
+
+// Complete assessment with automatic FCI calculation
+export const completeAssessment = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { id } = req.params;
+
+    // Check if assessment exists and is not already completed
+    const assessmentCheck = await pool.query(
+      'SELECT id, status FROM assessments WHERE id = $1',
+      [id]
+    );
+
+    if (assessmentCheck.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Assessment not found'
+      });
+    }
+
+    const assessment = assessmentCheck.rows[0];
+    
+    if (assessment.status === 'completed') {
+      return res.status(400).json({
+        success: false,
+        message: 'Assessment is already completed'
+      });
+    }
+
+    // Complete assessment with FCI calculation
+    const fciResults = await completeAssessmentWithFCI(id);
+
+    // Get updated assessment
+    const updatedAssessment = await pool.query(
+      `SELECT a.*, b.name as building_name, u.name as assigned_to_name
+       FROM assessments a
+       LEFT JOIN buildings b ON a.building_id = b.id
+       LEFT JOIN users u ON a.assigned_to_user_id = u.id
+       WHERE a.id = $1`,
+      [id]
+    );
+
+    res.json({
+      success: true,
+      message: 'Assessment completed successfully with FCI calculation',
+      data: {
+        assessment: updatedAssessment.rows[0],
+        fci_results: fciResults
+      }
+    });
+  } catch (error) {
+    console.error('Assessment completion error:', error);
     next(error);
   }
 };

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Building2, Search, CheckCircle2, Loader2 } from 'lucide-react';
+import { ArrowLeft, Search, CheckCircle2, Loader2 } from 'lucide-react';
 import { useBuildings } from '@/hooks/use-buildings';
 import { useAssessments } from '@/hooks/use-assessments';
 
@@ -18,81 +18,6 @@ import {
 } from '@/components/ui/breadcrumb';
 import { toast } from 'sonner';
 
-// Mock data for buildings
-const buildingsData = [
-  { 
-    id: '1', 
-    name: 'Oak Tower Office Complex', 
-    location: 'New York, NY', 
-    type: 'Commercial', 
-    size: 450000,
-    lastAssessment: '2024-04-10',
-    fci: 0.12,
-  },
-  { 
-    id: '2', 
-    name: 'Riverside Apartments', 
-    location: 'Chicago, IL', 
-    type: 'Residential', 
-    size: 325000,
-    lastAssessment: '2024-03-22',
-    fci: 0.34,
-  },
-  { 
-    id: '3', 
-    name: 'Sunset Mall', 
-    location: 'Miami, FL', 
-    type: 'Retail', 
-    size: 580000,
-    lastAssessment: '2024-05-01',
-    fci: 0.08,
-  },
-  { 
-    id: '4', 
-    name: 'Central Hospital', 
-    location: 'Boston, MA', 
-    type: 'Healthcare', 
-    size: 720000,
-    lastAssessment: '2024-02-15',
-    fci: 0.22,
-  },
-  { 
-    id: '5', 
-    name: 'Green Hills School', 
-    location: 'Seattle, WA', 
-    type: 'Education', 
-    size: 275000,
-    lastAssessment: '2024-04-28',
-    fci: 0.05,
-  },
-  { 
-    id: '6', 
-    name: 'Waterfront Hotel', 
-    location: 'San Francisco, CA', 
-    type: 'Hospitality', 
-    size: 390000,
-    lastAssessment: '2024-03-05',
-    fci: 0.19,
-  },
-  { 
-    id: '7', 
-    name: 'Metro Logistics Center', 
-    location: 'Dallas, TX', 
-    type: 'Industrial', 
-    size: 850000,
-    lastAssessment: '2024-05-10',
-    fci: 0.03,
-  },
-  { 
-    id: '8', 
-    name: 'Highland Park Condos', 
-    location: 'Denver, CO', 
-    type: 'Residential', 
-    size: 210000,
-    lastAssessment: '2024-04-15',
-    fci: 0.16,
-  },
-];
 
 export function NewAssessmentPage() {
   const navigate = useNavigate();
@@ -116,11 +41,20 @@ export function NewAssessmentPage() {
     fci: calculateFCI(building),
   }));
 
-  function calculateFCI(building: any) {
-    const age = new Date().getFullYear() - (building.year_built || 2020);
+  function calculateFCI(building: unknown) {
+  if (
+    typeof building === 'object' &&
+    building !== null &&
+    'year_built' in building &&
+    typeof (building as unknown).year_built === 'number'
+  ) {
+    const age = new Date().getFullYear() - (building as unknown).year_built;
     const baseFCI = age * 0.01;
     return Math.min(baseFCI, 0.9);
   }
+  // fallback if year_built is missing or invalid
+  return 0.1;
+}
 
   const filteredBuildings = buildingsData.filter((building) =>
     building.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -187,11 +121,11 @@ export function NewAssessmentPage() {
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
-            <BreadcrumbLink as={Link} to="/dashboard">Dashboard</BreadcrumbLink>
+            <BreadcrumbLink asChild><Link to="/dashboard">Dashboard</Link></BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbLink as={Link} to="/assessments">Assessments</BreadcrumbLink>
+            <BreadcrumbLink asChild><Link to="/assessments">Assessments</Link></BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
