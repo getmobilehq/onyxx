@@ -1,0 +1,53 @@
+# Gitleaks configuration for ONYX
+# Detects secrets in git repositories
+
+title = "ONYX Security Configuration"
+
+[extend]
+# Use default gitleaks rules
+useDefault = true
+
+[[rules]]
+description = "JWT Secret"
+id = "jwt-secret"
+regex = '''JWT_SECRET\s*=\s*[\"']?([A-Za-z0-9+/]{40,}={0,2})[\"']?'''
+keywords = ["JWT_SECRET"]
+
+[[rules]]
+description = "Database Password"
+id = "db-password"
+regex = '''(DB_PASSWORD|DATABASE_URL)\s*=\s*[\"']?([^\"'\s]+)[\"']?'''
+keywords = ["DB_PASSWORD", "DATABASE_URL"]
+
+[[rules]]
+description = "Cloudinary API Secret"
+id = "cloudinary-secret"
+regex = '''CLOUDINARY_API_SECRET\s*=\s*[\"']?([A-Za-z0-9_-]{20,})[\"']?'''
+keywords = ["CLOUDINARY_API_SECRET"]
+
+[[rules]]
+description = "Email API Key"
+id = "email-key"
+regex = '''(MAILGUN_API_KEY|EMAIL_KEY)\s*=\s*[\"']?([A-Za-z0-9_-]{20,})[\"']?'''
+keywords = ["MAILGUN_API_KEY", "EMAIL_KEY"]
+
+# Allowlist for development files
+[allowlist]
+paths = [
+  '''\.env\.example''',
+  '''\.env\.template''',
+  '''docs/.*''',
+  '''README\.md''',
+]
+
+commits = [
+  # Add commit hashes to allowlist if needed
+]
+
+regexes = [
+  # Allow example/template values
+  '''your-[a-zA-Z0-9-]+-here''',
+  '''changeme''',
+  '''example''',
+  '''template''',
+]
