@@ -1,9 +1,8 @@
 services:
-  # Backend API Service
   - type: web
     name: onyx-backend
-    runtime: node
-    repo: https://github.com/getmobilehq/onyxx
+    env: node
+    repo: https://github.com/getmobilehq/onyxx.git
     branch: main
     rootDir: backend
     buildCommand: npm install && npm run build
@@ -11,66 +10,23 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-      - key: PORT
-        value: 5001
       - key: DATABASE_URL
-        sync: false # Set in Render dashboard
+        sync: false
       - key: JWT_SECRET
-        sync: false # Set in Render dashboard - use the secure value we generated
+        sync: false
       - key: JWT_REFRESH_SECRET
-        sync: false # Set in Render dashboard - use the secure value we generated
+        sync: false
       - key: JWT_EXPIRE
         value: 7d
       - key: JWT_REFRESH_EXPIRE
         value: 30d
       - key: CLIENT_URL
-        sync: false # Set to your frontend URL in Render dashboard
+        sync: false
       - key: CLOUDINARY_CLOUD_NAME
-        sync: false # Set in Render dashboard
+        sync: false
       - key: CLOUDINARY_API_KEY
-        sync: false # Set in Render dashboard
+        sync: false
       - key: CLOUDINARY_API_SECRET
-        sync: false # Set in Render dashboard
-      - key: MAILGUN_API_KEY
-        sync: false # Set in Render dashboard if using email
-      - key: MAILGUN_DOMAIN
-        sync: false # Set in Render dashboard if using email
+        sync: false
     healthCheckPath: /api/health
     autoDeploy: true
-
-  # Frontend Static Site
-  - type: static
-    name: onyx-frontend
-    repo: https://github.com/getmobilehq/onyxx
-    branch: main
-    buildCommand: npm install && npm run build
-    staticPublishPath: ./dist
-    headers:
-      - path: /*
-        name: X-Frame-Options
-        value: DENY
-      - path: /*
-        name: X-Content-Type-Options
-        value: nosniff
-      - path: /*
-        name: Referrer-Policy
-        value: strict-origin-when-cross-origin
-      - path: /*
-        name: Permissions-Policy
-        value: camera=(), microphone=(), geolocation=()
-    routes:
-      - type: rewrite
-        source: /*
-        destination: /index.html
-    envVars:
-      - key: VITE_API_URL
-        sync: false # Set to your backend URL (e.g., https://onyx-backend.onrender.com/api)
-
-databases:
-  # PostgreSQL Database
-  - name: onyx-db
-    plan: starter # or 'standard' for production
-    databaseName: onyx
-    user: onyx_admin
-    region: oregon # Choose your preferred region
-    postgresMajorVersion: 15
