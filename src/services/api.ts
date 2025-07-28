@@ -1,8 +1,9 @@
 import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'axios';
 
 // API base URL - can be configured via environment variables
-// Using port 5002 to avoid conflicts with other applications
-const API_BASE_URL = 'http://localhost:5002/api';
+// Production API with auto-fallback to local development
+const API_BASE_URL = import.meta.env.VITE_API_URL || 
+  (import.meta.env.DEV ? 'http://localhost:5001/api' : 'https://onyxx.onrender.com/api');
 
 // Debug: Log the API URL being used
 console.log('🔗 API Base URL:', API_BASE_URL);
@@ -184,7 +185,25 @@ export const assessmentsAPI = {
     condition_rating?: number;
     notes?: string;
     photo_urls?: string[];
+    deficiencies?: Array<{
+      description: string;
+      cost: number;
+      category: string;
+      photos?: any[];
+    }>;
   }) => api.put(`/assessments/${assessmentId}/elements/${elementId}`, data),
+  saveElements: (assessmentId: string, elements: Array<{
+    element_id: string;
+    condition_rating: number;
+    notes?: string;
+    photo_urls?: string[];
+    deficiencies?: Array<{
+      description: string;
+      cost: number;
+      category: string;
+      photos?: any[];
+    }>;
+  }>) => api.post(`/assessments/${assessmentId}/elements`, { elements }),
   calculateFCI: (assessmentId: string) => 
     api.get(`/assessments/${assessmentId}/calculate-fci`),
   completeAssessment: (assessmentId: string) => 
@@ -199,10 +218,41 @@ export const elementsAPI = {
 };
 
 export const reportsAPI = {
-  getAll: () => api.get('/reports'),
+  getAll: (params?: { 
+    building_id?: string; 
+    status?: string; 
+    report_type?: string; 
+    assessor?: string; 
+    search?: string;
+    limit?: number; 
+    offset?: number; 
+  }) => api.get('/reports', { params }),
   getById: (id: string) => api.get(`/reports/${id}`),
-  getByBuildingId: (buildingId: string) => api.get(`/reports/building/${buildingId}`),
-  generate: (assessmentId: string) => api.post('/reports/generate', { assessmentId }),
+  create: (data: {
+    assessment_id?: string;
+    building_id: string;
+    title: string;
+    description?: string;
+    report_type?: 'facility_condition' | 'maintenance_plan' | 'capital_assessment';
+    status?: 'draft' | 'published' | 'archived';
+    assessment_date?: string;
+    assessor_name?: string;
+    fci_score?: number;
+    total_repair_cost?: number;
+    replacement_value?: number;
+    immediate_repair_cost?: number;
+    short_term_repair_cost?: number;
+    long_term_repair_cost?: number;
+    element_count?: number;
+    deficiency_count?: number;
+    executive_summary?: string;
+    recommendations?: any[];
+    systems_data?: any;
+  }) => api.post('/reports', data),
+  update: (id: string, data: any) => api.put(`/reports/${id}`, data),
+  delete: (id: string) => api.delete(`/reports/${id}`),
+  generateFromAssessment: (assessmentId: string) => api.post(`/reports/generate/${assessmentId}`),
+  getByBuildingId: (buildingId: string) => api.get('/reports', { params: { building_id: buildingId } }),
   download: (id: string) => api.get(`/reports/${id}/download`, { responseType: 'blob' }),
 };
 
@@ -227,6 +277,14 @@ export const organizationsAPI = {
   create: (data: { name: string; subscription?: string }) => api.post('/organizations', data),
   update: (id: string, data: any) => api.put(`/organizations/${id}`, data),
   delete: (id: string) => api.delete(`/organizations/${id}`),
+};
+
+export const analyticsAPI = {
+  getSummary: (params?: { timeRange?: string }) => api.get('/analytics/summary', { params }),
+  getBuildingAnalytics: () => api.get('/analytics/buildings'),
+  getFCICorrelation: () => api.get('/analytics/fci-correlation'),
+  getCostTrends: (params?: { timeRange?: string }) => api.get('/analytics/cost-trends', { params }),
+  getEfficiency: () => api.get('/analytics/efficiency'),
 };
 
 export default api;

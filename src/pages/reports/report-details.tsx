@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -7,6 +8,9 @@ import {
   Share2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useReports } from '@/hooks/use-reports';
+import { toast } from 'sonner';
+import { generateReportPDF } from '@/services/pdf-generator';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -127,7 +131,38 @@ const getPriorityColor = (priority: string) => {
 
 export function ReportDetailsPage() {
   const { id } = useParams<{ id: string }>();
-  const report = reportsData.find(r => r.id === id);
+  const [report, setReport] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const { getReport, downloadReport } = useReports();
+
+  useEffect(() => {
+    const loadReport = async () => {
+      if (!id) return;
+
+      try {
+        const reportData = await getReport(id);
+        setReport(reportData);
+      } catch (error) {
+        console.error('Failed to load report:', error);
+        toast.error('Failed to load report details');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadReport();
+  }, [id, getReport]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-300 border-t-primary mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading report...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!report) {
     return (
@@ -152,12 +187,48 @@ export function ReportDetailsPage() {
     );
   }
 
+  // Map backend data to frontend format
+  const mappedReport = {
+    ...report,
+    buildingName: report.building_name || report.title?.replace('Facility Condition Assessment - ', ''),
+    location: `${report.city || ''}, ${report.state || ''}`.replace(', ', ''),
+    assessmentDate: report.assessment_date || report.report_date,
+    fci: report.fci_score || 0,
+    assessor: report.assessor_name || report.created_by_name,
+    buildingType: report.building_type || 'Unknown',
+    buildingSize: report.square_footage || 0,
+    yearBuilt: report.year_built || 'Unknown',
+    repairCosts: {
+      immediate: report.immediate_repair_cost || 0,
+      shortTerm: report.short_term_repair_cost || 0,
+      longTerm: report.long_term_repair_cost || 0,
+      total: report.total_repair_cost || 0,
+      replacementValue: report.replacement_value || 0,
+    },
+    systems: report.systems_data?.elements?.map((el: any) => ({
+      name: el.individual_element || el.group_element || 'Unknown',
+      condition: getConditionLabel(el.condition_rating),
+      fci: 0.1 // Calculate based on element costs if needed
+    })) || [],
+    recommendations: report.recommendations || [],
+    notes: report.notes || []
+  };
+
   // Calculate repair cost percentages for the chart
   const repairCostData = [
-    { name: 'Immediate', value: report.repairCosts.immediate, fill: '#ef4444' },
-    { name: 'Short Term', value: report.repairCosts.shortTerm, fill: '#f59e0b' },
-    { name: 'Long Term', value: report.repairCosts.longTerm, fill: '#3b82f6' },
+    { name: 'Immediate', value: mappedReport.repairCosts.immediate, fill: '#ef4444' },
+    { name: 'Short Term', value: mappedReport.repairCosts.shortTerm, fill: '#f59e0b' },
+    { name: 'Long Term', value: mappedReport.repairCosts.longTerm, fill: '#3b82f6' },
   ];
+
+  // Helper function to convert condition rating to label
+  function getConditionLabel(rating: number): string {
+    if (rating >= 5) return 'Excellent';
+    if (rating >= 4) return 'Good';
+    if (rating >= 3) return 'Fair';
+    if (rating >= 2) return 'Poor';
+    return 'Critical';
+  }
 
   return (
     <div className="space-y-6 p-6 pb-16">
@@ -172,17 +243,17 @@ export function ReportDetailsPage() {
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbLink>{report.buildingName}</BreadcrumbLink>
+            <BreadcrumbLink>{mappedReport.buildingName}</BreadcrumbLink>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
 
       <div className="flex flex-col space-y-4 md:flex-row md:items-start md:justify-between md:space-y-0">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">{report.buildingName}</h2>
+          <h2 className="text-2xl font-bold tracking-tight">{mappedReport.buildingName}</h2>
           <div className="flex items-center text-muted-foreground">
             <Calendar className="mr-2 h-4 w-4" />
-            Assessment Date: {new Date(report.assessmentDate).toLocaleDateString()}
+            Assessment Date: {new Date(mappedReport.assessmentDate).toLocaleDateString()}
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -190,7 +261,52 @@ export function ReportDetailsPage() {
             <Share2 className="mr-2 h-4 w-4" />
             Share Report
           </Button>
-          <Button>
+          <Button onClick={() => {
+            try {
+              // Convert report data to PDF format
+              const pdfData = {
+                id: mappedReport.id,
+                title: `Facility Condition Assessment - ${mappedReport.buildingName}`,
+                building_name: mappedReport.buildingName,
+                assessor_name: mappedReport.assessor,
+                assessment_date: mappedReport.assessmentDate,
+                report_date: new Date().toISOString(),
+                fci_score: mappedReport.fci,
+                total_repair_cost: mappedReport.repairCosts.total,
+                replacement_value: mappedReport.repairCosts.replacementValue,
+                immediate_repair_cost: mappedReport.repairCosts.immediate,
+                short_term_repair_cost: mappedReport.repairCosts.shortTerm,
+                long_term_repair_cost: mappedReport.repairCosts.longTerm,
+                element_count: mappedReport.systems?.length || 0,
+                deficiency_count: mappedReport.systems?.reduce((count: number, system: any) => 
+                  count + (system.deficiencies?.length || 0), 0) || 0,
+                executive_summary: `This facility condition assessment of ${mappedReport.buildingName} reveals an FCI score of ${mappedReport.fci.toFixed(4)}, indicating ${getFciLabel(mappedReport.fci).toLowerCase()} condition.`,
+                building_type: mappedReport.buildingType,
+                square_footage: mappedReport.buildingSize,
+                year_built: mappedReport.yearBuilt,
+                city: mappedReport.location.split(',')[1]?.trim() || '',
+                state: mappedReport.location.split(',')[0]?.trim() || '',
+                systems_data: {
+                  elements: mappedReport.systems?.map((system: any) => ({
+                    individual_element: system.name,
+                    condition_rating: system.condition === 'Excellent' ? 5 : 
+                                    system.condition === 'Good' ? 4 :
+                                    system.condition === 'Fair' ? 3 :
+                                    system.condition === 'Poor' ? 2 : 1,
+                    notes: system.notes || '',
+                    deficiencies: system.deficiencies || []
+                  })) || []
+                },
+                recommendations: mappedReport.recommendations || []
+              };
+
+              generateReportPDF(pdfData);
+              toast.success('PDF report downloaded successfully');
+            } catch (error) {
+              console.error('Failed to generate PDF:', error);
+              toast.error('Failed to generate PDF report');
+            }
+          }}>
             <Download className="mr-2 h-4 w-4" />
             Download PDF
           </Button>
@@ -206,23 +322,23 @@ export function ReportDetailsPage() {
           <CardContent className="grid gap-4 sm:grid-cols-2">
             <div>
               <h3 className="font-semibold">Location</h3>
-              <p>{report.location}</p>
+              <p>{mappedReport.location}</p>
             </div>
             <div>
               <h3 className="font-semibold">Building Type</h3>
-              <p>{report.buildingType}</p>
+              <p>{mappedReport.buildingType}</p>
             </div>
             <div>
               <h3 className="font-semibold">Size</h3>
-              <p>{report.buildingSize.toLocaleString()} sq ft</p>
+              <p>{mappedReport.buildingSize.toLocaleString()} sq ft</p>
             </div>
             <div>
               <h3 className="font-semibold">Year Built</h3>
-              <p>{report.yearBuilt}</p>
+              <p>{mappedReport.yearBuilt}</p>
             </div>
             <div>
               <h3 className="font-semibold">Assessor</h3>
-              <p>{report.assessor}</p>
+              <p>{mappedReport.assessor}</p>
             </div>
             <div>
               <h3 className="font-semibold">Status</h3>
@@ -230,12 +346,12 @@ export function ReportDetailsPage() {
                 variant="outline"
                 className={cn(
                   "capitalize",
-                  report.status === 'published' && "border-green-500 text-green-500",
-                  report.status === 'draft' && "border-yellow-500 text-yellow-500",
-                  report.status === 'archived' && "border-blue-500 text-blue-500"
+                  mappedReport.status === 'published' && "border-green-500 text-green-500",
+                  mappedReport.status === 'draft' && "border-yellow-500 text-yellow-500",
+                  mappedReport.status === 'archived' && "border-blue-500 text-blue-500"
                 )}
               >
-                {report.status}
+                {mappedReport.status}
               </Badge>
             </div>
           </CardContent>
@@ -251,14 +367,14 @@ export function ReportDetailsPage() {
           <CardContent className="flex flex-col items-center justify-center space-y-6">
             <div className="relative flex h-40 w-40 items-center justify-center rounded-full border-8 border-muted">
               <div className="flex flex-col items-center">
-                <span className="text-4xl font-bold">{report.fci.toFixed(2)}</span>
+                <span className="text-4xl font-bold">{mappedReport.fci.toFixed(2)}</span>
                 <span
                   className={cn(
                     "text-lg font-medium",
-                    getFciStatusColor(report.fci)
+                    getFciStatusColor(mappedReport.fci)
                   )}
                 >
-                  {getFciLabel(report.fci)}
+                  {getFciLabel(mappedReport.fci)}
                 </span>
               </div>
               <svg
@@ -275,11 +391,11 @@ export function ReportDetailsPage() {
                   stroke="currentColor"
                   strokeWidth="12"
                   strokeDasharray="439.6"
-                  strokeDashoffset={439.6 - (439.6 * report.fci)}
+                  strokeDashoffset={439.6 - (439.6 * mappedReport.fci)}
                   className={cn(
-                    report.fci <= 0.1 ? "text-green-500" :
-                    report.fci <= 0.2 ? "text-blue-500" :
-                    report.fci <= 0.3 ? "text-yellow-500" :
+                    mappedReport.fci <= 0.1 ? "text-green-500" :
+                    mappedReport.fci <= 0.2 ? "text-blue-500" :
+                    mappedReport.fci <= 0.3 ? "text-yellow-500" :
                     "text-red-500"
                   )}
                 />
@@ -289,13 +405,13 @@ export function ReportDetailsPage() {
               <div className="flex items-center justify-between text-sm">
                 <span>Repair Cost</span>
                 <span className="font-medium">
-                  ${report.repairCosts.total.toLocaleString()}
+                  ${mappedReport.repairCosts.total.toLocaleString()}
                 </span>
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span>Replacement Value</span>
                 <span className="font-medium">
-                  ${report.repairCosts.replacementValue.toLocaleString()}
+                  ${mappedReport.repairCosts.replacementValue.toLocaleString()}
                 </span>
               </div>
             </div>
@@ -322,7 +438,7 @@ export function ReportDetailsPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {report.systems.map((system) => (
+                {mappedReport.systems.map((system) => (
                   <div
                     key={system.name}
                     className="flex items-center justify-between space-x-4 rounded-lg border p-4"
@@ -378,7 +494,7 @@ export function ReportDetailsPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-6">
-                {report.recommendations.map((rec, index) => (
+                {mappedReport.recommendations.map((rec, index) => (
                   <div
                     key={index}
                     className="space-y-2 rounded-lg border p-4"
@@ -447,25 +563,25 @@ export function ReportDetailsPage() {
                       <div className="flex justify-between">
                         <span>Immediate Repairs</span>
                         <span className="font-medium">
-                          ${report.repairCosts.immediate.toLocaleString()}
+                          ${mappedReport.repairCosts.immediate.toLocaleString()}
                         </span>
                       </div>
                       <div className="flex justify-between">
                         <span>Short-Term (1-3 years)</span>
                         <span className="font-medium">
-                          ${report.repairCosts.shortTerm.toLocaleString()}
+                          ${mappedReport.repairCosts.shortTerm.toLocaleString()}
                         </span>
                       </div>
                       <div className="flex justify-between">
                         <span>Long-Term (3-5 years)</span>
                         <span className="font-medium">
-                          ${report.repairCosts.longTerm.toLocaleString()}
+                          ${mappedReport.repairCosts.longTerm.toLocaleString()}
                         </span>
                       </div>
                       <div className="border-t pt-2 mt-2">
                         <div className="flex justify-between font-medium">
                           <span>Total Repair Costs</span>
-                          <span>${report.repairCosts.total.toLocaleString()}</span>
+                          <span>${mappedReport.repairCosts.total.toLocaleString()}</span>
                         </div>
                       </div>
                     </div>
@@ -477,22 +593,22 @@ export function ReportDetailsPage() {
                       <div className="flex justify-between">
                         <span>Current Replacement Value</span>
                         <span className="font-medium">
-                          ${report.repairCosts.replacementValue.toLocaleString()}
+                          ${mappedReport.repairCosts.replacementValue.toLocaleString()}
                         </span>
                       </div>
                       <div className="flex justify-between">
                         <span>Facility Condition Index</span>
                         <span className={cn(
                           "font-medium",
-                          getFciStatusColor(report.fci)
+                          getFciStatusColor(mappedReport.fci)
                         )}>
-                          {report.fci.toFixed(2)}
+                          {mappedReport.fci.toFixed(2)}
                         </span>
                       </div>
                       <div className="flex justify-between">
                         <span>Cost per Square Foot</span>
                         <span className="font-medium">
-                          ${(report.repairCosts.total / report.buildingSize).toFixed(2)}
+                          ${(mappedReport.repairCosts.total / mappedReport.buildingSize).toFixed(2)}
                         </span>
                       </div>
                     </div>
@@ -514,7 +630,7 @@ export function ReportDetailsPage() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {report.notes.map((note, index) => (
+            {mappedReport.notes.map((note, index) => (
               <div
                 key={index}
                 className="flex gap-4 border-b pb-4 last:border-0 last:pb-0"

@@ -51,7 +51,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
    - JWT-based authentication with refresh tokens
    - User registration, login, logout
    - Protected routes and token management
-   - Login: joseph@univelcity.com / password123
+   - Login: admin@onyx.com / password123
 
 2. **Buildings Management**: ✅ COMPLETE
    - Complete CRUD operations (Create, Read, Update, Delete)

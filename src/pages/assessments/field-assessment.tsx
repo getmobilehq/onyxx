@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Building2, Info, Camera, Plus, X, Upload, FileText, CheckCircle2 } from 'lucide-react';
 import { useAssessments } from '@/hooks/use-assessments';
+import { useBuildings } from '@/hooks/use-buildings';
+import { AssessmentCompletion } from '@/components/assessment-completion';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -81,14 +83,33 @@ export function FieldAssessmentPage() {
   const buildingId = searchParams.get('buildingId');
   const assessmentId = searchParams.get('assessmentId');
   
-  const { updateAssessment } = useAssessments();
+  const { updateAssessment, saveAssessmentElements, updateAssessmentElement } = useAssessments();
+  const { getBuilding } = useBuildings();
   const [currentElementIndex, setCurrentElementIndex] = useState(0);
   const [assessmentData, setAssessmentData] = useState<any>(null);
   const [preAssessmentData, setPreAssessmentData] = useState<any>(null);
   const [elementAssessments, setElementAssessments] = useState<any[]>([]);
   const [photos, setPhotos] = useState<{ [key: string]: File[] }>({});
   const [deficiencies, setDeficiencies] = useState<any[]>([]);
+  const [isCompleted, setIsCompleted] = useState(false);
+  const [completedAssessment, setCompletedAssessment] = useState<any>(null);
+  const [buildingData, setBuildingData] = useState<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Load building data
+  useEffect(() => {
+    const loadBuildingData = async () => {
+      if (buildingId) {
+        try {
+          const building = await getBuilding(buildingId);
+          setBuildingData(building);
+        } catch (error) {
+          console.error('Failed to load building data:', error);
+        }
+      }
+    };
+    loadBuildingData();
+  }, [buildingId, getBuilding]);
 
   // Load assessment data
   useEffect(() => {
@@ -349,28 +370,56 @@ export function FieldAssessmentPage() {
     localStorage.setItem('currentAssessment', JSON.stringify(completeAssessment));
     localStorage.setItem(`assessment-${buildingId}`, JSON.stringify(completeAssessment));
 
-    // Update assessment status in backend
+    // Save assessment elements with deficiencies to backend
     if (assessmentId) {
       try {
+        // Convert condition ratings to numeric values (1-5)
+        const conditionToRating = {
+          'new': 5,
+          'good': 4,
+          'fair': 3,
+          'poor': 2,
+          'critical': 1
+        };
+
+        // Prepare elements for backend with proper format
+        const elementsForBackend = elementAssessments
+          .filter(e => e.assessed)
+          .map(e => ({
+            element_id: e.id,
+            condition_rating: conditionToRating[e.condition as keyof typeof conditionToRating] || 3,
+            notes: e.notes || '',
+            photo_urls: e.photos || [],
+            deficiencies: (e.deficiencies || []).map((d: any) => ({
+              description: d.description,
+              cost: d.cost || 0,
+              category: d.category || '',
+              photos: d.photos || []
+            }))
+          }));
+
+        // Save all assessment elements with deficiencies
+        await saveAssessmentElements(assessmentId, elementsForBackend);
+
+        // Update assessment status
         await updateAssessment(assessmentId, {
           status: 'completed',
           completed_at: new Date().toISOString(),
           notes: `Assessment completed with FCI of ${fci.toFixed(4)}. Total repair cost: $${totalRepairCost.toLocaleString()}`
         });
         
-        toast.success('Field assessment completed! FCI data ready for capital planning.');
+        toast.success('Field assessment completed with all deficiency data saved!');
       } catch (error) {
-        console.error('Failed to update assessment in backend:', error);
-        toast.warning('Assessment completed locally but failed to save to database');
+        console.error('Failed to save assessment to backend:', error);
+        toast.warning('Assessment completed locally but failed to save complete data to database');
       }
     } else {
       toast.success('Field assessment completed successfully!');
     }
     
-    // Navigate back to assessments list
-    setTimeout(() => {
-      navigate('/assessments');
-    }, 1500);
+    // Show completion screen
+    setCompletedAssessment(completeAssessment);
+    setIsCompleted(true);
     
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -381,11 +430,57 @@ export function FieldAssessmentPage() {
     }
   };
 
-  const handleSaveDraft = () => {
+  const handleSaveDraft = async () => {
     const data = form.getValues();
     saveCurrentElement(data);
-    toast.success('Draft saved successfully');
+    
+    // Also save current element to backend if assessmentId exists
+    if (assessmentId && currentElement) {
+      try {
+        const conditionToRating = {
+          'new': 5,
+          'good': 4,
+          'fair': 3,
+          'poor': 2,
+          'critical': 1
+        };
+
+        const elementData = {
+          condition_rating: conditionToRating[data.condition as keyof typeof conditionToRating] || 3,
+          notes: data.notes || '',
+          photo_urls: photos[currentElement.id] || [],
+          deficiencies: deficiencies.filter(d => d.description && d.description.trim() !== '').map(d => ({
+            description: d.description,
+            cost: d.cost || 0,
+            category: d.category || '',
+            photos: d.photos || []
+          }))
+        };
+
+        await updateAssessmentElement(assessmentId, currentElement.id, elementData);
+        toast.success('Draft saved successfully');
+      } catch (error) {
+        console.error('Failed to save draft to backend:', error);
+        toast.success('Draft saved locally');
+      }
+    } else {
+      toast.success('Draft saved successfully');
+    }
   };
+
+  // Show completion screen if assessment is completed
+  if (isCompleted && completedAssessment) {
+    return (
+      <div className="p-6 pb-16">
+        <AssessmentCompletion 
+          assessmentData={completedAssessment}
+          buildingData={buildingData}
+          onGenerateReport={() => navigate(`/reports/new?assessmentId=${assessmentId}`)}
+          onViewDetails={() => navigate(`/assessments/${assessmentId}`)}
+        />
+      </div>
+    );
+  }
 
   if (!currentElement) {
     return <div className="flex items-center justify-center h-full">Loading...</div>;

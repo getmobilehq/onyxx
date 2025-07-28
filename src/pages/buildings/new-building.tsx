@@ -31,6 +31,7 @@ import { toast } from 'sonner';
 const buildingSchema = z.object({
   name: z.string().min(2, { message: 'Building name must be at least 2 characters' }),
   type: z.string().min(1, { message: 'Please select a building type' }),
+  constructionType: z.string().optional(),
   address: z.string().min(5, { message: 'Please enter a valid address' }),
   city: z.string().min(2, { message: 'City is required' }),
   state: z.string().length(2, { message: 'Please enter a valid state code' }),
@@ -80,6 +81,16 @@ const buildingTypes = [
   { value: 'Low-grade Parking Garage', label: 'Low-grade Parking Garage ($143.00/sq ft)', cost: 143 },
 ];
 
+const constructionTypes = [
+  'Steel Frame',
+  'Concrete Block',
+  'Wood Frame',
+  'Reinforced Concrete',
+  'Masonry',
+  'Pre-engineered Metal',
+  'Mixed Construction'
+];
+
 export function NewBuildingPage() {
   const navigate = useNavigate();
   const { createBuilding } = useBuildings();
@@ -92,6 +103,7 @@ export function NewBuildingPage() {
     defaultValues: {
       name: '',
       type: '',
+      constructionType: '',
       address: '',
       city: '',
       state: '',
@@ -113,6 +125,7 @@ export function NewBuildingPage() {
       const buildingData = {
         name: values.name,
         type: values.type,
+        construction_type: values.constructionType,
         street_address: values.address,
         city: values.city,
         state: values.state,
@@ -344,6 +357,31 @@ export function NewBuildingPage() {
                       {buildingTypes.map((type) => (
                         <SelectItem key={type.value} value={type.value}>
                           {type.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="constructionType"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Construction Type</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select construction type" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {constructionTypes.map((type) => (
+                        <SelectItem key={type} value={type}>
+                          {type}
                         </SelectItem>
                       ))}
                     </SelectContent>

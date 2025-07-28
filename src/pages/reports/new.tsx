@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Download, FileText, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { useReports } from '@/hooks/use-reports';
+import { useBuildings } from '@/hooks/use-buildings';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,6 +18,7 @@ import { Badge } from '@/components/ui/badge';
 
 import { toast } from 'sonner';
 import { AssessmentWorkflow } from '@/components/assessment-workflow';
+import { generateReportPDF } from '@/services/pdf-generator';
 import {
   ResponsiveContainer,
   PieChart,
@@ -60,86 +63,165 @@ export function NewReportPage() {
   const [buildingData, setBuildingData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
+  const { createReport, generateReportFromAssessment } = useReports();
+  const { getBuilding } = useBuildings();
+
   useEffect(() => {
-    // Load assessment data from localStorage
-    const completeAssessment = localStorage.getItem(`assessment-${assessmentId}`);
-    
-    if (!completeAssessment) {
-      toast.error('Assessment data not found');
-      navigate('/assessments');
+    const loadData = async () => {
+      if (!assessmentId) {
+        toast.error('Assessment ID not found');
+        navigate('/assessments');
+        return;
+      }
+
+      try {
+        // Load assessment data from localStorage (fallback)
+        const completeAssessment = localStorage.getItem(`assessment-${assessmentId}`);
+        
+        if (completeAssessment) {
+          const data = JSON.parse(completeAssessment);
+          setAssessmentData(data);
+
+          // Get building data from the assessment or fetch from API
+          if (data.buildingId) {
+            try {
+              const building = await getBuilding(data.buildingId);
+              setBuildingData(building);
+            } catch (error) {
+              console.error('Failed to load building data:', error);
+              // Use building data from assessment if available
+              setBuildingData(data.buildingData || { name: 'Unknown Building' });
+            }
+          }
+        } else {
+          // If no localStorage data, this might be a direct assessment completion
+          // In this case, we should try to generate the report directly
+          toast.info('Generating report from assessment...');
+          try {
+            await generateReportFromAssessment(assessmentId);
+            navigate('/reports');
+            return;
+          } catch (error) {
+            toast.error('Failed to generate report from assessment');
+            navigate('/assessments');
+            return;
+          }
+        }
+      } catch (error) {
+        console.error('Error loading assessment data:', error);
+        toast.error('Error loading assessment data');
+        navigate('/assessments');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, [assessmentId, navigate, getBuilding, generateReportFromAssessment]);
+
+  const handleSaveReport = async () => {
+    if (!assessmentData || !buildingData) return;
+
+    try {
+      // Create report data
+      const reportData = {
+        assessment_id: assessmentId!,
+        building_id: buildingData.id || assessmentData.buildingId,
+        title: `Facility Condition Assessment - ${buildingData.name}`,
+        description: `Comprehensive assessment report for ${buildingData.name}`,
+        report_type: 'facility_condition' as const,
+        status: 'published' as const,
+        assessment_date: assessmentData.preAssessmentData?.assessmentDate,
+        fci_score: assessmentData.fieldAssessmentData?.fci || 0,
+        total_repair_cost: assessmentData.fieldAssessmentData?.totalRepairCost || 0,
+        replacement_value: assessmentData.preAssessmentData?.replacementValue || 0,
+        element_count: assessmentData.preAssessmentData?.selectedElements?.length || 0,
+        deficiency_count: assessmentData.fieldAssessmentData?.elementAssessments?.reduce((count: number, el: any) => 
+          count + (el.deficiencies?.length || 0), 0) || 0,
+        systems_data: {
+          elements: assessmentData.fieldAssessmentData?.elementAssessments || [],
+          assessment_summary: {
+            total_elements: assessmentData.preAssessmentData?.selectedElements?.length || 0,
+            total_deficiencies: assessmentData.fieldAssessmentData?.elementAssessments?.reduce((count: number, el: any) => 
+              count + (el.deficiencies?.length || 0), 0) || 0,
+            assessment_type: assessmentData.preAssessmentData?.assessmentType || 'Annual'
+          }
+        },
+        executive_summary: `This facility condition assessment of ${buildingData.name} reveals an FCI score of ${(assessmentData.fieldAssessmentData?.fci || 0).toFixed(4)}, indicating ${getFciLabel(assessmentData.fieldAssessmentData?.fci || 0).toLowerCase()} condition. ${getFciRecommendation(assessmentData.fieldAssessmentData?.fci || 0)}`
+      };
+
+      // Save report to backend
+      await createReport(reportData);
+      
+      toast.success('Report saved successfully!');
+      
+      // Navigate to reports list
+      setTimeout(() => {
+        navigate('/reports');
+      }, 1000);
+    } catch (error) {
+      console.error('Failed to save report:', error);
+      toast.error('Failed to save report. Please try again.');
+    }
+  };
+
+  const handleExportPDF = () => {
+    if (!assessmentData || !buildingData) {
+      toast.error('No assessment data available for PDF export');
       return;
     }
 
     try {
-      const data = JSON.parse(completeAssessment);
-      setAssessmentData(data);
+      const fieldData = assessmentData.fieldAssessmentData;
+      const preData = assessmentData.preAssessmentData;
+      const fci = fieldData?.fci || 0;
 
-      // Mock building data (in real app, fetch from API)
-      const buildings = [
-        { id: '1', name: 'Oak Tower Office Complex', location: 'New York, NY', type: 'Commercial', size: 450000 },
-        { id: '2', name: 'Riverside Apartments', location: 'Chicago, IL', type: 'Residential', size: 325000 },
-        { id: '3', name: 'Sunset Mall', location: 'Miami, FL', type: 'Retail', size: 580000 },
-        { id: '4', name: 'Central Hospital', location: 'Boston, MA', type: 'Healthcare', size: 720000 },
-        { id: '5', name: 'Green Hills School', location: 'Seattle, WA', type: 'Education', size: 275000 },
-        { id: '6', name: 'Waterfront Hotel', location: 'San Francisco, CA', type: 'Hospitality', size: 390000 },
-        { id: '7', name: 'Metro Logistics Center', location: 'Dallas, TX', type: 'Industrial', size: 850000 },
-        { id: '8', name: 'Highland Park Condos', location: 'Denver, CO', type: 'Residential', size: 210000 },
-      ];
-      
-      const building = buildings.find(b => b.id === assessmentId);
-      setBuildingData(building);
-      setLoading(false);
+      // Convert assessment data to PDF format
+      const pdfData = {
+        id: assessmentId || 'draft',
+        title: `Facility Condition Assessment - ${buildingData.name}`,
+        building_name: buildingData.name,
+        assessor_name: preData?.assessorName || 'Unknown Assessor',
+        assessment_date: preData?.assessmentDate || new Date().toISOString(),
+        report_date: new Date().toISOString(),
+        fci_score: fci,
+        total_repair_cost: fieldData?.totalRepairCost || 0,
+        replacement_value: preData?.replacementValue || 0,
+        immediate_repair_cost: fieldData?.totalImmediateCost || 0,
+        short_term_repair_cost: fieldData?.totalShortTermCost || 0,
+        long_term_repair_cost: fieldData?.totalLongTermCost || 0,
+        element_count: preData?.selectedElements?.length || 0,
+        deficiency_count: fieldData?.elementAssessments?.reduce((count: number, el: any) => 
+          count + (el.deficiencies?.length || 0), 0) || 0,
+        executive_summary: `This facility condition assessment of ${buildingData.name} reveals an FCI score of ${fci.toFixed(4)}, indicating ${getFciLabel(fci).toLowerCase()} condition. ${getFciRecommendation(fci)}`,
+        building_type: buildingData.type || 'Unknown',
+        square_footage: buildingData.size || 0,
+        year_built: buildingData.yearBuilt || 'Unknown',
+        city: buildingData.city || '',
+        state: buildingData.state || '',
+        systems_data: {
+          elements: fieldData?.elementAssessments?.map((assessment: any) => ({
+            individual_element: assessment.elementName || 'Unknown Element',
+            condition_rating: assessment.condition === 'new' || assessment.condition === 'good' ? 5 :
+                            assessment.condition === 'fair' ? 3 :
+                            assessment.condition === 'poor' || assessment.condition === 'critical' ? 1 : 3,
+            notes: assessment.notes || '',
+            deficiencies: assessment.deficiencies?.map((def: any) => ({
+              description: def.description,
+              cost: def.cost || 0,
+              category: def.severity || 'medium'
+            })) || []
+          })) || []
+        },
+        recommendations: [] // Could be generated based on deficiencies if needed
+      };
+
+      generateReportPDF(pdfData, `${buildingData.name.replace(/\s+/g, '-').toLowerCase()}-assessment-${new Date().getFullYear()}.pdf`);
+      toast.success('PDF report downloaded successfully');
     } catch (error) {
-      toast.error('Error loading assessment data');
-      navigate('/assessments');
+      console.error('Failed to generate PDF:', error);
+      toast.error('Failed to generate PDF report');
     }
-  }, [assessmentId, navigate]);
-
-  const handleSaveReport = () => {
-    if (!assessmentData) return;
-
-    // Create report data
-    const reportData = {
-      id: `report-${Date.now()}`,
-      assessmentId,
-      buildingId: assessmentId,
-      buildingName: buildingData?.name,
-      reportDate: new Date().toISOString(),
-      assessmentDate: assessmentData.preAssessmentData?.assessmentDate,
-      assessor: 'Current User', // In real app, get from auth context
-      fci: assessmentData.fieldAssessmentData?.fci || 0,
-      totalRepairCost: assessmentData.fieldAssessmentData?.totalRepairCost || 0,
-      replacementValue: assessmentData.preAssessmentData?.replacementValue || 0,
-      elementCount: assessmentData.preAssessmentData?.selectedElements?.length || 0,
-      deficiencyCount: assessmentData.fieldAssessmentData?.elementAssessments?.reduce((count: number, el: any) => 
-        count + (el.deficiencies?.length || 0), 0) || 0,
-      status: 'final',
-      type: assessmentData.preAssessmentData?.assessmentType || 'Annual',
-    };
-
-    // Save report to localStorage (in real app, save to database)
-    localStorage.setItem(`report-${reportData.id}`, JSON.stringify(reportData));
-    
-    // Update assessment status
-    const updatedAssessment = {
-      ...assessmentData,
-      status: 'completed',
-      reportId: reportData.id,
-      completedAt: new Date().toISOString(),
-    };
-    localStorage.setItem(`assessment-${assessmentId}`, JSON.stringify(updatedAssessment));
-
-    toast.success('Report saved successfully!');
-    
-    // Navigate to reports list
-    setTimeout(() => {
-      navigate('/reports');
-    }, 1000);
-  };
-
-  const handleExportPDF = () => {
-    toast.success('PDF export functionality will be implemented next');
-    // TODO: Implement PDF export
   };
 
   if (loading || !assessmentData || !buildingData) {

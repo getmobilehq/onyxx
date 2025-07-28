@@ -9,6 +9,9 @@ type User = {
   email: string;
   role: 'admin' | 'manager' | 'assessor';
   created_at?: string;
+  organization_id?: string;
+  organization_name?: string;
+  is_organization_owner?: boolean;
 };
 
 type AuthContextType = {
@@ -49,7 +52,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const login = async (email: string, password: string) => {
-    setLoading(true);
     try {
       const response = await authAPI.login(email, password);
       
@@ -64,14 +66,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(user);
         
         toast.success('Login successful');
-        navigate('/dashboard');
+        
+        // Navigate after a short delay to prevent flash
+        setTimeout(() => {
+          navigate('/dashboard');
+        }, 100);
       }
     } catch (error: any) {
       const message = error.response?.data?.message || 'Login failed';
       toast.error(message);
       throw error;
-    } finally {
-      setLoading(false);
     }
   };
 

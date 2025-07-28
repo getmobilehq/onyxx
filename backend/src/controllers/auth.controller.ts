@@ -64,12 +64,19 @@ export const register = async (
     const salt = await bcrypt.genSalt(10);
     const password_hash = await bcrypt.hash(password, salt);
 
-    // Create user
+    // Get default organization ID (you might want to make this configurable)
+    const defaultOrgResult = await pool.query(
+      `SELECT id FROM organizations WHERE name = 'Default Organization' LIMIT 1`
+    );
+    
+    const organizationId = defaultOrgResult.rows[0]?.id || 'a1b2c3d4-e5f6-7890-abcd-ef1234567890';
+
+    // Create user with organization
     const result = await pool.query(
-      `INSERT INTO users (name, email, password_hash, role) 
-       VALUES ($1, $2, $3, $4) 
-       RETURNING id, name, email, role, created_at`,
-      [name, email, password_hash, role]
+      `INSERT INTO users (name, email, password_hash, role, organization_id) 
+       VALUES ($1, $2, $3, $4, $5) 
+       RETURNING id, name, email, role, organization_id, created_at`,
+      [name, email, password_hash, role, organizationId]
     );
 
     const user = result.rows[0];
@@ -117,11 +124,14 @@ export const login = async (
 
     const { email, password } = req.body;
 
-    // Get user from database
+    // Get user from database with organization info
     const result = await pool.query(
-      `SELECT id, name, email, password_hash, role 
-       FROM users 
-       WHERE email = $1`,
+      `SELECT u.id, u.name, u.email, u.password_hash, u.role, 
+              u.organization_id, u.is_organization_owner,
+              o.name as organization_name, o.subscription_plan
+       FROM users u
+       LEFT JOIN organizations o ON o.id = u.organization_id
+       WHERE u.email = $1`,
       [email]
     );
 
@@ -226,9 +236,12 @@ export const getMe = async (
     const userId = req.user?.id;
 
     const result = await pool.query(
-      `SELECT id, name, email, role, created_at
-       FROM users
-       WHERE id = $1`,
+      `SELECT u.id, u.name, u.email, u.role, u.created_at,
+              u.organization_id, u.is_organization_owner,
+              o.name as organization_name, o.subscription_plan
+       FROM users u
+       LEFT JOIN organizations o ON o.id = u.organization_id
+       WHERE u.id = $1`,
       [userId]
     );
 
@@ -250,6 +263,10 @@ export const getMe = async (
           name: user.name,
           role: user.role,
           created_at: user.created_at,
+          organization_id: user.organization_id,
+          is_organization_owner: user.is_organization_owner,
+          organization_name: user.organization_name,
+          organization_subscription_plan: user.subscription_plan,
         },
       },
     });

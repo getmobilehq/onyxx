@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Building2, CheckCircle2, Plus, X } from 'lucide-react';
 import { useBuildings } from '@/hooks/use-buildings';
+import { usePreAssessments } from '@/hooks/use-pre-assessments';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -129,25 +130,41 @@ export function PreAssessmentPage() {
   console.log('📍 URL params:', { buildingId, assessmentId });
   
   const { getBuilding } = useBuildings();
+  const { 
+    currentPreAssessment, 
+    loading: preAssessmentLoading, 
+    getByAssessmentId, 
+    saveDraft, 
+    completePreAssessment 
+  } = usePreAssessments();
+  
   const [selectedElements, setSelectedElements] = useState<any[]>([]);
   const [showElementDialog, setShowElementDialog] = useState(false);
   const [assessmentData, setAssessmentData] = useState<any>(null);
   const [buildingData, setBuildingData] = useState<any>(null);
   const [loadingBuilding, setLoadingBuilding] = useState(true);
 
-  // Load assessment data from localStorage
+  // Load assessment and pre-assessment data
   useEffect(() => {
     console.log('🔄 Loading assessment data...');
+    
+    // Try to load from localStorage first (for backward compatibility)
     const currentAssessment = localStorage.getItem('currentAssessment');
     if (currentAssessment) {
       const data = JSON.parse(currentAssessment);
-      console.log('📋 Loaded assessment data:', data);
+      console.log('📋 Loaded assessment data from localStorage:', data);
       setAssessmentData(data);
     } else if (!buildingId) {
       // If no assessment data and no building ID, redirect to new assessment
       navigate('/assessments/new');
     }
-  }, [buildingId, navigate]);
+
+    // Load existing pre-assessment from database if assessmentId exists
+    if (assessmentId) {
+      console.log('🔄 Loading pre-assessment from database...');
+      getByAssessmentId(assessmentId);
+    }
+  }, [buildingId, assessmentId, navigate, getByAssessmentId]);
 
   // Load building data from API
   useEffect(() => {
@@ -208,65 +225,146 @@ export function PreAssessmentPage() {
     if (buildingData) {
       form.setValue('buildingSize', buildingData.size);
     }
-  }, [buildingData]); // Removed form from dependencies
+  }, [buildingData, form]);
 
-  const onSubmit = (data: PreAssessmentForm) => {
-    // Checklist is now optional - removed the requirement check
+  // Load existing pre-assessment data into form
+  useEffect(() => {
+    if (currentPreAssessment) {
+      console.log('📋 Loading existing pre-assessment data:', currentPreAssessment);
+      
+      // Update form with existing data
+      form.setValue('assessmentType', currentPreAssessment.assessment_type);
+      form.setValue('assessmentDate', currentPreAssessment.assessment_date);
+      form.setValue('assessmentScope', currentPreAssessment.assessment_scope);
+      form.setValue('buildingSize', currentPreAssessment.building_size);
+      form.setValue('additionalNotes', currentPreAssessment.additional_notes || '');
+      
+      // Update checklist
+      if (currentPreAssessment.checklist) {
+        const checklist = typeof currentPreAssessment.checklist === 'string' 
+          ? JSON.parse(currentPreAssessment.checklist) 
+          : currentPreAssessment.checklist;
+        
+        Object.entries(checklist).forEach(([key, value]) => {
+          form.setValue(`checklist.${key}` as any, value as boolean);
+        });
+      }
+      
+      // Update selected elements
+      if (currentPreAssessment.selected_elements) {
+        const elements = typeof currentPreAssessment.selected_elements === 'string'
+          ? JSON.parse(currentPreAssessment.selected_elements)
+          : currentPreAssessment.selected_elements;
+        
+        setSelectedElements(elements);
+      }
+    }
+  }, [currentPreAssessment, form]);
 
+  const onSubmit = async (data: PreAssessmentForm) => {
     if (selectedElements.length === 0) {
       toast.error('Please add at least one building element');
       return;
     }
 
-    // Calculate replacement value using building's type (not from form)
+    if (!assessmentId || !buildingId) {
+      toast.error('Missing assessment or building ID');
+      return;
+    }
+
+    // Calculate replacement value using building's type
     const buildingType = buildingData?.type || '';
     const replacementValue = data.buildingSize * (buildingTypeCosts[buildingType as keyof typeof buildingTypeCosts] || 300);
 
-    // Save pre-assessment data
+    // Prepare pre-assessment data for database
     const preAssessmentData = {
-      ...data,
-      buildingType, // Use building's type from database
-      buildingId: buildingId || assessmentData?.buildingId,
-      buildingName: buildingData?.name,
-      selectedElements,
-      replacementValue,
-      completedAt: new Date().toISOString(),
-      status: 'completed'
+      assessment_id: assessmentId,
+      building_id: buildingId,
+      assessment_type: data.assessmentType,
+      assessment_date: data.assessmentDate,
+      assessment_scope: data.assessmentScope,
+      building_size: data.buildingSize,
+      building_type: buildingType,
+      replacement_value: replacementValue,
+      selected_elements: selectedElements,
+      checklist: data.checklist,
+      additional_notes: data.additionalNotes,
+      assessor_name: assessmentData?.assessorName || 'Unknown Assessor'
     };
 
-    // Update assessment status
-    const updatedAssessment = {
-      ...assessmentData,
-      status: 'field-assessment',
-      currentStep: 2,
-      preAssessmentData
-    };
+    // Save to database
+    const savedPreAssessment = await completePreAssessment(preAssessmentData);
+    
+    if (savedPreAssessment) {
+      // Also save to localStorage for backward compatibility
+      const legacyData = {
+        ...data,
+        buildingType,
+        buildingId,
+        buildingName: buildingData?.name,
+        selectedElements,
+        replacementValue,
+        completedAt: new Date().toISOString(),
+        status: 'completed'
+      };
 
-    localStorage.setItem('currentAssessment', JSON.stringify(updatedAssessment));
-    localStorage.setItem(`pre-assessment-${buildingId || assessmentData?.buildingId}`, JSON.stringify(preAssessmentData));
-    
-    toast.success('Pre-assessment completed! Proceeding to field assessment...');
-    
-    // Navigate to field assessment
-    setTimeout(() => {
-      const targetBuildingId = buildingId || assessmentData?.buildingId;
-      const targetAssessmentId = assessmentId || assessmentData?.assessmentId;
-      navigate(`/assessments/field-assessment?buildingId=${targetBuildingId}&assessmentId=${targetAssessmentId}`);
-    }, 1000);
+      const updatedAssessment = {
+        ...assessmentData,
+        status: 'field-assessment',
+        currentStep: 2,
+        preAssessmentData: legacyData
+      };
+
+      localStorage.setItem('currentAssessment', JSON.stringify(updatedAssessment));
+      localStorage.setItem(`pre-assessment-${buildingId}`, JSON.stringify(legacyData));
+      
+      toast.success('Pre-assessment completed! Proceeding to field assessment...');
+      
+      // Navigate to field assessment
+      setTimeout(() => {
+        navigate(`/assessments/field-assessment?buildingId=${buildingId}&assessmentId=${assessmentId}`);
+      }, 1000);
+    }
   };
 
-  const handleSaveDraft = () => {
+  const handleSaveDraft = async () => {
     const formData = form.getValues();
     
-    // Save draft
-    localStorage.setItem(`pre-assessment-draft-${buildingId || assessmentData?.buildingId}`, JSON.stringify({
+    if (!assessmentId || !buildingId) {
+      toast.error('Missing assessment or building ID');
+      return;
+    }
+
+    // Calculate replacement value
+    const buildingType = buildingData?.type || '';
+    const replacementValue = formData.buildingSize * (buildingTypeCosts[buildingType as keyof typeof buildingTypeCosts] || 300);
+
+    // Prepare draft data for database
+    const draftData = {
+      assessment_id: assessmentId,
+      building_id: buildingId,
+      assessment_type: formData.assessmentType,
+      assessment_date: formData.assessmentDate,
+      assessment_scope: formData.assessmentScope,
+      building_size: formData.buildingSize,
+      building_type: buildingType,
+      replacement_value: replacementValue,
+      selected_elements: selectedElements,
+      checklist: formData.checklist,
+      additional_notes: formData.additionalNotes,
+      assessor_name: assessmentData?.assessorName || 'Unknown Assessor'
+    };
+
+    // Save draft to database
+    await saveDraft(draftData);
+    
+    // Also save to localStorage for backward compatibility
+    localStorage.setItem(`pre-assessment-draft-${buildingId}`, JSON.stringify({
       ...formData,
       selectedElements,
       savedAt: new Date().toISOString(),
       status: 'draft'
     }));
-    
-    toast.success('Draft saved successfully');
   };
 
   const addElement = (element: any, group: string, majorGroup: string) => {

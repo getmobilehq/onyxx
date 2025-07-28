@@ -16,9 +16,11 @@ import {
   Menu,
   Moon,
   Settings,
+  Shield,
   Sun,
   User,
   Users,
+  Building,
   X,
 } from 'lucide-react';
 
@@ -40,13 +42,15 @@ import {
   SheetTrigger 
 } from '@/components/ui/sheet';
 import { OrgSwitcher } from '@/components/org-switcher';
+import { AdminOrgSwitcher } from '@/components/admin-org-switcher';
+import { LoadingScreen } from '@/components/loading-screen';
 
 export function DashboardLayout() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
   const { user, logout } = useAuth();
-  const { currentOrg } = useOrg();
+  const { currentOrg, loading: orgLoading } = useOrg();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -96,12 +100,39 @@ export function DashboardLayout() {
       icon: Users,
       current: pathname.startsWith('/team'),
     },
+    {
+      name: 'Organization',
+      href: '/organization',
+      icon: Building,
+      current: pathname.startsWith('/organization'),
+    },
   ];
+
+  // Admin-only navigation items
+  const adminNavigation = user?.role === 'admin' ? [
+    {
+      name: 'Admin Dashboard',
+      href: '/admin/dashboard',
+      icon: Shield,
+      current: pathname === '/admin/dashboard',
+    },
+    {
+      name: 'Admin Settings',
+      href: '/admin/settings',
+      icon: Settings,
+      current: pathname === '/admin/settings',
+    },
+  ] : [];
 
   const userNavigation = [
     { name: 'Your Profile', href: '/profile', icon: User },
     { name: 'Settings', href: '/settings', icon: Settings },
   ];
+
+  // Show loading screen while organization is loading
+  if (orgLoading) {
+    return <LoadingScreen message="Loading organization data..." />;
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -116,8 +147,9 @@ export function DashboardLayout() {
               <span className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">Onyx</span>
             </Link>
           </div>
-          <div className="mt-8 px-6">
+          <div className="mt-8 px-6 space-y-4">
             <OrgSwitcher />
+            {user?.role === 'admin' && <AdminOrgSwitcher />}
           </div>
           <div className="mt-10 flex flex-grow flex-col">
             <nav className="flex-1 space-y-1.5 px-4">
@@ -142,6 +174,39 @@ export function DashboardLayout() {
                   {item.name}
                 </Link>
               ))}
+              
+              {/* Admin Navigation */}
+              {adminNavigation.length > 0 && (
+                <>
+                  <div className="border-t border-border/50 mx-4 my-4" />
+                  <div className="px-4 mb-2">
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                      Admin
+                    </p>
+                  </div>
+                  {adminNavigation.map((item) => (
+                    <Link
+                      key={item.name}
+                      to={item.href}
+                      className={cn(
+                        item.current
+                          ? 'bg-destructive/10 text-destructive shadow-sm'
+                          : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground',
+                        'group flex items-center rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-200'
+                      )}
+                    >
+                      <item.icon
+                        className={cn(
+                          item.current ? 'text-destructive' : 'text-muted-foreground group-hover:text-foreground',
+                          'mr-3 h-5 w-5 flex-shrink-0 transition-all duration-200 group-hover:scale-110'
+                        )}
+                        aria-hidden="true"
+                      />
+                      {item.name}
+                    </Link>
+                  ))}
+                </>
+              )}
             </nav>
           </div>
           {currentOrg && (
@@ -223,6 +288,40 @@ export function DashboardLayout() {
                         {item.name}
                       </Link>
                     ))}
+                    
+                    {/* Admin Navigation in Mobile */}
+                    {adminNavigation.length > 0 && (
+                      <>
+                        <div className="border-t border-border/50 mx-2 my-4" />
+                        <div className="px-2 mb-2">
+                          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                            Admin
+                          </p>
+                        </div>
+                        {adminNavigation.map((item) => (
+                          <Link
+                            key={item.name}
+                            to={item.href}
+                            className={cn(
+                              item.current
+                                ? 'bg-destructive/10 text-destructive'
+                                : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+                              'group flex items-center rounded-md px-3 py-2.5 text-base font-medium'
+                            )}
+                            onClick={() => setIsMobileMenuOpen(false)}
+                          >
+                            <item.icon
+                              className={cn(
+                                item.current ? 'text-destructive' : 'text-muted-foreground group-hover:text-foreground',
+                                'mr-4 h-5 w-5 flex-shrink-0'
+                              )}
+                              aria-hidden="true"
+                            />
+                            {item.name}
+                          </Link>
+                        ))}
+                      </>
+                    )}
                   </div>
                   <div className="mt-10 border-t pt-6">
                     <div className="space-y-1 px-4">

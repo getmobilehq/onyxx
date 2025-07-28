@@ -8,6 +8,7 @@ import {
   deleteAssessment,
   getAssessmentElements,
   updateAssessmentElement,
+  saveAssessmentElements,
   calculateFCI,
   completeAssessment
 } from '../controllers/assessments.controller';
@@ -27,6 +28,7 @@ router.delete('/:id', deleteAssessment);
 // Assessment elements
 router.get('/:id/elements', getAssessmentElements);
 router.put('/:assessmentId/elements/:elementId', updateAssessmentElement);
+router.post('/:id/elements', saveAssessmentElements);
 
 // FCI calculations
 router.get('/:id/calculate-fci', calculateFCI);

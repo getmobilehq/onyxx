@@ -23,40 +23,64 @@ export function OrgProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const [currentOrg, setCurrentOrg] = useState<Organization | null>(null);
   const [organizations, setOrganizations] = useState<Organization[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchOrganizations = async () => {
       if (user) {
         setLoading(true);
         try {
+          console.log('Fetching current organization...');
           // Try to get current organization first
           const currentResponse = await organizationsAPI.getCurrent();
+          console.log('Organization response:', currentResponse.data);
           if (currentResponse.data.success && currentResponse.data.data.organization) {
-            setCurrentOrg(currentResponse.data.data.organization);
-          }
-          
-          // Get all organizations user has access to
-          const response = await organizationsAPI.getAll();
-          if (response.data.success) {
-            const orgs = response.data.data.organizations;
-            setOrganizations(orgs);
-            
-            // If no current org set, use the first one
-            if (!currentOrg && orgs.length > 0) {
-              setCurrentOrg(orgs[0]);
-            }
+            const orgData = currentResponse.data.data.organization;
+            // Ensure the organization has the expected structure for the frontend
+            const formattedOrg = {
+              id: orgData.id,
+              name: orgData.name,
+              subscription: orgData.subscription?.plan || 'professional',
+              createdAt: orgData.createdAt || orgData.created_at || new Date().toISOString(),
+            };
+            setCurrentOrg(formattedOrg);
+            setOrganizations([formattedOrg]); // Set the current org in organizations list
+          } else {
+            // Fallback: create a default organization structure
+            const fallbackOrg = {
+              id: user.organization_id || 'default',
+              name: user.organization_name || 'Default Organization',
+              subscription: 'professional',
+              createdAt: new Date().toISOString(),
+            };
+            setCurrentOrg(fallbackOrg);
+            setOrganizations([fallbackOrg]);
           }
         } catch (error: any) {
           console.error('Failed to fetch organizations:', error);
-          // If API fails, keep empty state
-          setOrganizations([]);
+          console.error('Error details:', error.response?.data);
+          
+          // Fallback: create a default organization structure from user data
+          if (user.organization_id) {
+            const fallbackOrg = {
+              id: user.organization_id,
+              name: user.organization_name || 'Default Organization',
+              subscription: 'professional',
+              createdAt: new Date().toISOString(),
+            };
+            setCurrentOrg(fallbackOrg);
+            setOrganizations([fallbackOrg]);
+          } else {
+            setOrganizations([]);
+            setCurrentOrg(null);
+          }
         } finally {
           setLoading(false);
         }
       } else {
         setCurrentOrg(null);
         setOrganizations([]);
+        setLoading(false);
       }
     };
 

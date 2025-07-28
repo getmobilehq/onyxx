@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { EmailSubscriptions } from '@/components/email-subscriptions';
 import { Link } from 'react-router-dom';
+import { useReports } from '@/hooks/use-reports';
 import { 
   ArrowUpDown,
   Building2,
@@ -15,6 +16,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getFCIStatus, formatFCI } from '@/lib/fci-utils';
+import { generateReportPDF } from '@/services/pdf-generator';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -53,48 +55,25 @@ import {
   TableRow,
 } from '@/components/ui/table';
 
-// Mock data for reports
-const reportsData = [
-  {
-    id: '1',
-    buildingName: 'Oak Tower Office Complex',
-    location: 'New York, NY',
-    assessmentDate: '2024-04-10',
-    fci: 0.12,
-    assessor: 'Alex Johnson',
-    status: 'published',
-  },
-  {
-    id: '2',
-    buildingName: 'Riverside Apartments',
-    location: 'Chicago, IL',
-    assessmentDate: '2024-03-22',
-    fci: 0.34,
-    assessor: 'Maria Garcia',
-    status: 'draft',
-  },
-  {
-    id: '3',
-    buildingName: 'Sunset Mall',
-    location: 'Miami, FL',
-    assessmentDate: '2024-05-01',
-    fci: 0.08,
-    assessor: 'David Chen',
-    status: 'published',
-  },
-  {
-    id: '4',
-    buildingName: 'Central Hospital',
-    location: 'Boston, MA',
-    assessmentDate: '2024-02-15',
-    fci: 0.22,
-    assessor: 'Sarah Williams',
-    status: 'archived',
-  },
-];
+// Map backend report data to frontend format
+const mapReportData = (report: any) => ({
+  id: report.id,
+  buildingName: report.building_name || 'Unknown Building',
+  location: `${report.city || ''}, ${report.state || ''}`.replace(', ', ''),
+  assessmentDate: report.assessment_date || report.report_date || new Date().toISOString().split('T')[0],
+  fci: report.fci_score !== null && report.fci_score !== undefined ? parseFloat(report.fci_score) : null,
+  assessor: report.assessor_name || report.created_by_name || 'Unknown',
+  status: report.status || 'draft',
+  title: report.title || `Assessment Report - ${report.building_name}`,
+  totalRepairCost: report.total_repair_cost || 0,
+  replacementValue: report.replacement_value || 0,
+  elementCount: report.element_count || 0,
+  deficiencyCount: report.deficiency_count || 0,
+});
 
 // Helper function to determine FCI status color
-const getFciStatusColor = (fci: number) => {
+const getFciStatusColor = (fci: number | null) => {
+  if (fci === null) return 'text-gray-500';
   const status = getFCIStatus(fci);
   switch (status.label) {
     case 'Excellent':
@@ -111,7 +90,8 @@ const getFciStatusColor = (fci: number) => {
 };
 
 // Helper function to determine FCI label
-const getFciLabel = (fci: number) => {
+const getFciLabel = (fci: number | null) => {
+  if (fci === null) return 'Not Yet Assessed';
   return getFCIStatus(fci).label;
 };
 
@@ -124,13 +104,23 @@ export function ReportsPage() {
   const [filterOpen, setFilterOpen] = useState(false);
   const [downloading, setDownloading] = useState(false);
 
+  const { reports, loading, error, fetchReports, deleteReport, getReport } = useReports();
+
+  // Load reports on component mount
+  useEffect(() => {
+    fetchReports();
+  }, []);
+
+  // Map backend data to frontend format
+  const mappedReports = reports.map(mapReportData);
+
   // Filter reports based on search query, status, and FCI range
-  const filteredReports = reportsData.filter((report) => {
+  const filteredReports = mappedReports.filter((report) => {
     const matchesSearch = report.buildingName.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          report.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          report.assessor.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = selectedStatus === 'all' || report.status === selectedStatus;
-    const matchesFci = report.fci >= fciRange[0] && report.fci <= fciRange[1];
+    const matchesFci = report.fci === null || (report.fci >= fciRange[0] && report.fci <= fciRange[1]);
     
     return matchesSearch && matchesStatus && matchesFci;
   });
@@ -150,7 +140,10 @@ export function ReportsPage() {
         comparison = new Date(b.assessmentDate).getTime() - new Date(a.assessmentDate).getTime();
         break;
       case 'fci':
-        comparison = a.fci - b.fci;
+        if (a.fci === null && b.fci === null) comparison = 0;
+        else if (a.fci === null) comparison = 1; // Put null values at the end
+        else if (b.fci === null) comparison = -1;
+        else comparison = a.fci - b.fci;
         break;
       case 'assessor':
         comparison = a.assessor.localeCompare(b.assessor);
@@ -213,6 +206,30 @@ export function ReportsPage() {
       setDownloading(false);
     }
   };
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-300 border-t-primary mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading reports...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <p className="text-red-500 mb-4">Error loading reports: {error}</p>
+          <Button onClick={() => fetchReports()}>Try Again</Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 p-6 pb-16">
@@ -426,7 +443,7 @@ export function ReportsPage() {
         
         {/* Results count */}
         <div className="text-sm text-muted-foreground">
-          Showing {sortedReports.length} of {reportsData.length} reports
+          Showing {sortedReports.length} of {mappedReports.length} reports
         </div>
       </div>
 
@@ -533,7 +550,7 @@ export function ReportsPage() {
                   <TableCell>{new Date(report.assessmentDate).toLocaleDateString()}</TableCell>
                   <TableCell>
                     <span className={cn("font-medium", getFciStatusColor(report.fci))}>
-                      {report.fci.toFixed(2)} ({getFciLabel(report.fci)})
+                      {report.fci !== null ? `${report.fci.toFixed(2)} (${getFciLabel(report.fci)})` : `N/A (${getFciLabel(report.fci)})`}
                     </span>
                   </TableCell>
                   <TableCell>{report.assessor}</TableCell>
@@ -566,7 +583,44 @@ export function ReportsPage() {
                             View report
                           </Link>
                         </DropdownMenuItem>
-                        <DropdownMenuItem>
+                        <DropdownMenuItem onClick={async () => {
+                          try {
+                            // Get full report data for PDF generation
+                            const fullReport = await getReport(report.id);
+                            
+                            // Convert to PDF format
+                            const pdfData = {
+                              id: fullReport.id,
+                              title: fullReport.title || `Facility Condition Assessment - ${report.buildingName}`,
+                              building_name: report.buildingName,
+                              assessor_name: report.assessor,
+                              assessment_date: report.assessmentDate,
+                              report_date: new Date().toISOString(),
+                              fci_score: report.fci,
+                              total_repair_cost: report.totalRepairCost || 0,
+                              replacement_value: report.replacementValue || 0,
+                              immediate_repair_cost: fullReport.immediate_repair_cost || 0,
+                              short_term_repair_cost: fullReport.short_term_repair_cost || 0,
+                              long_term_repair_cost: fullReport.long_term_repair_cost || 0,
+                              element_count: report.elementCount || 0,
+                              deficiency_count: report.deficiencyCount || 0,
+                              executive_summary: fullReport.executive_summary || `Assessment report for ${report.buildingName}`,
+                              building_type: fullReport.building_type || 'Unknown',
+                              square_footage: fullReport.square_footage || 0,
+                              year_built: fullReport.year_built || 'Unknown',
+                              city: report.location.split(',')[1]?.trim() || '',
+                              state: report.location.split(',')[0]?.trim() || '',
+                              systems_data: fullReport.systems_data || { elements: [] },
+                              recommendations: fullReport.recommendations || []
+                            };
+
+                            generateReportPDF(pdfData);
+                            toast.success('PDF report downloaded successfully');
+                          } catch (error) {
+                            console.error('Failed to generate PDF:', error);
+                            toast.error('Failed to generate PDF report');
+                          }
+                        }}>
                           <Download className="mr-2 h-4 w-4" />
                           Download PDF
                         </DropdownMenuItem>
@@ -574,6 +628,22 @@ export function ReportsPage() {
                         <DropdownMenuItem>
                           <Share2 className="mr-2 h-4 w-4" />
                           Share report
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem 
+                          className="text-red-600 focus:text-red-600"
+                          onClick={async () => {
+                            if (confirm('Are you sure you want to delete this report?')) {
+                              try {
+                                await deleteReport(report.id);
+                              } catch (error) {
+                                console.error('Failed to delete report:', error);
+                              }
+                            }
+                          }}
+                        >
+                          <X className="mr-2 h-4 w-4" />
+                          Delete report
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>

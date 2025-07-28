@@ -160,7 +160,8 @@ const buildingTypes = [
 ];
 
 // Helper function to determine FCI status color
-const getFciStatusColor = (fci: number) => {
+const getFciStatusColor = (fci: number | null) => {
+  if (fci === null) return 'text-gray-500';
   if (fci <= 0.1) return 'text-green-500';
   if (fci <= 0.2) return 'text-blue-500';
   if (fci <= 0.3) return 'text-yellow-500';
@@ -168,7 +169,8 @@ const getFciStatusColor = (fci: number) => {
 };
 
 // Helper function to determine FCI label
-const getFciLabel = (fci: number) => {
+const getFciLabel = (fci: number | null) => {
+  if (fci === null) return 'Not Yet Assessed';
   if (fci <= 0.1) return 'Excellent';
   if (fci <= 0.2) return 'Good';
   if (fci <= 0.3) return 'Fair';
@@ -193,10 +195,11 @@ export function BuildingsPage() {
     type: building.type || 'Unknown',
     size: building.square_footage || 0,
     yearBuilt: building.year_built || new Date().getFullYear(),
-    fci: calculateFCI(building),
+    fci: building.latest_fci_score !== null && building.latest_fci_score !== undefined ? parseFloat(building.latest_fci_score) : null,
     lastAssessment: building.updated_at ? new Date(building.updated_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
     image: building.image_url || 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab'
   }));
+
 
   // Simple FCI calculation based on age
   function calculateFCI(building: any) {
@@ -210,10 +213,11 @@ export function BuildingsPage() {
     const matchesSearch = building.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                         building.location.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesType = selectedType === 'All Types' || building.type === selectedType;
-    const matchesFci = building.fci >= fciRange[0] && building.fci <= fciRange[1];
+    const matchesFci = building.fci === null || (building.fci >= fciRange[0] && building.fci <= fciRange[1]);
     
     return matchesSearch && matchesType && matchesFci;
   });
+
 
   // Sort buildings
   const sortedBuildings = [...filteredBuildings].sort((a, b) => {
@@ -550,12 +554,13 @@ export function BuildingsPage() {
                   <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4 pt-12">
                     <div className={cn(
                       "inline-flex items-center rounded-full px-2 py-1 text-xs font-medium",
+                      building.fci === null ? "bg-gray-500/20 text-gray-500" :
                       building.fci <= 0.1 ? "bg-green-500/20 text-green-500" :
                       building.fci <= 0.2 ? "bg-blue-500/20 text-blue-500" :
                       building.fci <= 0.3 ? "bg-yellow-500/20 text-yellow-500" :
                       "bg-red-500/20 text-red-500"
                     )}>
-                      FCI: {building.fci.toFixed(2)} ({getFciLabel(building.fci)})
+                      FCI: {building.fci !== null ? building.fci.toFixed(2) : 'N/A'} ({getFciLabel(building.fci)})
                     </div>
                   </div>
                 </div>
@@ -699,12 +704,13 @@ export function BuildingsPage() {
                     <TableCell>
                       <div className="flex flex-col gap-1">
                         <span className={cn("text-sm font-medium", getFciStatusColor(building.fci))}>
-                          {building.fci.toFixed(2)}
+                          {building.fci !== null ? building.fci.toFixed(2) : 'N/A'}
                         </span>
                         <Progress
-                          value={building.fci * 100}
+                          value={building.fci !== null ? building.fci * 100 : 0}
                           className="h-2 w-16"
                           indicatorClassName={cn(
+                            building.fci === null ? "bg-gray-400" :
                             building.fci <= 0.1 ? "bg-green-500" :
                             building.fci <= 0.2 ? "bg-blue-500" :
                             building.fci <= 0.3 ? "bg-yellow-500" :

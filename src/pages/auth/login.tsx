@@ -61,9 +61,9 @@ export function LoginPage() {
 
   // Demo login credentials
   const demoCredentials = [
-    { role: 'Admin', email: 'admin@onyx.com', password: 'admin123' },
-    { role: 'Building Manager', email: 'manager@onyx.com', password: 'manager123' },
-    { role: 'Assessor', email: 'assessor@onyx.com', password: 'assessor123' },
+    { role: 'Admin', email: 'admin@onyx.com', password: 'password' },
+    { role: 'Building Manager', email: 'manager@onyx.com', password: 'password' },
+    { role: 'Assessor', email: 'assessor@onyx.com', password: 'password' },
   ];
 
   return (

@@ -1,5 +1,12 @@
 import express from 'express';
-import { generatePDFReport, generateExcelReport } from '../controllers/reports.controller';
+import { 
+  createReport,
+  getAllReports,
+  getReportById,
+  updateReport,
+  deleteReport,
+  generateReportFromAssessment
+} from '../controllers/reports.controller';
 import { 
   getUserSubscriptions, 
   createSubscription, 
@@ -15,11 +22,15 @@ import { authenticate } from '../middleware/auth.middleware';
 
 const router = express.Router();
 
-// PDF report generation
-router.get('/pdf/:assessmentId', authenticate, generatePDFReport);
+// Reports CRUD operations
+router.post('/', authenticate, createReport);
+router.get('/', authenticate, getAllReports);
+router.get('/:id', authenticate, getReportById);
+router.put('/:id', authenticate, updateReport);
+router.delete('/:id', authenticate, deleteReport);
 
-// Excel report generation
-router.get('/excel', authenticate, generateExcelReport);
+// Generate report from assessment
+router.post('/generate/:assessmentId', authenticate, generateReportFromAssessment);
 
 // Email report subscriptions
 router.get('/subscriptions', authenticate, getUserSubscriptions);

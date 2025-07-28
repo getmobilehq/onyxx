@@ -14,8 +14,11 @@ export const getAllUsers = async (
     const { role, search } = req.query;
 
     let query = `
-      SELECT id, name, email, role, created_at
-      FROM users
+      SELECT u.id, u.name, u.email, u.role, u.created_at, 
+             u.organization_id, u.is_organization_owner,
+             o.name as organization_name
+      FROM users u
+      LEFT JOIN organizations o ON o.id = u.organization_id
       WHERE 1=1
     `;
     const params: any[] = [];

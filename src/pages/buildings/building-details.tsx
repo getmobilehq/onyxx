@@ -74,7 +74,10 @@ export interface Building {
 
 
 // Helper function to determine FCI status color
-const getFciStatusColor = (fci: number) => {
+const getFciStatusColor = (fci: number | null) => {
+  if (fci === null) {
+    return "text-gray-500";
+  }
   const status = getFCIStatus(fci);
   switch (status.label) {
     case 'Excellent':
@@ -91,7 +94,10 @@ const getFciStatusColor = (fci: number) => {
 };
 
 // Helper function to determine FCI label
-const getFciLabel = (fci: number) => {
+const getFciLabel = (fci: number | null) => {
+  if (fci === null) {
+    return 'Not Assessed';
+  }
   return getFCIStatus(fci).label;
 };
 
@@ -170,7 +176,7 @@ export function BuildingDetailsPage() {
           address: `${buildingData.street_address || ''}, ${buildingData.city || ''}, ${buildingData.state || ''} ${buildingData.zip_code || ''}`,
           size: buildingData.square_footage || 0,
           yearBuilt: buildingData.year_built || new Date().getFullYear(),
-          fci: latestFCI || calculateFCIFromAge(buildingData.year_built || new Date().getFullYear()),
+          fci: latestFCI,
           lastAssessment: lastAssessmentDate,
           image: (buildingData.image_url && !buildingData.image_url.startsWith('blob:')) 
             ? buildingData.image_url 
@@ -349,14 +355,14 @@ export function BuildingDetailsPage() {
           <CardContent className="flex flex-col items-center justify-center space-y-6 p-6">
             <div className="relative flex h-40 w-40 items-center justify-center rounded-full border-8 border-muted">
               <div className="flex flex-col items-center">
-                <span className="text-4xl font-bold">{formatFCI(building.fci)}</span>
+                <span className="text-4xl font-bold">{building.fci !== null ? formatFCI(building.fci) : 'N/A'}</span>
                 <span
                   className={cn(
                     "text-lg font-medium",
                     getFciStatusColor(building.fci)
                   )}
                 >
-                  {getFciLabel(building.fci)}
+                  {building.fci !== null ? getFciLabel(building.fci) : 'Not Yet Assessed'}
                 </span>
               </div>
               <svg
@@ -373,8 +379,9 @@ export function BuildingDetailsPage() {
                   stroke="currentColor"
                   strokeWidth="12"
                   strokeDasharray="439.6"
-                  strokeDashoffset={439.6 - (439.6 * building.fci)}
+                  strokeDashoffset={building.fci !== null ? (439.6 - (439.6 * building.fci)) : 439.6}
                   className={cn(
+                    building.fci === null ? "text-gray-400" :
                     building.fci <= 0.1 ? "text-green-600" :
                     building.fci <= 0.4 ? "text-green-500" :
                     building.fci <= 0.7 ? "text-yellow-500" :
@@ -385,8 +392,8 @@ export function BuildingDetailsPage() {
             </div>
             <div className="w-full space-y-4">
               <div className="text-center">
-                <p className="text-sm text-muted-foreground">{getFCIStatus(building.fci).description}</p>
-                <p className="text-xs text-muted-foreground mt-1">{getFCIStatus(building.fci).recommendation}</p>
+                <p className="text-sm text-muted-foreground">{building.fci !== null ? getFCIStatus(building.fci).description : 'This building has not been assessed yet.'}</p>
+                <p className="text-xs text-muted-foreground mt-1">{building.fci !== null ? getFCIStatus(building.fci).recommendation : 'Schedule an initial assessment to determine facility condition.'}</p>
               </div>
               <div className="space-y-1">
                 <div className="flex items-center justify-between text-sm">

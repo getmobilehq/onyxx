@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { buildingsAPI, assessmentsAPI, reportsAPI } from '@/services/api';
+import { buildingsAPI, assessmentsAPI } from '@/services/api';
 
 interface DashboardMetrics {
   totalBuildings: number;
@@ -36,25 +36,24 @@ export function useDashboard() {
 
     try {
       // Fetch all data in parallel
-      const [buildingsRes, assessmentsRes, reportsRes] = await Promise.all([
+      const [buildingsRes, assessmentsRes] = await Promise.all([
         buildingsAPI.getAll(),
         assessmentsAPI.getAll({ limit: 10 }),
-        reportsAPI.getAll(),
       ]);
 
       // Process buildings data
       if (buildingsRes.data.success) {
-        const buildings = buildingsRes.data.data.buildings;
+        const buildings = buildingsRes.data.data.buildings || [];
         setMetrics(prev => ({ ...prev, totalBuildings: buildings.length }));
 
         // Calculate buildings at risk (FCI > 0.10)
         const atRisk = buildings
-          .filter((b: any) => b.fci_score && b.fci_score > 0.10)
+          .filter((b: any) => b.fci_score && parseFloat(b.fci_score) > 0.10)
           .map((b: any) => ({
             id: b.id,
             name: b.name,
-            fci: b.fci_score || 0,
-            status: b.fci_score > 0.30 ? 'critical' : b.fci_score > 0.20 ? 'warning' : 'attention',
+            fci: parseFloat(b.fci_score) || 0,
+            status: parseFloat(b.fci_score) > 0.30 ? 'critical' : parseFloat(b.fci_score) > 0.20 ? 'warning' : 'attention',
           }))
           .sort((a: BuildingAtRisk, b: BuildingAtRisk) => b.fci - a.fci)
           .slice(0, 5);
@@ -62,17 +61,17 @@ export function useDashboard() {
 
         // Calculate FCI distribution
         const distribution = [
-          { condition: 'Good', value: buildings.filter((b: any) => b.fci_score && b.fci_score <= 0.05).length },
-          { condition: 'Fair', value: buildings.filter((b: any) => b.fci_score && b.fci_score > 0.05 && b.fci_score <= 0.10).length },
-          { condition: 'Poor', value: buildings.filter((b: any) => b.fci_score && b.fci_score > 0.10 && b.fci_score <= 0.30).length },
-          { condition: 'Critical', value: buildings.filter((b: any) => b.fci_score && b.fci_score > 0.30).length },
+          { condition: 'Good', value: buildings.filter((b: any) => b.fci_score && parseFloat(b.fci_score) <= 0.05).length },
+          { condition: 'Fair', value: buildings.filter((b: any) => b.fci_score && parseFloat(b.fci_score) > 0.05 && parseFloat(b.fci_score) <= 0.10).length },
+          { condition: 'Poor', value: buildings.filter((b: any) => b.fci_score && parseFloat(b.fci_score) > 0.10 && parseFloat(b.fci_score) <= 0.30).length },
+          { condition: 'Critical', value: buildings.filter((b: any) => b.fci_score && parseFloat(b.fci_score) > 0.30).length },
         ];
         setFciDistribution(distribution);
       }
 
       // Process assessments data
       if (assessmentsRes.data.success) {
-        const assessments = assessmentsRes.data.data.assessments;
+        const assessments = assessmentsRes.data.data.assessments || [];
         
         // Count assessments this year
         const currentYear = new Date().getFullYear();
@@ -84,57 +83,70 @@ export function useDashboard() {
         // Separate recent and upcoming
         const now = new Date();
         const recent = assessments
-          .filter((a: any) => a.status === 'completed' || new Date(a.scheduled_date) < now)
+          .filter((a: any) => a.status === 'completed' || (a.scheduled_date && new Date(a.scheduled_date) < now))
           .slice(0, 5);
         const upcoming = assessments
-          .filter((a: any) => a.status !== 'completed' && new Date(a.scheduled_date) >= now)
+          .filter((a: any) => a.status !== 'completed' && a.scheduled_date && new Date(a.scheduled_date) >= now)
           .slice(0, 5);
         
         setRecentAssessments(recent);
         setUpcomingAssessments(upcoming);
-      }
 
-      // Process reports data
-      if (reportsRes.data.success) {
-        const reports = reportsRes.data.data.reports;
-        
-        // Calculate average FCI and total repair costs
-        if (reports.length > 0) {
-          const totalFCI = reports.reduce((sum: number, r: any) => sum + (r.fci_score || 0), 0);
-          const avgFCI = totalFCI / reports.length;
-          const totalRepairs = reports.reduce((sum: number, r: any) => sum + (r.total_repair_cost || 0), 0);
+        // Calculate average FCI from completed assessments
+        const completedAssessments = assessments.filter((a: any) => a.status === 'completed' && a.fci_score);
+        if (completedAssessments.length > 0) {
+          const totalFCI = completedAssessments.reduce((sum: number, a: any) => sum + (a.fci_score || 0), 0);
+          const avgFCI = totalFCI / completedAssessments.length;
+          
+          // Calculate estimated repairs using actual building replacement values
+          const buildings = buildingsRes.data.data.buildings || [];
+          const totalReplacementValue = buildings.reduce((sum: number, building: any) => {
+            // Use actual replacement value from building data, fallback to reasonable estimates based on square footage
+            if (building.replacement_value) {
+              return sum + parseFloat(building.replacement_value);
+            } else if (building.square_footage) {
+              // Fallback: estimate $200 per sq ft for replacement value
+              return sum + (building.square_footage * 200);
+            } else {
+              // Last resort fallback for buildings without size data
+              return sum + 1500000; // $1.5M average
+            }
+          }, 0);
+          
+          const estimatedRepairs = avgFCI * totalReplacementValue;
           
           setMetrics(prev => ({
             ...prev,
             averageFCI: avgFCI,
-            estimatedRepairs: totalRepairs,
+            estimatedRepairs: estimatedRepairs,
           }));
-
-          // Calculate FCI trend (last 6 months)
-          const sixMonthsAgo = new Date();
-          sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
-          
-          const trendData = [];
-          for (let i = 0; i < 6; i++) {
-            const month = new Date(sixMonthsAgo);
-            month.setMonth(month.getMonth() + i);
-            const monthReports = reports.filter((r: any) => {
-              const reportDate = new Date(r.created_at);
-              return reportDate.getMonth() === month.getMonth() && 
-                     reportDate.getFullYear() === month.getFullYear();
-            });
-            
-            const monthAvgFCI = monthReports.length > 0
-              ? monthReports.reduce((sum: number, r: any) => sum + (r.fci_score || 0), 0) / monthReports.length
-              : 0;
-            
-            trendData.push({
-              month: month.toLocaleDateString('en-US', { month: 'short' }),
-              fci: Number((monthAvgFCI * 100).toFixed(1)),
-            });
-          }
-          setFciTrend(trendData);
         }
+
+        // Calculate FCI trend from assessments (last 6 months)
+        const sixMonthsAgo = new Date();
+        sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+        
+        const trendData = [];
+        for (let i = 0; i < 6; i++) {
+          const month = new Date(sixMonthsAgo);
+          month.setMonth(month.getMonth() + i);
+          const monthAssessments = assessments.filter((a: any) => {
+            const assessmentDate = new Date(a.created_at);
+            return assessmentDate.getMonth() === month.getMonth() && 
+                   assessmentDate.getFullYear() === month.getFullYear() &&
+                   a.status === 'completed' && a.fci_score;
+          });
+          
+          const monthAvgFCI = monthAssessments.length > 0
+            ? monthAssessments.reduce((sum: number, a: any) => sum + (a.fci_score || 0), 0) / monthAssessments.length
+            : 0;
+          
+          trendData.push({
+            month: month.toLocaleDateString('en-US', { month: 'short' }),
+            fci: Number((monthAvgFCI * 100).toFixed(1)),
+          });
+        }
+        setFciTrend(trendData);
       }
     } catch (err: any) {
       console.error('Failed to fetch dashboard data:', err);

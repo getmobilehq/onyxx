@@ -15,8 +15,10 @@ import userRoutes from './routes/user.routes';
 import buildingsRoutes from './routes/buildings.routes';
 import elementsRoutes from './routes/elements.routes';
 import assessmentsRoutes from './routes/assessments.routes';
+import preAssessmentsRoutes from './routes/pre-assessments.routes';
 import reportsRoutes from './routes/reports';
 import analyticsRoutes from './routes/analytics.routes';
+import organizationsRoutes from './routes/organizations.routes';
 import mailgunEmailService from './services/mailgun-email.service';
 
 // Import middleware
@@ -40,7 +42,10 @@ pool.connect((err, client, release) => {
 // Middleware
 app.use(helmet()); // Security headers
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:5173',
+  origin: [
+    process.env.CLIENT_URL || 'http://localhost:5173',
+    'http://localhost:5174' // Additional frontend port
+  ],
   credentials: true,
 }));
 app.use(express.json());
@@ -49,9 +54,11 @@ app.use(express.urlencoded({ extended: true }));
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/organizations', organizationsRoutes);
 app.use('/api/buildings', buildingsRoutes);
 app.use('/api/elements', elementsRoutes);
 app.use('/api/assessments', assessmentsRoutes);
+app.use('/api/pre-assessments', preAssessmentsRoutes);
 app.use('/api/reports', reportsRoutes);
 app.use('/api/analytics', analyticsRoutes);
 

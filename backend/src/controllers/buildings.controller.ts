@@ -13,10 +13,19 @@ export const getAllBuildings = async (
     const { type, status, search } = req.query;
 
     let query = `
-      SELECT id, name, type, construction_type, year_built, square_footage,
-             state, city, zip_code, street_address, cost_per_sqft, 
-             image_url, status, created_at, updated_at
-      FROM buildings
+      SELECT b.id, b.name, b.type, b.construction_type, b.year_built, b.square_footage,
+             b.state, b.city, b.zip_code, b.street_address, b.cost_per_sqft, 
+             b.image_url, b.status, b.created_at, b.updated_at,
+             (
+               SELECT a.fci_score 
+               FROM assessments a 
+               WHERE a.building_id = b.id 
+                 AND a.status = 'completed' 
+                 AND a.fci_score IS NOT NULL
+               ORDER BY a.completed_at DESC 
+               LIMIT 1
+             ) as latest_fci_score
+      FROM buildings b
       WHERE 1=1
     `;
     const params: any[] = [];
@@ -247,8 +256,31 @@ export const deleteBuilding = async (
       });
     }
 
-    // TODO: Check if building has assessments/reports before deleting
-    // For now, we'll allow deletion
+    // Check if building has assessments
+    const assessmentCheck = await pool.query(
+      'SELECT COUNT(*) FROM assessments WHERE building_id = $1',
+      [id]
+    );
+
+    if (parseInt(assessmentCheck.rows[0].count) > 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Cannot delete building with existing assessments. Please delete all assessments first.',
+      });
+    }
+
+    // Check if building has reports
+    const reportCheck = await pool.query(
+      'SELECT COUNT(*) FROM reports WHERE building_id = $1',
+      [id]
+    );
+
+    if (parseInt(reportCheck.rows[0].count) > 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Cannot delete building with existing reports. Please delete all reports first.',
+      });
+    }
 
     await pool.query('DELETE FROM buildings WHERE id = $1', [id]);
 

@@ -13,7 +13,6 @@ import {
 import { 
   BarChart,
   Bar,
-  LineChart,
   Line,
   XAxis,
   YAxis,
@@ -25,23 +24,22 @@ import {
   Scatter,
   PieChart,
   Pie,
-  Cell
+  Cell,
+  ComposedChart
 } from 'recharts';
 import { 
   Building2,
   TrendingUp,
-  TrendingDown,
   DollarSign,
   Calendar,
   Activity,
   Loader2,
   BarChart3,
   PieChart as PieChartIcon,
-  Target,
-  Clock
+  Target
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { PredictiveMaintenance } from '@/components/predictive-maintenance';
+import { analyticsAPI } from '@/services/api';
 
 interface AnalyticsData {
   summary: {
@@ -60,32 +58,35 @@ interface AnalyticsData {
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
 export function AnalyticsPage() {
+  console.log('AnalyticsPage component rendering...');
+  
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [timeRange, setTimeRange] = useState('12');
 
   useEffect(() => {
+    console.log('Analytics page mounted, fetching data...');
     fetchAnalyticsData();
   }, [timeRange]);
 
   const fetchAnalyticsData = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/analytics/summary', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
+      setError(null);
+      const response = await analyticsAPI.getSummary({ timeRange });
       
-      if (response.ok) {
-        const data = await response.json();
-        setAnalyticsData(data.data);
+      if (response.data.success) {
+        console.log('Analytics data received:', response.data.data);
+        setAnalyticsData(response.data.data);
       } else {
-        toast.error('Failed to load analytics data');
+        throw new Error('Failed to load analytics data');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to fetch analytics:', error);
+      setError(error.response?.data?.message || 'Failed to load analytics data');
       toast.error('Failed to load analytics data');
+      setAnalyticsData(null);
     } finally {
       setLoading(false);
     }
@@ -108,7 +109,24 @@ export function AnalyticsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-96">
-        <Loader2 className="h-8 w-8 animate-spin" />
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading analytics...</p>
+          <p className="text-xs text-muted-foreground mt-2">Check browser console for debug info</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-6">
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center h-32 space-y-4">
+            <p className="text-red-500">Error loading analytics: {error}</p>
+            <Button onClick={() => fetchAnalyticsData()}>Try Again</Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -181,7 +199,7 @@ export function AnalyticsPage() {
             <Target className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{analyticsData.summary.avg_fci}</div>
+            <div className="text-2xl font-bold">{analyticsData.summary.avg_fci !== null ? analyticsData.summary.avg_fci.toFixed(3) : 'N/A'}</div>
           </CardContent>
         </Card>
 
@@ -228,18 +246,28 @@ export function AnalyticsPage() {
               </CardHeader>
               <CardContent>
                 <div className="h-[300px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={analyticsData.fci_age_correlation}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="age_range" />
-                      <YAxis />
-                      <Tooltip 
-                        formatter={(value: number) => [value.toFixed(3), 'Average FCI']}
-                      />
-                      <Legend />
-                      <Bar dataKey="avg_fci" fill="#8884d8" name="Average FCI" />
-                    </BarChart>
-                  </ResponsiveContainer>
+                  {analyticsData.fci_age_correlation.length > 0 ? (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={analyticsData.fci_age_correlation}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="age_range" />
+                        <YAxis />
+                        <Tooltip 
+                          formatter={(value: number) => [value.toFixed(3), 'Average FCI']}
+                        />
+                        <Legend />
+                        <Bar dataKey="avg_fci" fill="#8884d8" name="Average FCI" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="flex items-center justify-center h-full text-muted-foreground">
+                      <div className="text-center">
+                        <BarChart3 className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                        <p>No FCI correlation data available</p>
+                        <p className="text-xs">Complete more assessments to see trends</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -253,25 +281,35 @@ export function AnalyticsPage() {
               </CardHeader>
               <CardContent>
                 <div className="h-[300px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={analyticsData.fci_age_correlation}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        label={({ name, value }) => `${name}: ${value}`}
-                        outerRadius={80}
-                        fill="#8884d8"
-                        dataKey="building_count"
-                      >
-                        {analyticsData.fci_age_correlation.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
+                  {analyticsData.fci_age_correlation.length > 0 ? (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={analyticsData.fci_age_correlation}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={false}
+                          label={({ name, value }) => `${name}: ${value}`}
+                          outerRadius={80}
+                          fill="#8884d8"
+                          dataKey="building_count"
+                        >
+                          {analyticsData.fci_age_correlation.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="flex items-center justify-center h-full text-muted-foreground">
+                      <div className="text-center">
+                        <PieChartIcon className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                        <p>No age distribution data available</p>
+                        <p className="text-xs">Add more buildings to see distribution</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -333,33 +371,43 @@ export function AnalyticsPage() {
             </CardHeader>
             <CardContent>
               <div className="h-[400px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={analyticsData.cost_trends}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="period" />
-                    <YAxis yAxisId="left" />
-                    <YAxis yAxisId="right" orientation="right" />
-                    <Tooltip />
-                    <Legend />
-                    <Bar yAxisId="left" dataKey="assessment_count" fill="#8884d8" name="Assessments" />
-                    <Line 
-                      yAxisId="right" 
-                      type="monotone" 
-                      dataKey="avg_repair_cost" 
-                      stroke="#ff7300" 
-                      name="Avg Repair Cost"
-                      strokeWidth={2}
-                    />
-                    <Line 
-                      yAxisId="right" 
-                      type="monotone" 
-                      dataKey="avg_fci" 
-                      stroke="#82ca9d" 
-                      name="Avg FCI"
-                      strokeWidth={2}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
+                {analyticsData.cost_trends.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <ComposedChart data={analyticsData.cost_trends}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="period" />
+                      <YAxis yAxisId="left" />
+                      <YAxis yAxisId="right" orientation="right" />
+                      <Tooltip />
+                      <Legend />
+                      <Bar yAxisId="left" dataKey="assessment_count" fill="#8884d8" name="Assessments" />
+                      <Line 
+                        yAxisId="right" 
+                        type="monotone" 
+                        dataKey="avg_repair_cost" 
+                        stroke="#ff7300" 
+                        name="Avg Repair Cost"
+                        strokeWidth={2}
+                      />
+                      <Line 
+                        yAxisId="right" 
+                        type="monotone" 
+                        dataKey="avg_fci" 
+                        stroke="#82ca9d" 
+                        name="Avg FCI"
+                        strokeWidth={2}
+                      />
+                    </ComposedChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="flex items-center justify-center h-full text-muted-foreground">
+                    <div className="text-center">
+                      <TrendingUp className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <p>No cost trend data available</p>
+                      <p className="text-xs">Complete more assessments to see trends</p>
+                    </div>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -377,17 +425,27 @@ export function AnalyticsPage() {
               </CardHeader>
               <CardContent>
                 <div className="h-[300px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <ScatterChart
-                      data={analyticsData.building_analytics.filter(b => b.latest_fci !== null)}
-                    >
-                      <CartesianGrid />
-                      <XAxis dataKey="age" name="Age" unit="yrs" />
-                      <YAxis dataKey="latest_fci" name="FCI" />
-                      <Tooltip cursor={{ strokeDasharray: '3 3' }} />
-                      <Scatter dataKey="cost_per_sqft_actual" fill="#8884d8" />
-                    </ScatterChart>
-                  </ResponsiveContainer>
+                  {analyticsData.building_analytics.filter(b => b.latest_fci !== null).length > 0 ? (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <ScatterChart
+                        data={analyticsData.building_analytics.filter(b => b.latest_fci !== null)}
+                      >
+                        <CartesianGrid />
+                        <XAxis dataKey="age" name="Age" unit="yrs" />
+                        <YAxis dataKey="latest_fci" name="FCI" />
+                        <Tooltip cursor={{ strokeDasharray: '3 3' }} />
+                        <Scatter dataKey="cost_per_sqft_actual" fill="#8884d8" />
+                      </ScatterChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="flex items-center justify-center h-full text-muted-foreground">
+                      <div className="text-center">
+                        <Target className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                        <p>No correlation data available</p>
+                        <p className="text-xs">Complete assessments to see building correlations</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -436,7 +494,9 @@ export function AnalyticsPage() {
 
         {/* Predictive Maintenance */}
         <TabsContent value="predictive" className="space-y-4">
-          <PredictiveMaintenance />
+          <div className="p-6 text-center text-muted-foreground">
+            Predictive Maintenance section temporarily disabled for debugging
+          </div>
         </TabsContent>
       </Tabs>
     </div>

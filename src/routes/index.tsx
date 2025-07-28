@@ -29,22 +29,36 @@ import { ReportDetailsPage } from '@/pages/reports/report-details';
 import { SettingsPage } from '@/pages/settings';
 import { ProfilePage } from '@/pages/profile';
 import { AnalyticsPage } from '@/pages/analytics';
+import { AnalyticsTestPage } from '@/pages/analytics/test';
+import { SimpleAnalyticsPage } from '@/pages/analytics/simple';
+import { DebugAnalyticsPage } from '@/pages/analytics/debug';
+import { FixedAnalyticsPage } from '@/pages/analytics/fixed';
 import { TeamPage } from '@/pages/team';
+import { OrganizationPage } from '@/pages/organization';
+import { AdminSettingsPage } from '@/pages/admin/settings';
+import { AdminDashboard } from '@/pages/admin/dashboard';
+import { AdminUsersPage } from '@/pages/admin/users';
+import { OrganizationDetailsPage } from '@/pages/admin/organization-details';
+import { OrganizationEditPage } from '@/pages/admin/organization-edit';
+import { LoadingScreen } from '@/components/loading-screen';
 import { NotFoundPage } from '@/pages/not-found';
 
 export const AppRoutes = () => {
   const { user, loading } = useAuth();
 
+  // Show loading screen while authentication is being checked
+  if (loading) {
+    return <LoadingScreen message="Initializing application..." />;
+  }
+
   // Protected route wrapper
   const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-    if (loading) return <div>Loading...</div>;
     if (!user) return <Navigate to="/login" replace />;
     return <>{children}</>;
   };
 
   // Auth route wrapper (redirects to dashboard if already logged in)
   const AuthRoute = ({ children }: { children: React.ReactNode }) => {
-    if (loading) return <div>Loading...</div>;
     if (user) return <Navigate to="/dashboard" replace />;
     return <>{children}</>;
   };
@@ -53,7 +67,7 @@ export const AppRoutes = () => {
     <Routes>
       {/* Auth Routes */}
       <Route path="/" element={<AuthLayout />}>
-        <Route index element={<Navigate to="/login\" replace />} />
+        <Route index element={<Navigate to="/login" replace />} />
         <Route 
           path="login" 
           element={
@@ -112,10 +126,20 @@ export const AppRoutes = () => {
         <Route path="reports/:id" element={<ReportDetailsPage />} />
         
         {/* Analytics */}
-        <Route path="analytics" element={<AnalyticsPage />} />
+        <Route path="analytics" element={<FixedAnalyticsPage />} />
         
         {/* Team Management */}
         <Route path="team" element={<TeamPage />} />
+        
+        {/* Organization Management */}
+        <Route path="organization" element={<OrganizationPage />} />
+        
+        {/* Admin Routes */}
+        <Route path="admin/dashboard" element={<AdminDashboard />} />
+        <Route path="admin/users" element={<AdminUsersPage />} />
+        <Route path="admin/organizations/:id" element={<OrganizationDetailsPage />} />
+        <Route path="admin/organizations/:id/edit" element={<OrganizationEditPage />} />
+        <Route path="admin/settings" element={<AdminSettingsPage />} />
         
         {/* User Settings */}
         <Route path="settings" element={<SettingsPage />} />

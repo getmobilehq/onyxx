@@ -128,6 +128,12 @@ export function useAssessments() {
       condition_rating?: number;
       notes?: string;
       photo_urls?: string[];
+      deficiencies?: Array<{
+        description: string;
+        cost: number;
+        category: string;
+        photos?: any[];
+      }>;
     }
   ) => {
     try {
@@ -140,6 +146,35 @@ export function useAssessments() {
       }
     } catch (err: any) {
       toast.error('Failed to update element assessment');
+      throw err;
+    }
+  };
+
+  const saveAssessmentElements = async (
+    assessmentId: string,
+    elements: Array<{
+      element_id: string;
+      condition_rating: number;
+      notes?: string;
+      photo_urls?: string[];
+      deficiencies?: Array<{
+        description: string;
+        cost: number;
+        category: string;
+        photos?: any[];
+      }>;
+    }>
+  ) => {
+    try {
+      const response = await assessmentsAPI.saveElements(assessmentId, elements);
+      if (response.data.success) {
+        toast.success('Assessment elements saved successfully');
+        return response.data.data.saved_elements;
+      } else {
+        throw new Error('Failed to save assessment elements');
+      }
+    } catch (err: any) {
+      toast.error('Failed to save assessment elements');
       throw err;
     }
   };
@@ -188,6 +223,7 @@ export function useAssessments() {
     deleteAssessment,
     getAssessmentElements,
     updateAssessmentElement,
+    saveAssessmentElements,
     calculateFCI,
     completeAssessment,
   };

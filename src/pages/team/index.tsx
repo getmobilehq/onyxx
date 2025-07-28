@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Plus, Search, MoreHorizontal, UserPlus, Mail, Phone, Shield, ShieldCheck, Users } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -51,70 +51,21 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from 'sonner';
+import { usersAPI } from '@/services/api';
+import { useAuth } from '@/context/auth-context';
 
-// Mock team data
-const mockTeamMembers = [
-  {
-    id: '1',
-    name: 'Sarah Johnson',
-    email: 'sarah.johnson@company.com',
-    role: 'admin',
-    phone: '+1 (555) 123-4567',
-    avatar: '',
-    status: 'active',
-    lastActive: '2 hours ago',
-    joinedAt: '2023-01-15',
-    assessmentsCompleted: 45,
-  },
-  {
-    id: '2',
-    name: 'Michael Chen',
-    email: 'michael.chen@company.com',
-    role: 'manager',
-    phone: '+1 (555) 234-5678',
-    avatar: '',
-    status: 'active',
-    lastActive: '1 day ago',
-    joinedAt: '2023-03-22',
-    assessmentsCompleted: 32,
-  },
-  {
-    id: '3',
-    name: 'Emily Rodriguez',
-    email: 'emily.rodriguez@company.com',
-    role: 'assessor',
-    phone: '+1 (555) 345-6789',
-    avatar: '',
-    status: 'active',
-    lastActive: '3 hours ago',
-    joinedAt: '2023-06-10',
-    assessmentsCompleted: 28,
-  },
-  {
-    id: '4',
-    name: 'David Thompson',
-    email: 'david.thompson@company.com',
-    role: 'assessor',
-    phone: '+1 (555) 456-7890',
-    avatar: '',
-    status: 'inactive',
-    lastActive: '2 weeks ago',
-    joinedAt: '2023-02-28',
-    assessmentsCompleted: 52,
-  },
-  {
-    id: '5',
-    name: 'Lisa Park',
-    email: 'lisa.park@company.com',
-    role: 'manager',
-    phone: '+1 (555) 567-8901',
-    avatar: '',
-    status: 'active',
-    lastActive: '5 minutes ago',
-    joinedAt: '2023-04-12',
-    assessmentsCompleted: 38,
-  },
-];
+interface TeamMember {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  phone?: string;
+  avatar?: string;
+  status: 'active' | 'inactive';
+  lastActive?: string;
+  joinedAt: string;
+  assessmentsCompleted?: number;
+}
 
 const inviteSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -146,6 +97,9 @@ const roleConfig = {
 };
 
 export function TeamPage() {
+  const { user } = useAuth();
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRole, setSelectedRole] = useState<string>('all');
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
@@ -159,7 +113,38 @@ export function TeamPage() {
     },
   });
 
-  const filteredMembers = mockTeamMembers.filter(member => {
+  useEffect(() => {
+    fetchTeamMembers();
+  }, []);
+
+  const fetchTeamMembers = async () => {
+    try {
+      setLoading(true);
+      const response = await usersAPI.getAll();
+      if (response.data.success) {
+        const users = response.data.data.users.map((user: any): TeamMember => ({
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          phone: user.phone || '',
+          avatar: '',
+          status: 'active',
+          lastActive: 'Recently',
+          joinedAt: user.createdAt,
+          assessmentsCompleted: 0,
+        }));
+        setTeamMembers(users);
+      }
+    } catch (error) {
+      console.error('Failed to fetch team members:', error);
+      toast.error('Failed to load team members');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredMembers = teamMembers.filter(member => {
     const matchesSearch = member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          member.email.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesRole = selectedRole === 'all' || member.role === selectedRole;
@@ -190,6 +175,17 @@ export function TeamPage() {
   const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading team members...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 p-6">
@@ -295,9 +291,9 @@ export function TeamPage() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{mockTeamMembers.length}</div>
+            <div className="text-2xl font-bold">{teamMembers.length}</div>
             <p className="text-xs text-muted-foreground">
-              {mockTeamMembers.filter(m => m.status === 'active').length} active
+              {teamMembers.filter(m => m.status === 'active').length} active
             </p>
           </CardContent>
         </Card>
@@ -309,7 +305,7 @@ export function TeamPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {mockTeamMembers.filter(m => m.role === 'admin').length}
+              {teamMembers.filter(m => m.role === 'admin').length}
             </div>
             <p className="text-xs text-muted-foreground">
               Full access members
@@ -324,10 +320,10 @@ export function TeamPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {mockTeamMembers.reduce((sum, member) => sum + member.assessmentsCompleted, 0)}
+              {teamMembers.reduce((sum, member) => sum + (member.assessmentsCompleted || 0), 0)}
             </div>
             <p className="text-xs text-muted-foreground">
-              +12% from last month
+              Total completed
             </p>
           </CardContent>
         </Card>

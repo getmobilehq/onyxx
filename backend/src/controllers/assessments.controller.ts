@@ -411,10 +411,34 @@ export const getAssessmentElements = async (
 
     const result = await pool.query(query, params);
 
+    // Get deficiencies for each assessment element
+    const elementsWithDeficiencies = await Promise.all(
+      result.rows.map(async (element) => {
+        if (element.assessment_element_id) {
+          const deficienciesResult = await pool.query(
+            `SELECT id, description, cost, category, photos, created_at, updated_at
+             FROM assessment_deficiencies 
+             WHERE assessment_element_id = $1
+             ORDER BY created_at ASC`,
+            [element.assessment_element_id]
+          );
+          
+          return {
+            ...element,
+            deficiencies: deficienciesResult.rows
+          };
+        }
+        return {
+          ...element,
+          deficiencies: []
+        };
+      })
+    );
+
     res.json({
       success: true,
       data: {
-        elements: result.rows
+        elements: elementsWithDeficiencies
       }
     });
   } catch (error) {
@@ -422,7 +446,7 @@ export const getAssessmentElements = async (
   }
 };
 
-// Update assessment element rating
+// Update assessment element rating with deficiencies
 export const updateAssessmentElement = async (
   req: Request,
   res: Response,
@@ -430,7 +454,7 @@ export const updateAssessmentElement = async (
 ) => {
   try {
     const { assessmentId, elementId } = req.params;
-    const { condition_rating, notes, photo_urls } = req.body;
+    const { condition_rating, notes, photo_urls, deficiencies } = req.body;
 
     // Validate condition rating
     if (condition_rating && ![1, 2, 3, 4, 5].includes(condition_rating)) {
@@ -466,33 +490,182 @@ export const updateAssessmentElement = async (
       });
     }
 
-    // Upsert assessment element
-    const result = await pool.query(
-      `INSERT INTO assessment_elements (
-        assessment_id, element_id, condition_rating, notes, photo_urls, created_at, updated_at
-      ) VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
-      ON CONFLICT (assessment_id, element_id) 
-      DO UPDATE SET
-        condition_rating = EXCLUDED.condition_rating,
-        notes = EXCLUDED.notes,
-        photo_urls = EXCLUDED.photo_urls,
-        updated_at = NOW()
-      RETURNING *`,
-      [
-        assessmentId,
-        elementId,
-        condition_rating,
-        notes || null,
-        photo_urls ? JSON.stringify(photo_urls) : null
-      ]
+    // Start transaction for element and deficiencies
+    await pool.query('BEGIN');
+
+    try {
+      // Upsert assessment element
+      const result = await pool.query(
+        `INSERT INTO assessment_elements (
+          assessment_id, element_id, condition_rating, notes, photo_urls, created_at, updated_at
+        ) VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+        ON CONFLICT (assessment_id, element_id) 
+        DO UPDATE SET
+          condition_rating = EXCLUDED.condition_rating,
+          notes = EXCLUDED.notes,
+          photo_urls = EXCLUDED.photo_urls,
+          updated_at = NOW()
+        RETURNING *`,
+        [
+          assessmentId,
+          elementId,
+          condition_rating,
+          notes || null,
+          photo_urls ? JSON.stringify(photo_urls) : null
+        ]
+      );
+
+      const assessmentElementId = result.rows[0].id;
+
+      // Delete existing deficiencies for this assessment element
+      await pool.query(
+        'DELETE FROM assessment_deficiencies WHERE assessment_element_id = $1',
+        [assessmentElementId]
+      );
+
+      // Insert new deficiencies if provided
+      if (deficiencies && Array.isArray(deficiencies) && deficiencies.length > 0) {
+        for (const deficiency of deficiencies) {
+          if (deficiency.description && deficiency.description.trim()) {
+            await pool.query(
+              `INSERT INTO assessment_deficiencies (
+                assessment_element_id, description, cost, category, photos, created_at, updated_at
+              ) VALUES ($1, $2, $3, $4, $5, NOW(), NOW())`,
+              [
+                assessmentElementId,
+                deficiency.description,
+                deficiency.cost || 0,
+                deficiency.category || '',
+                deficiency.photos ? JSON.stringify(deficiency.photos) : null
+              ]
+            );
+          }
+        }
+      }
+
+      await pool.query('COMMIT');
+
+      res.json({
+        success: true,
+        data: {
+          assessment_element: result.rows[0]
+        }
+      });
+    } catch (error) {
+      await pool.query('ROLLBACK');
+      throw error;
+    }
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Bulk save assessment elements with deficiencies
+export const saveAssessmentElements = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { id } = req.params;
+    const { elements } = req.body;
+
+    // Check if assessment exists
+    const assessmentCheck = await pool.query(
+      'SELECT id FROM assessments WHERE id = $1',
+      [id]
     );
 
-    res.json({
-      success: true,
-      data: {
-        assessment_element: result.rows[0]
+    if (assessmentCheck.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Assessment not found'
+      });
+    }
+
+    if (!elements || !Array.isArray(elements)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Elements array is required'
+      });
+    }
+
+    // Start transaction
+    await pool.query('BEGIN');
+
+    try {
+      const savedElements = [];
+
+      for (const element of elements) {
+        if (!element.element_id || !element.condition_rating) {
+          continue; // Skip invalid elements
+        }
+
+        // Upsert assessment element
+        const elementResult = await pool.query(
+          `INSERT INTO assessment_elements (
+            assessment_id, element_id, condition_rating, notes, photo_urls, created_at, updated_at
+          ) VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+          ON CONFLICT (assessment_id, element_id) 
+          DO UPDATE SET
+            condition_rating = EXCLUDED.condition_rating,
+            notes = EXCLUDED.notes,
+            photo_urls = EXCLUDED.photo_urls,
+            updated_at = NOW()
+          RETURNING *`,
+          [
+            id,
+            element.element_id,
+            element.condition_rating,
+            element.notes || null,
+            element.photo_urls ? JSON.stringify(element.photo_urls) : null
+          ]
+        );
+
+        const assessmentElementId = elementResult.rows[0].id;
+
+        // Delete existing deficiencies
+        await pool.query(
+          'DELETE FROM assessment_deficiencies WHERE assessment_element_id = $1',
+          [assessmentElementId]
+        );
+
+        // Insert new deficiencies
+        if (element.deficiencies && Array.isArray(element.deficiencies)) {
+          for (const deficiency of element.deficiencies) {
+            if (deficiency.description && deficiency.description.trim()) {
+              await pool.query(
+                `INSERT INTO assessment_deficiencies (
+                  assessment_element_id, description, cost, category, photos, created_at, updated_at
+                ) VALUES ($1, $2, $3, $4, $5, NOW(), NOW())`,
+                [
+                  assessmentElementId,
+                  deficiency.description,
+                  deficiency.cost || 0,
+                  deficiency.category || '',
+                  deficiency.photos ? JSON.stringify(deficiency.photos) : null
+                ]
+              );
+            }
+          }
+        }
+
+        savedElements.push(elementResult.rows[0]);
       }
-    });
+
+      await pool.query('COMMIT');
+
+      res.json({
+        success: true,
+        message: 'Assessment elements saved successfully',
+        data: {
+          saved_elements: savedElements
+        }
+      });
+    } catch (error) {
+      await pool.query('ROLLBACK');
+      throw error;
+    }
   } catch (error) {
     next(error);
   }
