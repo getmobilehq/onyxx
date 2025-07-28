@@ -29,6 +29,11 @@ import { notFound } from './middleware/notFound.middleware';
 // Create Express app
 const app: Application = express();
 
+// Trust proxy in production (required for Render.com)
+if (process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', 1);
+}
+
 // Test database connection
 pool.connect((err, client, release) => {
   if (err) {
