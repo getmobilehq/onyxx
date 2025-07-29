@@ -59,12 +59,6 @@ export function LoginPage() {
     }
   }
 
-  // Demo login credentials
-  const demoCredentials = [
-    { role: 'Admin', email: 'admin@onyx.com', password: 'password' },
-    { role: 'Building Manager', email: 'manager@onyx.com', password: 'password' },
-    { role: 'Assessor', email: 'assessor@onyx.com', password: 'password' },
-  ];
 
   return (
     <Card className="border-none shadow-2xl bg-card/95 backdrop-blur-xl">
@@ -154,33 +148,6 @@ export function LoginPage() {
           </Link>
         </div>
       </CardContent>
-      <CardFooter className="flex flex-col space-y-4 pt-0">
-        <div className="relative">
-          <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t" />
-          </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-card px-2 text-muted-foreground">Demo Accounts</span>
-          </div>
-        </div>
-        <div className="grid gap-2 text-sm">
-          {demoCredentials.map((cred, index) => (
-            <div key={index} className="flex justify-between items-center border border-border/50 rounded-lg p-3 hover:bg-muted/50 transition-all duration-200">
-              <span className="font-medium">{cred.role}</span>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  form.setValue('email', cred.email);
-                  form.setValue('password', cred.password);
-                }}
-              >
-                Use credentials
-              </Button>
-            </div>
-          ))}
-        </div>
-      </CardFooter>
     </Card>
   );
 }
