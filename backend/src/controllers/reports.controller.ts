@@ -134,7 +134,7 @@ export const getAllReports = async (
       SELECT 
         r.*,
         b.name as building_name,
-        b.street_address,
+        b.address as street_address,
         b.city,
         b.state,
         b.building_type as building_type,
@@ -246,7 +246,7 @@ export const getReportById = async (
       `SELECT 
         r.*,
         b.name as building_name,
-        b.street_address,
+        b.address as street_address,
         b.city,
         b.state,
         b.building_type as building_type,

@@ -50,11 +50,12 @@ export const createAssessment = async (
 
     const result = await pool.query(
       `INSERT INTO assessments (
-        building_id, assessment_type, status, scheduled_date, 
+        organization_id, building_id, assessment_type, status, scheduled_date, 
         assigned_to, created_by, created_at, updated_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW()) 
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW()) 
       RETURNING *`,
       [
+        user.organization_id,
         building_id,
         type,
         'pending',
@@ -83,12 +84,13 @@ export const getAllAssessments = async (
 ) => {
   try {
     const { building_id, type, status, assigned_to, limit = 50, offset = 0 } = req.query;
+    const user = (req as any).user;
 
     let query = `
       SELECT 
         a.*,
         b.name as building_name,
-        b.street_address,
+        b.address as street_address,
         b.city,
         b.state,
         u1.name as assigned_to_name,
@@ -97,9 +99,9 @@ export const getAllAssessments = async (
       LEFT JOIN buildings b ON a.building_id = b.id
       LEFT JOIN users u1 ON a.assigned_to = u1.id
       LEFT JOIN users u2 ON a.created_by = u2.id
-      WHERE 1=1
+      WHERE a.organization_id = $1
     `;
-    const params: any[] = [];
+    const params: any[] = [user.organization_id];
 
     if (building_id) {
       params.push(building_id);
@@ -183,15 +185,16 @@ export const getAssessmentById = async (
 ) => {
   try {
     const { id } = req.params;
+    const user = (req as any).user;
 
     const result = await pool.query(
       `SELECT 
         a.*,
         b.name as building_name,
-        b.street_address,
+        b.address as street_address,
         b.city,
         b.state,
-        b.type as building_type,
+        b.building_type as building_type,
         b.year_built,
         b.square_footage,
         u1.name as assigned_to_name,
@@ -200,8 +203,8 @@ export const getAssessmentById = async (
       LEFT JOIN buildings b ON a.building_id = b.id
       LEFT JOIN users u1 ON a.assigned_to = u1.id
       LEFT JOIN users u2 ON a.created_by = u2.id
-      WHERE a.id = $1`,
-      [id]
+      WHERE a.id = $1 AND a.organization_id = $2`,
+      [id, user.organization_id]
     );
 
     if (result.rows.length === 0) {
