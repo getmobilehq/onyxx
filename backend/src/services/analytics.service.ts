@@ -81,11 +81,15 @@ export class AnalyticsService {
         SELECT 
           b.id,
           b.name,
-          b.type,
+          b.building_type as type,
           b.year_built,
-          EXTRACT(YEAR FROM CURRENT_DATE) - b.year_built as age,
+          EXTRACT(YEAR FROM CURRENT_DATE) - COALESCE(b.year_built, EXTRACT(YEAR FROM CURRENT_DATE) - 30) as age,
           b.square_footage,
-          COALESCE(b.cost_per_sqft, 150) as cost_per_sqft,
+          CASE 
+            WHEN b.square_footage > 0 AND b.replacement_value > 0 
+            THEN b.replacement_value / b.square_footage
+            ELSE 150 
+          END as cost_per_sqft,
           ft.latest_fci,
           ft.fci_trend,
           COALESCE(ad.total_assessments, 0) as total_assessments,
@@ -127,7 +131,11 @@ export class AnalyticsService {
             b.id,
             b.name,
             EXTRACT(YEAR FROM CURRENT_DATE) - b.year_built as age,
-            COALESCE(b.cost_per_sqft, 150) as cost_per_sqft,
+            CASE 
+              WHEN b.square_footage > 0 AND b.replacement_value > 0 
+              THEN b.replacement_value / b.square_footage
+              ELSE 150 
+            END as cost_per_sqft,
             CASE 
               WHEN a.notes IS NOT NULL AND a.notes ~ 'FCI Score: ([0-9.]+)'
               THEN REGEXP_REPLACE(REGEXP_SUBSTR(a.notes, 'FCI Score: ([0-9.]+)'), '[^0-9.]', '', 'g')::numeric
@@ -195,7 +203,11 @@ export class AnalyticsService {
           SELECT 
             b.id as building_id,
             b.name as building_name,
-            COALESCE(b.cost_per_sqft, 150) as cost_per_sqft,
+            CASE 
+              WHEN b.square_footage > 0 AND b.replacement_value > 0 
+              THEN b.replacement_value / b.square_footage
+              ELSE 150 
+            END as cost_per_sqft,
             EXTRACT(YEAR FROM CURRENT_DATE) - b.year_built as age,
             CASE 
               WHEN a.notes IS NOT NULL AND a.notes ~ 'FCI Score: ([0-9.]+)'

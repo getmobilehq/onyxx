@@ -282,9 +282,9 @@ export const organizationsAPI = {
 export const analyticsAPI = {
   getSummary: (params?: { timeRange?: string }) => api.get('/analytics/summary', { params }),
   getBuildingAnalytics: () => api.get('/analytics/buildings'),
-  getFCICorrelation: () => api.get('/analytics/fci-correlation'),
+  getFCICorrelation: () => api.get('/analytics/fci-age-correlation'),
   getCostTrends: (params?: { timeRange?: string }) => api.get('/analytics/cost-trends', { params }),
-  getEfficiency: () => api.get('/analytics/efficiency'),
+  getEfficiency: () => api.get('/analytics/cost-efficiency'),
 };
 
 export default api;
