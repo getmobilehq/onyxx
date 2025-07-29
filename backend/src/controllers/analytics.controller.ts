@@ -92,9 +92,11 @@ export const getAnalyticsSummary = async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error('Error fetching analytics summary:', error);
+    console.error('Error details:', error.message, error.stack);
     res.status(500).json({
       success: false,
-      message: 'Failed to fetch analytics summary'
+      message: 'Failed to fetch analytics summary',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };

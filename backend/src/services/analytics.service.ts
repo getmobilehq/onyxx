@@ -60,7 +60,7 @@ export class AnalyticsService {
               ORDER BY a.created_at DESC
             ) FILTER (WHERE a.notes IS NOT NULL) as fci_history
           FROM assessments a
-          WHERE a.status = 'completed'
+          WHERE a.status = 'completed' AND a.organization_id = $1
           GROUP BY a.building_id
         ),
         fci_trends AS (
@@ -332,25 +332,26 @@ export class AnalyticsService {
         this.getMaintenanceCostTrends(12, organizationId)
       ]);
 
-      // Calculate summary metrics
+      // Calculate summary metrics with proper null/zero handling
       const totalBuildings = buildingAnalytics.length;
-      const avgAge = buildingAnalytics.reduce((sum, b) => sum + b.age, 0) / totalBuildings;
-      const avgFCI = buildingAnalytics
-        .filter(b => b.latest_fci !== null)
-        .reduce((sum, b) => sum + (b.latest_fci || 0), 0) / 
-        buildingAnalytics.filter(b => b.latest_fci !== null).length;
+      const avgAge = totalBuildings > 0 ? 
+        buildingAnalytics.reduce((sum, b) => sum + b.age, 0) / totalBuildings : 0;
       
-      const avgCostPerSqft = buildingAnalytics
-        .reduce((sum, b) => sum + b.cost_per_sqft, 0) / totalBuildings;
+      const buildingsWithFCI = buildingAnalytics.filter(b => b.latest_fci !== null);
+      const avgFCI = buildingsWithFCI.length > 0 ? 
+        buildingsWithFCI.reduce((sum, b) => sum + (b.latest_fci || 0), 0) / buildingsWithFCI.length : 0;
       
-      const avgRepairCostPerSqft = buildingAnalytics
-        .reduce((sum, b) => sum + b.cost_per_sqft_actual, 0) / totalBuildings;
+      const avgCostPerSqft = totalBuildings > 0 ? 
+        buildingAnalytics.reduce((sum, b) => sum + b.cost_per_sqft, 0) / totalBuildings : 0;
+      
+      const avgRepairCostPerSqft = totalBuildings > 0 ? 
+        buildingAnalytics.reduce((sum, b) => sum + b.cost_per_sqft_actual, 0) / totalBuildings : 0;
 
       return {
         summary: {
           total_buildings: totalBuildings,
           avg_age: Math.round(avgAge),
-          avg_fci: Number(avgFCI.toFixed(4)),
+          avg_fci: avgFCI > 0 ? Number(avgFCI.toFixed(4)) : null,
           avg_cost_per_sqft: Math.round(avgCostPerSqft),
           avg_repair_cost_per_sqft: Math.round(avgRepairCostPerSqft)
         },
