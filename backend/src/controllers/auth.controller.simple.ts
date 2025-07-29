@@ -80,6 +80,7 @@ export const register = async (
       email: user.email,
       role: user.role,
       name: user.name,
+      organization_id: user.organization_id || 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
     });
 
     res.status(201).json({
@@ -149,6 +150,7 @@ export const login = async (
       email: user.email,
       role: user.role,
       name: user.name,
+      organization_id: user.organization_id || 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
     });
 
     res.json({
@@ -199,6 +201,7 @@ export const refreshToken = async (
       email: decoded.email,
       role: decoded.role,
       name: decoded.name,
+      organization_id: decoded.organization_id,
     });
 
     res.json({
