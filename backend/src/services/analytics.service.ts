@@ -37,7 +37,7 @@ export class AnalyticsService {
   /**
    * Get detailed building analytics with cost and FCI metrics
    */
-  static async getBuildingAnalytics(): Promise<BuildingAnalytics[]> {
+  static async getBuildingAnalytics(organizationId: string): Promise<BuildingAnalytics[]> {
     try {
       const query = `
         WITH assessment_data AS (
@@ -109,10 +109,11 @@ export class AnalyticsService {
         FROM buildings b
         LEFT JOIN assessment_data ad ON b.id = ad.building_id
         LEFT JOIN fci_trends ft ON b.id = ft.building_id
+        WHERE b.organization_id = $1
         ORDER BY b.name
       `;
       
-      const result = await pool.query(query);
+      const result = await pool.query(query, [organizationId]);
       return result.rows;
     } catch (error) {
       console.error('Error fetching building analytics:', error);
@@ -123,7 +124,7 @@ export class AnalyticsService {
   /**
    * Analyze correlation between building age and FCI scores
    */
-  static async getFCIAgeCorrelation(): Promise<FCIAgeCorrelation[]> {
+  static async getFCIAgeCorrelation(organizationId: string): Promise<FCIAgeCorrelation[]> {
     try {
       const query = `
         WITH building_fci AS (
@@ -151,6 +152,7 @@ export class AnalyticsService {
             ORDER BY created_at DESC 
             LIMIT 1
           ) a ON true
+          WHERE b.organization_id = $1
         ),
         age_groups AS (
           SELECT 
@@ -185,7 +187,7 @@ export class AnalyticsService {
           END
       `;
       
-      const result = await pool.query(query);
+      const result = await pool.query(query, [organizationId]);
       return result.rows;
     } catch (error) {
       console.error('Error fetching FCI age correlation:', error);
@@ -196,7 +198,7 @@ export class AnalyticsService {
   /**
    * Analyze cost efficiency across buildings
    */
-  static async getCostEfficiencyAnalysis(): Promise<CostEfficiencyAnalysis[]> {
+  static async getCostEfficiencyAnalysis(organizationId: string): Promise<CostEfficiencyAnalysis[]> {
     try {
       const query = `
         WITH building_costs AS (
@@ -229,7 +231,7 @@ export class AnalyticsService {
             ORDER BY created_at DESC 
             LIMIT 1
           ) a ON true
-          WHERE b.square_footage > 0
+          WHERE b.square_footage > 0 AND b.organization_id = $1
         )
         SELECT 
           building_id,
@@ -250,7 +252,7 @@ export class AnalyticsService {
         ORDER BY efficiency_score DESC, fci ASC
       `;
       
-      const result = await pool.query(query);
+      const result = await pool.query(query, [organizationId]);
       return result.rows;
     } catch (error) {
       console.error('Error fetching cost efficiency analysis:', error);
@@ -261,7 +263,7 @@ export class AnalyticsService {
   /**
    * Get maintenance cost trends over time
    */
-  static async getMaintenanceCostTrends(months: number = 12): Promise<any[]> {
+  static async getMaintenanceCostTrends(months: number = 12, organizationId: string): Promise<any[]> {
     try {
       const query = `
         WITH monthly_costs AS (
@@ -292,6 +294,7 @@ export class AnalyticsService {
           FROM assessments a
           WHERE a.status = 'completed'
             AND a.created_at >= CURRENT_DATE - INTERVAL '${months} months'
+            AND a.organization_id = $1
           GROUP BY DATE_TRUNC('month', a.created_at)
         )
         SELECT 
@@ -304,7 +307,7 @@ export class AnalyticsService {
         ORDER BY month
       `;
       
-      const result = await pool.query(query);
+      const result = await pool.query(query, [organizationId]);
       return result.rows;
     } catch (error) {
       console.error('Error fetching maintenance cost trends:', error);
@@ -315,7 +318,7 @@ export class AnalyticsService {
   /**
    * Get comprehensive analytics summary
    */
-  static async getAnalyticsSummary(): Promise<any> {
+  static async getAnalyticsSummary(organizationId: string): Promise<any> {
     try {
       const [
         buildingAnalytics,
@@ -323,10 +326,10 @@ export class AnalyticsService {
         costEfficiency,
         costTrends
       ] = await Promise.all([
-        this.getBuildingAnalytics(),
-        this.getFCIAgeCorrelation(),
-        this.getCostEfficiencyAnalysis(),
-        this.getMaintenanceCostTrends()
+        this.getBuildingAnalytics(organizationId),
+        this.getFCIAgeCorrelation(organizationId),
+        this.getCostEfficiencyAnalysis(organizationId),
+        this.getMaintenanceCostTrends(12, organizationId)
       ]);
 
       // Calculate summary metrics

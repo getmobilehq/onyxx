@@ -4,7 +4,8 @@ import AnalyticsService from '../services/analytics.service';
 // Get building analytics with cost and FCI metrics
 export const getBuildingAnalytics = async (req: Request, res: Response) => {
   try {
-    const analytics = await AnalyticsService.getBuildingAnalytics();
+    const user = (req as any).user;
+    const analytics = await AnalyticsService.getBuildingAnalytics(user.organization_id);
     
     res.json({
       success: true,
@@ -22,7 +23,8 @@ export const getBuildingAnalytics = async (req: Request, res: Response) => {
 // Get FCI and age correlation analysis
 export const getFCIAgeCorrelation = async (req: Request, res: Response) => {
   try {
-    const correlation = await AnalyticsService.getFCIAgeCorrelation();
+    const user = (req as any).user;
+    const correlation = await AnalyticsService.getFCIAgeCorrelation(user.organization_id);
     
     res.json({
       success: true,
@@ -40,7 +42,8 @@ export const getFCIAgeCorrelation = async (req: Request, res: Response) => {
 // Get cost efficiency analysis
 export const getCostEfficiencyAnalysis = async (req: Request, res: Response) => {
   try {
-    const efficiency = await AnalyticsService.getCostEfficiencyAnalysis();
+    const user = (req as any).user;
+    const efficiency = await AnalyticsService.getCostEfficiencyAnalysis(user.organization_id);
     
     res.json({
       success: true,
@@ -60,8 +63,9 @@ export const getMaintenanceCostTrends = async (req: Request, res: Response) => {
   try {
     const { months } = req.query;
     const monthsNum = months ? parseInt(months as string) : 12;
+    const user = (req as any).user;
     
-    const trends = await AnalyticsService.getMaintenanceCostTrends(monthsNum);
+    const trends = await AnalyticsService.getMaintenanceCostTrends(monthsNum, user.organization_id);
     
     res.json({
       success: true,
@@ -79,7 +83,8 @@ export const getMaintenanceCostTrends = async (req: Request, res: Response) => {
 // Get comprehensive analytics summary
 export const getAnalyticsSummary = async (req: Request, res: Response) => {
   try {
-    const summary = await AnalyticsService.getAnalyticsSummary();
+    const user = (req as any).user;
+    const summary = await AnalyticsService.getAnalyticsSummary(user.organization_id);
     
     res.json({
       success: true,
