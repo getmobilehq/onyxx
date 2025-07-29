@@ -13,9 +13,8 @@ export const getAllBuildings = async (
     const { type, status, search } = req.query;
 
     let query = `
-      SELECT b.id, b.name, b.type, b.construction_type, b.year_built, b.square_footage,
-             b.state, b.city, b.zip_code, b.street_address, b.cost_per_sqft, 
-             b.image_url, b.status, b.created_at, b.updated_at,
+      SELECT b.id, b.name, b.building_type as type, b.construction_type, b.year_built, b.square_footage,
+             b.state, b.city, b.zip_code, b.address as street_address, b.image_url, b.status, b.created_at, b.updated_at,
              (
                SELECT a.fci_score 
                FROM assessments a 
@@ -33,7 +32,7 @@ export const getAllBuildings = async (
     // Add filters
     if (type) {
       params.push(type);
-      query += ` AND type = $${params.length}`;
+      query += ` AND building_type = $${params.length}`;
     }
 
     if (status) {
@@ -43,7 +42,7 @@ export const getAllBuildings = async (
 
     if (search) {
       params.push(`%${search}%`);
-      query += ` AND (name ILIKE $${params.length} OR street_address ILIKE $${params.length} OR city ILIKE $${params.length})`;
+      query += ` AND (name ILIKE $${params.length} OR address ILIKE $${params.length} OR city ILIKE $${params.length})`;
     }
 
     query += ' ORDER BY created_at DESC';
@@ -72,9 +71,9 @@ export const getBuildingById = async (
     const { id } = req.params;
 
     const result = await pool.query(
-      `SELECT id, name, type, construction_type, year_built, square_footage,
-              state, city, zip_code, street_address, cost_per_sqft, 
-              image_url, status, created_by_user_id, created_at, updated_at
+      `SELECT id, name, building_type as type, construction_type, year_built, square_footage,
+              state, city, zip_code, address as street_address, 
+              image_url, status, created_by as created_by_user_id, created_at, updated_at
        FROM buildings
        WHERE id = $1`,
       [id]
@@ -131,16 +130,16 @@ export const createBuilding = async (
 
     const result = await pool.query(
       `INSERT INTO buildings (
-        name, type, construction_type, year_built, square_footage,
-        state, city, zip_code, street_address, cost_per_sqft, 
-        image_url, created_by_user_id, status
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
-      RETURNING id, name, type, construction_type, year_built, square_footage,
-                state, city, zip_code, street_address, cost_per_sqft, 
+        name, building_type, construction_type, year_built, square_footage,
+        state, city, zip_code, address, 
+        image_url, created_by, status
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+      RETURNING id, name, building_type as type, construction_type, year_built, square_footage,
+                state, city, zip_code, address as street_address, 
                 image_url, status, created_at`,
       [
         name, type, construction_type, year_built, square_footage,
-        state, city, zip_code, street_address, cost_per_sqft,
+        state, city, zip_code, street_address,
         image_url, userId, 'pending'
       ]
     );
@@ -181,14 +180,15 @@ export const updateBuilding = async (
     let paramCount = 1;
 
     const allowedFields = [
-      'name', 'type', 'construction_type', 'year_built', 'square_footage',
-      'state', 'city', 'zip_code', 'street_address', 'cost_per_sqft',
+      'name', 'building_type', 'construction_type', 'year_built', 'square_footage',
+      'state', 'city', 'zip_code', 'address',
       'image_url', 'status'
     ];
 
     allowedFields.forEach(field => {
       if (updateFields[field] !== undefined) {
-        updates.push(`${field} = $${paramCount}`);
+        const dbField = field === 'type' ? 'building_type' : field === 'street_address' ? 'address' : field;
+        updates.push(`${dbField} = $${paramCount}`);
         values.push(updateFields[field]);
         paramCount++;
       }
@@ -209,8 +209,8 @@ export const updateBuilding = async (
       `UPDATE buildings 
        SET ${updates.join(', ')}
        WHERE id = $${paramCount}
-       RETURNING id, name, type, construction_type, year_built, square_footage,
-                 state, city, zip_code, street_address, cost_per_sqft, 
+       RETURNING id, name, building_type as type, construction_type, year_built, square_footage,
+                 state, city, zip_code, address as street_address, 
                  image_url, status, updated_at`,
       values
     );
