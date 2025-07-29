@@ -21,7 +21,7 @@ export const getAllBuildings = async (
                WHERE a.building_id = b.id 
                  AND a.status = 'completed' 
                  AND a.fci_score IS NOT NULL
-               ORDER BY a.completed_at DESC 
+               ORDER BY a.completion_date DESC 
                LIMIT 1
              ) as latest_fci_score
       FROM buildings b

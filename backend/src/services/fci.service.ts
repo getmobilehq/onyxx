@@ -342,7 +342,7 @@ export const completeAssessmentWithFCI = async (assessmentId: string): Promise<F
     const updateQuery = `
       UPDATE assessments 
       SET status = 'completed', 
-          completed_at = CURRENT_TIMESTAMP,
+          completion_date = CURRENT_TIMESTAMP,
           notes = $2
       WHERE id = $1
     `;

@@ -236,7 +236,7 @@ export const updateAssessment = async (
       scheduled_date,
       assigned_to,
       started_at,
-      completed_at,
+      completion_date,
       notes
     } = req.body;
 
@@ -288,9 +288,9 @@ export const updateAssessment = async (
       paramCount++;
     }
 
-    if (completed_at !== undefined) {
-      updates.push(`completed_at = $${paramCount}`);
-      params.push(completed_at);
+    if (completion_date !== undefined) {
+      updates.push(`completion_date = $${paramCount}`);
+      params.push(completion_date);
       paramCount++;
     }
 

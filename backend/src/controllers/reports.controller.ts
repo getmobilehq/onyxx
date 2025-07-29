@@ -71,7 +71,7 @@ export const createReport = async (
     const result = await pool.query(
       `INSERT INTO reports (
         assessment_id, building_id, title, description, report_type, status,
-        assessment_date, report_date, created_by_user_id, assessor_name,
+        assessment_date, report_date, generated_by, assessor_name,
         fci_score, total_repair_cost, replacement_value, immediate_repair_cost,
         short_term_repair_cost, long_term_repair_cost, element_count, deficiency_count,
         executive_summary, recommendations, systems_data, created_at, updated_at
@@ -137,12 +137,12 @@ export const getAllReports = async (
         b.street_address,
         b.city,
         b.state,
-        b.type as building_type,
+        b.building_type as building_type,
         u.name as created_by_name,
-        a.type as assessment_type
+        a.assessment_type as assessment_type
       FROM reports r
       LEFT JOIN buildings b ON r.building_id = b.id
-      LEFT JOIN users u ON r.created_by_user_id = u.id
+      LEFT JOIN users u ON r.generated_by = u.id
       LEFT JOIN assessments a ON r.assessment_id = a.id
       WHERE 1=1
     `;
@@ -249,16 +249,16 @@ export const getReportById = async (
         b.street_address,
         b.city,
         b.state,
-        b.type as building_type,
+        b.building_type as building_type,
         b.year_built,
         b.square_footage,
         u.name as created_by_name,
-        a.type as assessment_type,
-        a.started_at as assessment_started,
-        a.completed_at as assessment_completed
+        a.assessment_type as assessment_type,
+        a.start_date as assessment_started,
+        a.completion_date as assessment_completed
       FROM reports r
       LEFT JOIN buildings b ON r.building_id = b.id
-      LEFT JOIN users u ON r.created_by_user_id = u.id
+      LEFT JOIN users u ON r.generated_by = u.id
       LEFT JOIN assessments a ON r.assessment_id = a.id
       WHERE r.id = $1`,
       [id]
@@ -505,7 +505,7 @@ export const generateReportFromAssessment = async (
 
     // Check if assessment exists and is completed
     const assessmentResult = await pool.query(
-      `SELECT a.*, b.name as building_name, b.id as building_id, b.square_footage, b.type as building_type
+      `SELECT a.*, b.name as building_name, b.id as building_id, b.square_footage, b.building_type as building_type
        FROM assessments a
        JOIN buildings b ON a.building_id = b.id
        WHERE a.id = $1`,
@@ -566,7 +566,7 @@ export const generateReportFromAssessment = async (
     const reportResult = await pool.query(
       `INSERT INTO reports (
         assessment_id, building_id, title, description, report_type, status,
-        assessment_date, report_date, created_by_user_id, assessor_name,
+        assessment_date, report_date, generated_by, assessor_name,
         fci_score, total_repair_cost, replacement_value, immediate_repair_cost,
         short_term_repair_cost, long_term_repair_cost, element_count, deficiency_count,
         systems_data, created_at, updated_at
@@ -579,7 +579,7 @@ export const generateReportFromAssessment = async (
         `Automated report generated from completed assessment`,
         'facility_condition',
         'published',
-        assessment.completed_at || assessment.created_at,
+        assessment.completion_date || assessment.created_at,
         new Date(),
         user.id,
         user.name,

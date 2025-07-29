@@ -67,7 +67,7 @@ export class ReportGeneratorService {
         doc.text(`Assessment Type: ${data.type}`);
         doc.text(`Status: ${data.status}`);
         doc.text(`Assessor: ${data.assessor_name || 'Not assigned'}`);
-        doc.text(`Completed Date: ${data.completed_at ? new Date(data.completed_at).toLocaleDateString() : 'In progress'}`);
+        doc.text(`Completed Date: ${data.completion_date ? new Date(data.completion_date).toLocaleDateString() : 'In progress'}`);
         doc.moveDown();
         
         // FCI Results (if available in notes)
@@ -154,7 +154,7 @@ export class ReportGeneratorService {
           a.type as assessment_type,
           a.status,
           a.created_at,
-          a.completed_at,
+          a.completion_date,
           a.notes,
           b.name as building_name,
           b.type as building_type,
@@ -222,7 +222,7 @@ export class ReportGeneratorService {
         { header: 'State', key: 'state', width: 10 },
         { header: 'Assessor', key: 'assessor_name', width: 20 },
         { header: 'Created Date', key: 'created_at', width: 15 },
-        { header: 'Completed Date', key: 'completed_at', width: 15 },
+        { header: 'Completed Date', key: 'completion_date', width: 15 },
         { header: 'FCI Score', key: 'fci', width: 12 },
         { header: 'Total Cost', key: 'total_cost', width: 15 },
         { header: 'Immediate Cost', key: 'immediate_cost', width: 15 },
@@ -260,7 +260,7 @@ export class ReportGeneratorService {
           short_term_cost: shortTermCost,
           long_term_cost: longTermCost,
           created_at: row.created_at ? new Date(row.created_at).toLocaleDateString() : '',
-          completed_at: row.completed_at ? new Date(row.completed_at).toLocaleDateString() : '',
+          completion_date: row.completion_date ? new Date(row.completion_date).toLocaleDateString() : '',
         };
       });
       
