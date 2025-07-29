@@ -12,6 +12,8 @@ export const getAllBuildings = async (
   try {
     const { type, status, search } = req.query;
 
+    const user = (req as any).user;
+    
     let query = `
       SELECT b.id, b.name, b.building_type as type, b.construction_type, b.year_built, b.square_footage,
              b.state, b.city, b.zip_code, b.address as street_address, b.image_url, b.status, b.created_at, b.updated_at,
@@ -25,9 +27,9 @@ export const getAllBuildings = async (
                LIMIT 1
              ) as latest_fci_score
       FROM buildings b
-      WHERE 1=1
+      WHERE b.organization_id = $1
     `;
-    const params: any[] = [];
+    const params: any[] = [user.organization_id];
 
     // Add filters
     if (type) {
@@ -69,14 +71,15 @@ export const getBuildingById = async (
 ) => {
   try {
     const { id } = req.params;
+    const user = (req as any).user;
 
     const result = await pool.query(
       `SELECT id, name, building_type as type, construction_type, year_built, square_footage,
               state, city, zip_code, address as street_address, 
               image_url, status, created_by as created_by_user_id, created_at, updated_at
        FROM buildings
-       WHERE id = $1`,
-      [id]
+       WHERE id = $1 AND organization_id = $2`,
+      [id, user.organization_id]
     );
 
     if (result.rows.length === 0) {
@@ -126,21 +129,21 @@ export const createBuilding = async (
       image_url
     } = req.body;
 
-    const userId = req.user?.id;
+    const user = (req as any).user;
 
     const result = await pool.query(
       `INSERT INTO buildings (
-        name, building_type, construction_type, year_built, square_footage,
+        organization_id, name, building_type, construction_type, year_built, square_footage,
         state, city, zip_code, address, 
         image_url, created_by, status
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
       RETURNING id, name, building_type as type, construction_type, year_built, square_footage,
                 state, city, zip_code, address as street_address, 
                 image_url, status, created_at`,
       [
-        name, type, construction_type, year_built, square_footage,
+        user.organization_id, name, type, construction_type, year_built, square_footage,
         state, city, zip_code, street_address,
-        image_url, userId, 'pending'
+        image_url, user.id, 'active'
       ]
     );
 
