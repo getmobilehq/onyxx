@@ -44,21 +44,8 @@ export class AnalyticsService {
           SELECT 
             a.building_id,
             COUNT(a.id) as total_assessments,
-            AVG(
-              CASE 
-                WHEN a.notes IS NOT NULL AND a.notes ~ 'Total Repair Cost: \\$([0-9,]+)'
-                THEN REGEXP_REPLACE(REGEXP_SUBSTR(a.notes, 'Total Repair Cost: \\$([0-9,]+)'), '[^0-9]', '', 'g')::numeric
-                ELSE 0
-              END
-            ) as avg_repair_cost,
-            ARRAY_AGG(
-              CASE 
-                WHEN a.notes IS NOT NULL AND a.notes ~ 'FCI Score: ([0-9.]+)'
-                THEN REGEXP_REPLACE(REGEXP_SUBSTR(a.notes, 'FCI Score: ([0-9.]+)'), '[^0-9.]', '', 'g')::numeric
-                ELSE NULL
-              END
-              ORDER BY a.created_at DESC
-            ) FILTER (WHERE a.notes IS NOT NULL) as fci_history
+            AVG(COALESCE(a.total_deficiency_cost, 0)) as avg_repair_cost,
+            ARRAY_AGG(a.fci_score ORDER BY a.created_at DESC) FILTER (WHERE a.fci_score IS NOT NULL) as fci_history
           FROM assessments a
           WHERE a.status = 'completed' AND a.organization_id = $1
           GROUP BY a.building_id
@@ -137,18 +124,14 @@ export class AnalyticsService {
               THEN b.replacement_value / b.square_footage
               ELSE 150 
             END as cost_per_sqft,
-            CASE 
-              WHEN a.notes IS NOT NULL AND a.notes ~ 'FCI Score: ([0-9.]+)'
-              THEN REGEXP_REPLACE(REGEXP_SUBSTR(a.notes, 'FCI Score: ([0-9.]+)'), '[^0-9.]', '', 'g')::numeric
-              ELSE NULL
-            END as fci
+            a.fci_score as fci
           FROM buildings b
           LEFT JOIN LATERAL (
-            SELECT notes 
+            SELECT fci_score, total_deficiency_cost 
             FROM assessments 
             WHERE building_id = b.id 
               AND status = 'completed' 
-              AND notes IS NOT NULL 
+              AND fci_score IS NOT NULL 
             ORDER BY created_at DESC 
             LIMIT 1
           ) a ON true
@@ -211,23 +194,19 @@ export class AnalyticsService {
               ELSE 150 
             END as cost_per_sqft,
             EXTRACT(YEAR FROM CURRENT_DATE) - b.year_built as age,
+            COALESCE(a.fci_score, 0.15) as fci,
             CASE 
-              WHEN a.notes IS NOT NULL AND a.notes ~ 'FCI Score: ([0-9.]+)'
-              THEN REGEXP_REPLACE(REGEXP_SUBSTR(a.notes, 'FCI Score: ([0-9.]+)'), '[^0-9.]', '', 'g')::numeric
-              ELSE 0.15
-            END as fci,
-            CASE 
-              WHEN a.notes IS NOT NULL AND a.notes ~ 'Total Repair Cost: \\$([0-9,]+)' AND b.square_footage > 0
-              THEN REGEXP_REPLACE(REGEXP_SUBSTR(a.notes, 'Total Repair Cost: \\$([0-9,]+)'), '[^0-9]', '', 'g')::numeric / b.square_footage
+              WHEN a.total_deficiency_cost IS NOT NULL AND b.square_footage > 0
+              THEN a.total_deficiency_cost / b.square_footage
               ELSE 0
             END as repair_cost_per_sqft
           FROM buildings b
           LEFT JOIN LATERAL (
-            SELECT notes 
+            SELECT fci_score, total_deficiency_cost 
             FROM assessments 
             WHERE building_id = b.id 
               AND status = 'completed' 
-              AND notes IS NOT NULL 
+              AND fci_score IS NOT NULL 
             ORDER BY created_at DESC 
             LIMIT 1
           ) a ON true
@@ -270,27 +249,9 @@ export class AnalyticsService {
           SELECT 
             DATE_TRUNC('month', a.created_at) as month,
             COUNT(a.id) as assessment_count,
-            AVG(
-              CASE 
-                WHEN a.notes IS NOT NULL AND a.notes ~ 'Total Repair Cost: \\$([0-9,]+)'
-                THEN REGEXP_REPLACE(REGEXP_SUBSTR(a.notes, 'Total Repair Cost: \\$([0-9,]+)'), '[^0-9]', '', 'g')::numeric
-                ELSE 0
-              END
-            ) as avg_repair_cost,
-            SUM(
-              CASE 
-                WHEN a.notes IS NOT NULL AND a.notes ~ 'Total Repair Cost: \\$([0-9,]+)'
-                THEN REGEXP_REPLACE(REGEXP_SUBSTR(a.notes, 'Total Repair Cost: \\$([0-9,]+)'), '[^0-9]', '', 'g')::numeric
-                ELSE 0
-              END
-            ) as total_repair_cost,
-            AVG(
-              CASE 
-                WHEN a.notes IS NOT NULL AND a.notes ~ 'FCI Score: ([0-9.]+)'
-                THEN REGEXP_REPLACE(REGEXP_SUBSTR(a.notes, 'FCI Score: ([0-9.]+)'), '[^0-9.]', '', 'g')::numeric
-                ELSE NULL
-              END
-            ) as avg_fci
+            AVG(COALESCE(a.total_deficiency_cost, 0)) as avg_repair_cost,
+            SUM(COALESCE(a.total_deficiency_cost, 0)) as total_repair_cost,
+            AVG(a.fci_score) as avg_fci
           FROM assessments a
           WHERE a.status = 'completed'
             AND a.created_at >= CURRENT_DATE - INTERVAL '${months} months'
