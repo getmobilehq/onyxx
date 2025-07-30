@@ -6,6 +6,8 @@ import { useAuth } from '@/context/auth-context';
 export function NotFoundPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  
+  // Force rebuild to show custom 404 page
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center text-center p-4 bg-gradient-to-b from-background to-muted/20">
