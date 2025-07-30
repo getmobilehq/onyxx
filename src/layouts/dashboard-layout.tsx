@@ -88,12 +88,13 @@ export function DashboardLayout() {
       icon: FileText,
       current: pathname.startsWith('/reports'),
     },
-    {
-      name: 'Analytics',
-      href: '/analytics',
-      icon: BarChart3,
-      current: pathname.startsWith('/analytics'),
-    },
+    // Temporarily hidden due to API issues
+    // {
+    //   name: 'Analytics',
+    //   href: '/analytics',
+    //   icon: BarChart3,
+    //   current: pathname.startsWith('/analytics'),
+    // },
     {
       name: 'Team',
       href: '/team',

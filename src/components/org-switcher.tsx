@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Check, ChevronsUpDown, Plus, Building } from 'lucide-react';
+import { Check, ChevronsUpDown, Building } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -12,16 +12,7 @@ import {
   CommandList,
   CommandSeparator,
 } from '@/components/ui/command';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+// Dialog imports removed - organization creation not implemented
 import {
   Popover,
   PopoverContent,
@@ -37,36 +28,14 @@ type Organization = {
   createdAt: string;
 };
 
-// Mock organizations - in real app, this would come from API
-const mockOrganizations: Organization[] = [
-  {
-    id: '1',
-    name: 'Acme Construction Corp',
-    subscription: 'professional',
-    createdAt: '2023-01-15T00:00:00.000Z',
-  },
-  {
-    id: '2',
-    name: 'BuildTech Solutions',
-    subscription: 'enterprise',
-    createdAt: '2023-04-22T00:00:00.000Z',
-  },
-  {
-    id: '3',
-    name: 'Urban Development LLC',
-    subscription: 'professional',
-    createdAt: '2024-01-05T00:00:00.000Z',
-  },
-];
+// Organizations now come from org context (real API data)
 
 export function OrgSwitcher() {
-  const { currentOrg, setCurrentOrg } = useOrg();
+  const { currentOrg, setCurrentOrg, organizations } = useOrg();
   const [open, setOpen] = useState(false);
-  const [showNewOrgDialog, setShowNewOrgDialog] = useState(false);
-  const [newOrgName, setNewOrgName] = useState('');
 
-  // Find current organization from mock data
-  const currentOrgData = mockOrganizations.find(org => org.id === currentOrg?.id) || mockOrganizations[0];
+  // Use current organization from context
+  const currentOrgData = currentOrg;
 
   const handleOrgSelect = (org: Organization) => {
     setCurrentOrg({
@@ -79,29 +48,7 @@ export function OrgSwitcher() {
     toast.success(`Switched to ${org.name}`);
   };
 
-  const handleCreateOrg = () => {
-    if (!newOrgName.trim()) {
-      toast.error('Organization name is required');
-      return;
-    }
-
-    // In real app, this would make an API call
-    const newOrg: Organization = {
-      id: Date.now().toString(),
-      name: newOrgName.trim(),
-      subscription: 'professional',
-      createdAt: new Date().toISOString(),
-    };
-
-    mockOrganizations.push(newOrg);
-    
-    setCurrentOrg(newOrg);
-
-    toast.success(`Created and switched to ${newOrg.name}`);
-    setShowNewOrgDialog(false);
-    setNewOrgName('');
-    setOpen(false);
-  };
+  // Organization creation removed - not implemented in backend
 
   return (
     <>
@@ -127,7 +74,7 @@ export function OrgSwitcher() {
             <CommandList>
               <CommandEmpty>No organizations found.</CommandEmpty>
               <CommandGroup heading="Organizations">
-                {mockOrganizations.map((org) => (
+                {organizations.map((org) => (
                   <CommandItem
                     key={org.id}
                     onSelect={() => handleOrgSelect(org)}
@@ -151,50 +98,11 @@ export function OrgSwitcher() {
                   </CommandItem>
                 ))}
               </CommandGroup>
-              <CommandSeparator />
-              <CommandGroup>
-                <CommandItem onSelect={() => setShowNewOrgDialog(true)}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Create Organization
-                </CommandItem>
-              </CommandGroup>
+              {/* Organization creation not yet implemented */}
             </CommandList>
           </Command>
         </PopoverContent>
       </Popover>
-
-      <Dialog open={showNewOrgDialog} onOpenChange={setShowNewOrgDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Create Organization</DialogTitle>
-            <DialogDescription>
-              Create a new organization to manage buildings and assessments separately.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="name">Organization Name</Label>
-              <Input
-                id="name"
-                placeholder="Enter organization name"
-                value={newOrgName}
-                onChange={(e) => setNewOrgName(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    handleCreateOrg();
-                  }
-                }}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowNewOrgDialog(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleCreateOrg}>Create Organization</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </>
   );
 }
