@@ -42,6 +42,7 @@ import { OrganizationDetailsPage } from '@/pages/admin/organization-details';
 import { OrganizationEditPage } from '@/pages/admin/organization-edit';
 import { LoadingScreen } from '@/components/loading-screen';
 import { NotFoundPage } from '@/pages/not-found';
+import { ProtectedRoute } from '@/components/protected-route';
 
 export const AppRoutes = () => {
   const { user, loading } = useAuth();
@@ -135,11 +136,31 @@ export const AppRoutes = () => {
         <Route path="organization" element={<OrganizationPage />} />
         
         {/* Admin Routes */}
-        <Route path="admin/dashboard" element={<AdminDashboard />} />
-        <Route path="admin/users" element={<AdminUsersPage />} />
-        <Route path="admin/organizations/:id" element={<OrganizationDetailsPage />} />
-        <Route path="admin/organizations/:id/edit" element={<OrganizationEditPage />} />
-        <Route path="admin/settings" element={<AdminSettingsPage />} />
+        <Route path="admin/dashboard" element={
+          <ProtectedRoute adminOnly>
+            <AdminDashboard />
+          </ProtectedRoute>
+        } />
+        <Route path="admin/users" element={
+          <ProtectedRoute adminOnly>
+            <AdminUsersPage />
+          </ProtectedRoute>
+        } />
+        <Route path="admin/organizations/:id" element={
+          <ProtectedRoute adminOnly>
+            <OrganizationDetailsPage />
+          </ProtectedRoute>
+        } />
+        <Route path="admin/organizations/:id/edit" element={
+          <ProtectedRoute adminOnly>
+            <OrganizationEditPage />
+          </ProtectedRoute>
+        } />
+        <Route path="admin/settings" element={
+          <ProtectedRoute adminOnly>
+            <AdminSettingsPage />
+          </ProtectedRoute>
+        } />
         
         {/* User Settings */}
         <Route path="settings" element={<SettingsPage />} />
