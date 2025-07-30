@@ -6,6 +6,7 @@ import {
   getMaintenanceCostTrends,
   getAnalyticsSummary
 } from '../controllers/analytics.controller';
+import { testAnalyticsMethods } from '../controllers/analytics-test.controller';
 import {
   getMaintenancePredictions,
   getFailureRiskAnalysis,
@@ -30,6 +31,9 @@ router.get('/cost-trends', authenticate, getMaintenanceCostTrends);
 
 // Comprehensive analytics summary
 router.get('/summary', authenticate, getAnalyticsSummary);
+
+// Test endpoint to debug analytics methods
+router.get('/test', authenticate, testAnalyticsMethods);
 
 // Predictive maintenance endpoints
 router.get('/predictions', authenticate, getMaintenancePredictions);
