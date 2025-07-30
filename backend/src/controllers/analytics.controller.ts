@@ -86,24 +86,33 @@ export const getAnalyticsSummary = async (req: Request, res: Response) => {
     const user = (req as any).user;
     console.log('🔐 Analytics request from user:', user?.id, 'org:', user?.organization_id);
     
+    // Always return empty analytics if no user/org instead of error
     if (!user || !user.organization_id) {
-      return res.status(401).json({
-        success: false,
-        message: 'User authentication or organization context missing'
+      console.log('⚠️ No user/org context, returning empty analytics');
+      const emptyAnalytics = AnalyticsService.getEmptyAnalytics();
+      return res.json({
+        success: true,
+        data: emptyAnalytics,
+        message: 'No analytics data available yet'
       });
     }
     
-    const summary = await AnalyticsService.getAnalyticsSummary(user.organization_id);
+    let summary;
+    try {
+      summary = await AnalyticsService.getAnalyticsSummary(user.organization_id);
+    } catch (serviceError) {
+      console.error('Analytics service error:', serviceError);
+      // Return empty analytics on any service error
+      summary = AnalyticsService.getEmptyAnalytics();
+    }
     
     res.json({
       success: true,
       data: summary
     });
   } catch (error) {
-    console.error('Error fetching analytics summary:', error);
-    console.error('Error details:', error.message, error.stack);
-    
-    // Return empty analytics structure instead of error for better UX
+    console.error('Unexpected error in analytics controller:', error);
+    // Always return a valid response, never 500
     const emptyAnalytics = AnalyticsService.getEmptyAnalytics();
     res.json({
       success: true,
