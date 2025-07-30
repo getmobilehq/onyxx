@@ -281,17 +281,23 @@ export class AnalyticsService {
    */
   static async getAnalyticsSummary(organizationId: string): Promise<any> {
     try {
-      const [
-        buildingAnalytics,
-        fciAgeCorrelation,
-        costEfficiency,
-        costTrends
-      ] = await Promise.all([
-        this.getBuildingAnalytics(organizationId),
-        this.getFCIAgeCorrelation(organizationId),
-        this.getCostEfficiencyAnalysis(organizationId),
-        this.getMaintenanceCostTrends(12, organizationId)
-      ]);
+      console.log('🔍 Starting analytics summary for organization:', organizationId);
+      
+      console.log('📊 Fetching building analytics...');
+      const buildingAnalytics = await this.getBuildingAnalytics(organizationId);
+      console.log('✅ Building analytics:', buildingAnalytics.length, 'buildings');
+      
+      console.log('📈 Fetching FCI age correlation...');
+      const fciAgeCorrelation = await this.getFCIAgeCorrelation(organizationId);
+      console.log('✅ FCI age correlation:', fciAgeCorrelation.length, 'groups');
+      
+      console.log('💰 Fetching cost efficiency...');
+      const costEfficiency = await this.getCostEfficiencyAnalysis(organizationId);
+      console.log('✅ Cost efficiency:', costEfficiency.length, 'buildings');
+      
+      console.log('📅 Fetching cost trends...');
+      const costTrends = await this.getMaintenanceCostTrends(12, organizationId);
+      console.log('✅ Cost trends:', costTrends.length, 'periods');
 
       // Calculate summary metrics with proper null/zero handling
       const totalBuildings = buildingAnalytics.length;
@@ -308,7 +314,8 @@ export class AnalyticsService {
       const avgRepairCostPerSqft = totalBuildings > 0 ? 
         buildingAnalytics.reduce((sum, b) => sum + b.cost_per_sqft_actual, 0) / totalBuildings : 0;
 
-      return {
+      console.log('🧮 Calculated summary metrics');
+      const result = {
         summary: {
           total_buildings: totalBuildings,
           avg_age: Math.round(avgAge),
@@ -321,6 +328,9 @@ export class AnalyticsService {
         cost_efficiency: costEfficiency,
         cost_trends: costTrends
       };
+      
+      console.log('✅ Analytics summary completed successfully');
+      return result;
     } catch (error) {
       console.error('Error fetching analytics summary:', error);
       throw error;
