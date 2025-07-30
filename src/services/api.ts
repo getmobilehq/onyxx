@@ -3,7 +3,7 @@ import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'ax
 // API base URL - can be configured via environment variables
 // Production API with auto-fallback to local development
 const API_BASE_URL = import.meta.env.VITE_API_URL || 
-  (import.meta.env.DEV ? 'http://localhost:5001/api' : 'https://onyxx.onrender.com/api');
+  (import.meta.env.DEV ? 'http://localhost:5001/api' : 'https://onyx-backend-f7vh.onrender.com/api');
 
 // Debug: Log the API URL being used
 console.log('🔗 API Base URL:', API_BASE_URL);
