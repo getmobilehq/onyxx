@@ -84,6 +84,15 @@ export const getMaintenanceCostTrends = async (req: Request, res: Response) => {
 export const getAnalyticsSummary = async (req: Request, res: Response) => {
   try {
     const user = (req as any).user;
+    console.log('🔐 Analytics request from user:', user?.id, 'org:', user?.organization_id);
+    
+    if (!user || !user.organization_id) {
+      return res.status(401).json({
+        success: false,
+        message: 'User authentication or organization context missing'
+      });
+    }
+    
     const summary = await AnalyticsService.getAnalyticsSummary(user.organization_id);
     
     res.json({
