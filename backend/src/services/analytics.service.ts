@@ -283,9 +283,21 @@ export class AnalyticsService {
     try {
       console.log('🔍 Starting analytics summary for organization:', organizationId);
       
+      // Return empty analytics data structure if no organization
+      if (!organizationId) {
+        console.log('⚠️ No organization ID provided, returning empty analytics');
+        return this.getEmptyAnalytics();
+      }
+      
       console.log('📊 Fetching building analytics...');
       const buildingAnalytics = await this.getBuildingAnalytics(organizationId);
       console.log('✅ Building analytics:', buildingAnalytics.length, 'buildings');
+      
+      // If no buildings, return empty analytics structure
+      if (buildingAnalytics.length === 0) {
+        console.log('📭 No buildings found, returning empty analytics');
+        return this.getEmptyAnalytics();
+      }
       
       console.log('📈 Fetching FCI age correlation...');
       const fciAgeCorrelation = await this.getFCIAgeCorrelation(organizationId);
@@ -335,6 +347,25 @@ export class AnalyticsService {
       console.error('Error fetching analytics summary:', error);
       throw error;
     }
+  }
+
+  /**
+   * Get empty analytics structure for no data scenarios
+   */
+  static getEmptyAnalytics(): any {
+    return {
+      summary: {
+        total_buildings: 0,
+        avg_age: 0,
+        avg_fci: null,
+        avg_cost_per_sqft: 0,
+        avg_repair_cost_per_sqft: 0
+      },
+      building_analytics: [],
+      fci_age_correlation: [],
+      cost_efficiency: [],
+      cost_trends: []
+    };
   }
 }
 

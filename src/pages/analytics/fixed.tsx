@@ -122,21 +122,56 @@ export function FixedAnalyticsPage() {
     return (
       <div className="p-6">
         <Card>
-          <CardContent className="flex flex-col items-center justify-center h-32 space-y-4">
-            <p className="text-red-500">Error loading analytics: {error}</p>
-            <Button onClick={() => fetchAnalyticsData()}>Try Again</Button>
+          <CardHeader>
+            <CardTitle>Analytics Dashboard</CardTitle>
+          </CardHeader>
+          <CardContent className="text-center py-12">
+            <div className="mb-4">
+              <BarChart3 className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">No Analytics Data Yet</h3>
+              <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                Analytics will appear here once you have completed building assessments. 
+                Start by creating assessments for your buildings to track condition metrics and costs.
+              </p>
+            </div>
+            <div className="space-x-4">
+              <Button onClick={() => window.location.href = '/assessments/new'} variant="default">
+                Create Assessment
+              </Button>
+              <Button onClick={() => fetchAnalyticsData()} variant="outline">
+                Refresh
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
     );
   }
 
-  if (!analyticsData) {
+  if (!analyticsData || analyticsData.summary?.total_buildings === 0) {
     return (
       <div className="p-6">
         <Card>
-          <CardContent className="flex items-center justify-center h-32">
-            <p className="text-muted-foreground">No analytics data available</p>
+          <CardHeader>
+            <CardTitle>Analytics Dashboard</CardTitle>
+          </CardHeader>
+          <CardContent className="text-center py-12">
+            <div className="mb-4">
+              <Building2 className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Start Building Your Analytics</h3>
+              <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                Add buildings and complete assessments to see analytics data. 
+                Analytics provides insights into facility conditions, costs, and maintenance trends.
+              </p>
+            </div>
+            <div className="space-x-4">
+              <Button onClick={() => window.location.href = '/buildings/new'} variant="default">
+                Add Building
+              </Button>
+              <Button onClick={() => fetchAnalyticsData()} variant="outline">
+                Refresh
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
