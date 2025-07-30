@@ -254,7 +254,7 @@ export class AnalyticsService {
             AVG(a.fci_score) as avg_fci
           FROM assessments a
           WHERE a.status = 'completed'
-            AND a.created_at >= CURRENT_DATE - INTERVAL '${months} months'
+            AND a.created_at >= CURRENT_DATE - INTERVAL $2
             AND a.organization_id = $1
           GROUP BY DATE_TRUNC('month', a.created_at)
         )
@@ -268,7 +268,7 @@ export class AnalyticsService {
         ORDER BY month
       `;
       
-      const result = await pool.query(query, [organizationId]);
+      const result = await pool.query(query, [organizationId, `${months} months`]);
       return result.rows;
     } catch (error) {
       console.error('Error fetching maintenance cost trends:', error);
@@ -300,19 +300,19 @@ export class AnalyticsService {
       console.log('✅ Cost trends:', costTrends.length, 'periods');
 
       // Calculate summary metrics with proper null/zero handling
-      const totalBuildings = buildingAnalytics.length;
+      const totalBuildings = buildingAnalytics?.length || 0;
       const avgAge = totalBuildings > 0 ? 
-        buildingAnalytics.reduce((sum, b) => sum + b.age, 0) / totalBuildings : 0;
+        buildingAnalytics.reduce((sum, b) => sum + (b.age || 0), 0) / totalBuildings : 0;
       
-      const buildingsWithFCI = buildingAnalytics.filter(b => b.latest_fci !== null);
+      const buildingsWithFCI = buildingAnalytics?.filter(b => b.latest_fci !== null) || [];
       const avgFCI = buildingsWithFCI.length > 0 ? 
         buildingsWithFCI.reduce((sum, b) => sum + (b.latest_fci || 0), 0) / buildingsWithFCI.length : 0;
       
       const avgCostPerSqft = totalBuildings > 0 ? 
-        buildingAnalytics.reduce((sum, b) => sum + b.cost_per_sqft, 0) / totalBuildings : 0;
+        buildingAnalytics.reduce((sum, b) => sum + (b.cost_per_sqft || 0), 0) / totalBuildings : 0;
       
       const avgRepairCostPerSqft = totalBuildings > 0 ? 
-        buildingAnalytics.reduce((sum, b) => sum + b.cost_per_sqft_actual, 0) / totalBuildings : 0;
+        buildingAnalytics.reduce((sum, b) => sum + (b.cost_per_sqft_actual || 0), 0) / totalBuildings : 0;
 
       console.log('🧮 Calculated summary metrics');
       const result = {
@@ -323,10 +323,10 @@ export class AnalyticsService {
           avg_cost_per_sqft: Math.round(avgCostPerSqft),
           avg_repair_cost_per_sqft: Math.round(avgRepairCostPerSqft)
         },
-        building_analytics: buildingAnalytics,
-        fci_age_correlation: fciAgeCorrelation,
-        cost_efficiency: costEfficiency,
-        cost_trends: costTrends
+        building_analytics: buildingAnalytics || [],
+        fci_age_correlation: fciAgeCorrelation || [],
+        cost_efficiency: costEfficiency || [],
+        cost_trends: costTrends || []
       };
       
       console.log('✅ Analytics summary completed successfully');
