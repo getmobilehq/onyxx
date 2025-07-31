@@ -224,6 +224,114 @@ export const deleteUser = async (
   }
 };
 
+// Update current user's profile
+export const updateProfile = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ 
+        success: false, 
+        errors: errors.array() 
+      });
+    }
+
+    const userId = req.user?.id;
+    const { name, currentPassword, newPassword } = req.body;
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required',
+      });
+    }
+
+    // Get current user data
+    const currentUser = await pool.query(
+      'SELECT id, name, email, password_hash FROM users WHERE id = $1',
+      [userId]
+    );
+
+    if (currentUser.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
+    }
+
+    const user = currentUser.rows[0];
+
+    // If changing password, verify current password
+    if (newPassword) {
+      if (!currentPassword) {
+        return res.status(400).json({
+          success: false,
+          message: 'Current password is required to set a new password',
+        });
+      }
+
+      const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.password_hash);
+      if (!isCurrentPasswordValid) {
+        return res.status(400).json({
+          success: false,
+          message: 'Current password is incorrect',
+        });
+      }
+    }
+
+    // Build update query
+    const updates: string[] = [];
+    const values: any[] = [];
+    let paramCount = 1;
+
+    if (name && name !== user.name) {
+      updates.push(`name = $${paramCount}`);
+      values.push(name);
+      paramCount++;
+    }
+
+    if (newPassword) {
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(newPassword, salt);
+      updates.push(`password_hash = $${paramCount}`);
+      values.push(hashedPassword);
+      paramCount++;
+    }
+
+    if (updates.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'No changes to update',
+      });
+    }
+
+    // Add WHERE condition
+    values.push(userId);
+
+    // Update user
+    const result = await pool.query(
+      `UPDATE users 
+       SET ${updates.join(', ')}
+       WHERE id = $${paramCount}
+       RETURNING id, name, email, role`,
+      values
+    );
+
+    res.json({
+      success: true,
+      message: 'Profile updated successfully',
+      data: {
+        user: result.rows[0],
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // Invite new user
 export const inviteUser = async (
   req: Request,

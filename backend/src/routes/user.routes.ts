@@ -6,6 +6,7 @@ import {
   updateUser,
   deleteUser,
   inviteUser,
+  updateProfile,
 } from '../controllers/user.controller';
 import { authenticate, authorize } from '../middleware/auth.middleware';
 
@@ -27,6 +28,22 @@ const updateUserValidation = [
     .withMessage('Invalid role'),
 ];
 
+const updateProfileValidation = [
+  body('name')
+    .optional()
+    .trim()
+    .isLength({ min: 2 })
+    .withMessage('Name must be at least 2 characters'),
+  body('currentPassword')
+    .optional()
+    .isString()
+    .withMessage('Current password must be a string'),
+  body('newPassword')
+    .optional()
+    .isLength({ min: 8 })
+    .withMessage('New password must be at least 8 characters'),
+];
+
 const inviteUserValidation = [
   body('email')
     .isEmail()
@@ -46,6 +63,7 @@ const inviteUserValidation = [
 // Routes
 router.get('/', authorize('admin', 'manager'), getAllUsers);
 router.get('/:id', getUserById);
+router.put('/profile', updateProfileValidation, updateProfile);
 router.put('/:id', updateUserValidation, updateUser);
 router.delete('/:id', authorize('admin'), deleteUser);
 router.post('/invite', authorize('admin', 'manager'), inviteUserValidation, inviteUser);

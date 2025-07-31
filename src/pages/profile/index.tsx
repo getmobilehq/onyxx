@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Loader2, User } from 'lucide-react';
 import { toast } from 'sonner';
+import { usersAPI, authAPI } from '@/services/api';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -29,23 +30,32 @@ import { Separator } from '@/components/ui/separator';
 const profileSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters' }),
   email: z.string().email({ message: 'Please enter a valid email address' }),
-  currentPassword: z.string().min(1, 'Current password is required'),
+  currentPassword: z.string().optional(),
   newPassword: z.string().min(8, 'Password must be at least 8 characters').optional().or(z.literal('')),
-  confirmPassword: z.string(),
+  confirmPassword: z.string().optional(),
 }).refine((data) => {
+  // If new password is provided, confirm password is required
+  if (data.newPassword && !data.confirmPassword) {
+    return false;
+  }
+  // If new password is provided, passwords must match
   if (data.newPassword && data.newPassword !== data.confirmPassword) {
+    return false;
+  }
+  // If new password is provided, current password is required
+  if (data.newPassword && !data.currentPassword) {
     return false;
   }
   return true;
 }, {
-  message: "Passwords don't match",
+  message: "Password validation failed",
   path: ["confirmPassword"],
 });
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
 
 export function ProfilePage() {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<ProfileFormValues>({
@@ -62,12 +72,44 @@ export function ProfilePage() {
   async function onSubmit(values: ProfileFormValues) {
     setIsLoading(true);
     try {
-      // Simulate API request
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      toast.success('Profile updated successfully');
-    } catch (error) {
-      toast.error('Failed to update profile');
-      console.error(error);
+      // Prepare data for API call
+      const updateData: any = {};
+      
+      // Only include changed fields
+      if (values.name && values.name !== user?.name) {
+        updateData.name = values.name;
+      }
+      
+      // Handle password update
+      if (values.newPassword) {
+        updateData.currentPassword = values.currentPassword;
+        updateData.newPassword = values.newPassword;
+      }
+      
+      // Only make API call if there are changes
+      if (Object.keys(updateData).length === 0) {
+        toast.info('No changes to update');
+        return;
+      }
+      
+      // Call API to update profile
+      const response = await usersAPI.updateProfile(updateData);
+      
+      if (response.data.success) {
+        toast.success('Profile updated successfully');
+        
+        // Refresh user data in context
+        await refreshUser();
+        
+        // Clear password fields
+        form.setValue('currentPassword', '');
+        form.setValue('newPassword', '');
+        form.setValue('confirmPassword', '');
+      }
+    } catch (error: any) {
+      const message = error.response?.data?.message || 'Failed to update profile';
+      toast.error(message);
+      console.error('Profile update error:', error);
     } finally {
       setIsLoading(false);
     }
@@ -152,6 +194,9 @@ export function ProfilePage() {
 
                 <div className="space-y-4">
                   <h3 className="text-lg font-medium">Change Password</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Leave password fields empty if you don't want to change your password.
+                  </p>
                   <div className="grid gap-4">
                     <FormField
                       control={form.control}

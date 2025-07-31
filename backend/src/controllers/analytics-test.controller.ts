@@ -21,7 +21,7 @@ export const testAnalyticsMethods = async (req: Request, res: Response) => {
         count: buildingAnalytics.length,
         data: buildingAnalytics.slice(0, 1) // Just first item for brevity
       };
-    } catch (error) {
+    } catch (error: any) {
       results.tests.buildingAnalytics = {
         success: false,
         error: error.message
@@ -37,7 +37,7 @@ export const testAnalyticsMethods = async (req: Request, res: Response) => {
         count: fciAgeCorrelation.length,
         data: fciAgeCorrelation.slice(0, 1)
       };
-    } catch (error) {
+    } catch (error: any) {
       results.tests.fciAgeCorrelation = {
         success: false,
         error: error.message
@@ -53,7 +53,7 @@ export const testAnalyticsMethods = async (req: Request, res: Response) => {
         count: costEfficiency.length,
         data: costEfficiency.slice(0, 1)
       };
-    } catch (error) {
+    } catch (error: any) {
       results.tests.costEfficiency = {
         success: false,
         error: error.message
@@ -69,7 +69,7 @@ export const testAnalyticsMethods = async (req: Request, res: Response) => {
         count: costTrends.length,
         data: costTrends.slice(0, 1)
       };
-    } catch (error) {
+    } catch (error: any) {
       results.tests.costTrends = {
         success: false,
         error: error.message
@@ -82,7 +82,7 @@ export const testAnalyticsMethods = async (req: Request, res: Response) => {
       data: results
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Test endpoint error:', error);
     res.status(500).json({
       success: false,

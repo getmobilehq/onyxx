@@ -263,6 +263,8 @@ export const usersAPI = {
     api.post('/users/invite', data),
   update: (id: string, data: any) => api.put(`/users/${id}`, data),
   delete: (id: string) => api.delete(`/users/${id}`),
+  updateProfile: (data: { name?: string; currentPassword?: string; newPassword?: string }) =>
+    api.put('/users/profile', data),
 };
 
 export const referenceAPI = {
