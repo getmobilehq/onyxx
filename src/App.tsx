@@ -14,7 +14,7 @@ function App() {
           <AuthProvider>
             <OrgProvider>
               <AppRoutes />
-              <Toaster position="top-right" richColors />
+              <Toaster position="top-right" richColors duration={3000} />
             </OrgProvider>
           </AuthProvider>
         </ThemeProvider>
