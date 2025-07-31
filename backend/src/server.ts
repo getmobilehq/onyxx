@@ -82,7 +82,9 @@ app.use(cors({
   origin: [
     process.env.CLIENT_URL || 'http://localhost:5173',
     'http://localhost:5174', // Additional frontend port
-    'https://onyx-frontend.onrender.com' // Production frontend
+    'https://onyx-frontend.onrender.com', // Production frontend on Render
+    'https://onyxreport.com', // Custom domain
+    'http://onyxreport.com' // HTTP version (in case of redirect)
   ],
   credentials: true,
 }));
