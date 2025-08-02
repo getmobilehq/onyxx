@@ -22,6 +22,7 @@ import analyticsRoutes from './routes/analytics.routes';
 import organizationsRoutes from './routes/organizations.routes';
 import securityRoutes from './routes/security.routes';
 import twoFactorRoutes from './routes/two-factor.routes';
+import emailRoutes from './routes/email.routes';
 import mailgunEmailService from './services/mailgun-email.service';
 
 // Import middleware
@@ -77,6 +78,7 @@ app.use('/api/reports', reportsRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/security', securityRoutes);
 app.use('/api/2fa', twoFactorRoutes);
+app.use('/api/email', emailRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
