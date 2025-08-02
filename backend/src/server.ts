@@ -20,11 +20,14 @@ import preAssessmentsRoutes from './routes/pre-assessments.routes';
 import reportsRoutes from './routes/reports';
 import analyticsRoutes from './routes/analytics.routes';
 import organizationsRoutes from './routes/organizations.routes';
+import securityRoutes from './routes/security.routes';
 import mailgunEmailService from './services/mailgun-email.service';
 
 // Import middleware
 import { errorHandler } from './middleware/error.middleware';
 import { notFound } from './middleware/notFound.middleware';
+import { securityMiddleware } from './middleware/security.middleware';
+import { corsOptions, authLimiter, apiLimiter, securityHeaders } from './config/security';
 
 // Create Express app
 const app: Application = express();
@@ -45,53 +48,16 @@ pool.connect((err, client, release) => {
   }
 });
 
-// Rate limiting for authentication endpoints
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10, // 10 attempts per window per IP
-  message: { 
-    success: false, 
-    message: 'Too many login attempts, please try again later' 
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
-// General API rate limiting
-const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 1000, // 1000 requests per window per IP
-  message: { 
-    success: false, 
-    message: 'Too many API requests, please try again later' 
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
+// Rate limiters are now imported from config/security.ts
 
 // Middleware
-app.use(helmet({
-  contentSecurityPolicy: false, // Disable for now to avoid breaking functionality
-  crossOriginEmbedderPolicy: false,
-  hsts: {
-    maxAge: 31536000,
-    includeSubDomains: true,
-  },
-})); // Enhanced security headers
-app.use(cors({
-  origin: [
-    process.env.CLIENT_URL || 'http://localhost:5173',
-    'http://localhost:5174', // Additional frontend port
-    'https://onyx-frontend.onrender.com', // Production frontend on Render
-    'https://onyxreport.com', // Custom domain without www
-    'https://www.onyxreport.com', // Custom domain with www
-    'http://onyxreport.com', // HTTP version without www
-    'http://www.onyxreport.com' // HTTP version with www
-  ],
-  credentials: true,
-}));
+app.use(helmet(securityHeaders)); // Enhanced security headers
+app.use(cors(corsOptions));
 app.use(express.json({ limit: '10mb' })); // Add size limit
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Apply security middleware to all API routes
+app.use('/api', securityMiddleware);
 
 // Apply general rate limiting to all API routes
 app.use('/api', apiLimiter);
@@ -108,6 +74,7 @@ app.use('/api/assessments', assessmentsRoutes);
 app.use('/api/pre-assessments', preAssessmentsRoutes);
 app.use('/api/reports', reportsRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/security', securityRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
