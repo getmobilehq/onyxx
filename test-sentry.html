@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Sentry Frontend Integration</title>
+    <script src="https://browser.sentry-cdn.com/7.92.0/bundle.min.js"></script>
+</head>
+<body>
+    <h1>Sentry Frontend Test</h1>
+    <button onclick="testError()">Test Error</button>
+    <button onclick="testPerformance()">Test Performance</button>
+    
+    <script>
+        // Initialize Sentry
+        Sentry.init({
+            dsn: "https://3f906158648fa9f2d655c0e6f9628ce7@o4509779983269888.ingest.us.sentry.io/4509782570434560",
+            environment: "test",
+            release: "1.0.0",
+            
+            beforeSend(event, hint) {
+                console.log('Sentry event:', event);
+                return event;
+            },
+            
+            initialScope: {
+                tags: {
+                    component: 'frontend-test',
+                    service: 'onyx-web-test',
+                },
+            },
+        });
+
+        console.log('🔍 Sentry test page initialized');
+
+        function testError() {
+            try {
+                Sentry.captureMessage('Test message from ONYX frontend');
+                console.log('✅ Test message sent to Sentry');
+                
+                // Also test an exception
+                throw new Error('Test error from ONYX frontend');
+            } catch (error) {
+                Sentry.captureException(error);
+                console.log('✅ Test exception sent to Sentry');
+            }
+        }
+
+        function testPerformance() {
+            Sentry.addBreadcrumb({
+                message: 'User clicked performance test',
+                category: 'user-action',
+                level: 'info',
+            });
+            
+            console.log('✅ Breadcrumb added to Sentry');
+        }
+
+        // Test user context
+        Sentry.setUser({
+            id: 'test-user-123',
+            email: 'test@onyxreport.com',
+            role: 'admin',
+        });
+
+        console.log('✅ User context set');
+    </script>
+</body>
+</html>

@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { authAPI } from '../services/api';
+import { setUserContext, clearUserContext, trackUserAction } from '@/config/sentry';
 
 type User = {
   id: string;
@@ -38,7 +39,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         try {
           const response = await authAPI.getMe();
           if (response.data.success) {
-            setUser(response.data.data.user);
+            const user = response.data.data.user;
+            setUser(user);
+            
+            // Set Sentry user context on initial load
+            setUserContext({
+              id: user.id,
+              email: user.email,
+              role: user.role,
+              organization_id: user.organization_id,
+            });
           }
         } catch (error) {
           // Token might be expired, clear it
@@ -66,6 +76,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Set user in state
         setUser(user);
         
+        // Set Sentry user context
+        setUserContext({
+          id: user.id,
+          email: user.email,
+          role: user.role,
+          organization_id: user.organization_id,
+        });
+        
+        // Track login event
+        trackUserAction('login', 'authentication', {
+          user_role: user.role,
+          organization_id: user.organization_id,
+        });
+        
         toast.success('Login successful');
         
         // Navigate after a short delay to prevent flash
@@ -86,6 +110,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       // Ignore logout errors
     }
+    
+    // Track logout event
+    trackUserAction('logout', 'authentication');
+    
+    // Clear Sentry user context
+    clearUserContext();
     
     // Clear local state and storage
     setUser(null);
@@ -120,6 +150,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         
         // Set user in state
         setUser(user);
+        
+        // Set Sentry user context
+        setUserContext({
+          id: user.id,
+          email: user.email,
+          role: user.role,
+          organization_id: user.organization_id,
+        });
+        
+        // Track registration event
+        trackUserAction('register', 'authentication', {
+          user_role: user.role,
+        });
         
         toast.success('Registration successful');
         navigate('/dashboard');

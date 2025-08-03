@@ -7,6 +7,9 @@ import dotenv from 'dotenv';
 // Load environment variables
 dotenv.config();
 
+// Initialize Sentry (must be first)
+import { initSentry } from './config/sentry';
+
 // Import database
 import pool from './config/database';
 
@@ -33,6 +36,9 @@ import { corsOptions, authLimiter, apiLimiter, securityHeaders } from './config/
 
 // Create Express app
 const app: Application = express();
+
+// Initialize Sentry monitoring
+initSentry(app);
 
 // Trust proxy in production (required for Render.com)
 if (process.env.NODE_ENV === 'production') {

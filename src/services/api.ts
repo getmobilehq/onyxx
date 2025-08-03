@@ -1,4 +1,5 @@
 import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'axios';
+import { trackAPICall } from '@/config/sentry';
 
 // API base URL - can be configured via environment variables
 // Production API with auto-fallback to local development
@@ -35,13 +36,17 @@ const tokenManager = {
   },
 };
 
-// Request interceptor to add auth token
+// Request interceptor to add auth token and track timing
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const token = tokenManager.getAccessToken();
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    
+    // Add start time for performance tracking
+    (config as any).metadata = { startTime: Date.now() };
+    
     return config;
   },
   (error: AxiosError) => {
@@ -69,8 +74,27 @@ const processQueue = (error: AxiosError | null, token: string | null = null) => 
 };
 
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Track successful API calls
+    const duration = Date.now() - (response.config as any).metadata?.startTime || 0;
+    trackAPICall(
+      response.config.method?.toUpperCase() || 'GET',
+      response.config.url || '',
+      response.status,
+      duration
+    );
+    return response;
+  },
   async (error: AxiosError) => {
+    // Track failed API calls
+    const duration = Date.now() - (error.config as any)?.metadata?.startTime || 0;
+    trackAPICall(
+      error.config?.method?.toUpperCase() || 'GET',
+      error.config?.url || '',
+      error.response?.status || 0,
+      duration,
+      error
+    );
     const originalRequest = error.config as InternalAxiosRequestConfig & {
       _retry?: boolean;
     };
