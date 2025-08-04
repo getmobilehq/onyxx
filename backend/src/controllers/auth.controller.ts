@@ -72,6 +72,7 @@ export const register = async (
     const organizationId = defaultOrgResult.rows[0]?.id || 'a1b2c3d4-e5f6-7890-abcd-ef1234567890';
 
     // Create user with organization
+    console.log('Creating user with organization ID:', organizationId);
     const result = await pool.query(
       `INSERT INTO users (name, email, password_hash, role, organization_id) 
        VALUES ($1, $2, $3, $4, $5) 
@@ -104,6 +105,23 @@ export const register = async (
       },
     });
   } catch (error) {
+    console.error('Registration error:', error);
+    
+    // Handle specific database errors
+    if (error.code === '23505') { // Unique constraint violation
+      return res.status(409).json({
+        success: false,
+        message: 'User with this email already exists',
+      });
+    }
+    
+    if (error.code === '23503') { // Foreign key constraint violation
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid reference',
+      });
+    }
+    
     next(error);
   }
 };
