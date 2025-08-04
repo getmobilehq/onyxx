@@ -64,21 +64,9 @@ export const register = async (
     const salt = await bcrypt.genSalt(10);
     const password_hash = await bcrypt.hash(password, salt);
 
-    // Use hardcoded default organization ID for now to avoid lookup issues
-    const organizationId = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890';
-    
-    // Verify organization exists
-    const orgCheckResult = await pool.query(
-      `SELECT id FROM organizations WHERE id = $1`,
-      [organizationId]
-    );
-    
-    if (orgCheckResult.rows.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Default organization not found. Please contact administrator.',
-      });
-    }
+    // Temporarily use NULL for organization_id to bypass constraint issues
+    // TODO: Fix organization constraint and use proper organization assignment
+    const organizationId = null;
 
     // Create user with organization
     console.log('Creating user with organization ID:', organizationId);
