@@ -21,6 +21,7 @@ export const errorHandler = (
     statusCode,
     path: req.path,
     method: req.method,
+    body: req.method === 'POST' ? req.body : undefined,
   });
 
   // PostgreSQL errors
@@ -31,7 +32,9 @@ export const errorHandler = (
 
   if (err.message?.includes('violates foreign key')) {
     statusCode = 400;
-    message = 'Invalid reference';
+    message = process.env.NODE_ENV === 'development' 
+      ? `Foreign key violation: ${err.message}` 
+      : 'Invalid reference';
   }
 
   res.status(statusCode).json({
