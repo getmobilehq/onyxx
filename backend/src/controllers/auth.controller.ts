@@ -86,13 +86,14 @@ export const register = async (
 
     res.status(201).json({
       success: true,
-      message: 'User registered successfully',
+      message: 'User registered successfully - No organization required!',
       data: {
         user: {
           id: user.id,
           email: user.email,
           name: user.name,
           role: user.role,
+          organization_id: user.organization_id, // Should be null
         },
         tokens,
       },
