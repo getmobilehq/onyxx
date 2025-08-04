@@ -64,18 +64,13 @@ export const register = async (
     const salt = await bcrypt.genSalt(10);
     const password_hash = await bcrypt.hash(password, salt);
 
-    // Temporarily use NULL for organization_id to bypass constraint issues
-    // TODO: Fix organization constraint and use proper organization assignment
-    const organizationId = null;
-
-    // Create user with organization
-    console.log('🔧 SIGNUP DEBUG: Creating user with organization ID:', organizationId);
-    console.log('🔧 SIGNUP DEBUG: User data:', { name, email, role });
+    // Users start without organization - they can join/create one after signup
+    // This simplifies the signup process and avoids foreign key constraints
     const result = await pool.query(
-      `INSERT INTO users (name, email, password_hash, role, organization_id) 
-       VALUES ($1, $2, $3, $4, $5) 
+      `INSERT INTO users (name, email, password_hash, role) 
+       VALUES ($1, $2, $3, $4) 
        RETURNING id, name, email, role, organization_id, created_at`,
-      [name, email, password_hash, role, organizationId]
+      [name, email, password_hash, role]
     );
 
     const user = result.rows[0];
@@ -102,10 +97,8 @@ export const register = async (
         tokens,
       },
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Registration error:', error);
-    console.error('Error code:', error.code);
-    console.error('Error detail:', error.detail);
     
     // Handle specific database errors
     if (error.code === '23505') { // Unique constraint violation
@@ -115,17 +108,10 @@ export const register = async (
       });
     }
     
-    if (error.code === '23503') { // Foreign key constraint violation
-      return res.status(400).json({
-        success: false,
-        message: `Invalid reference: ${error.detail || 'Organization constraint violation'}`,
-      });
-    }
-    
-    // Return generic error with more details for debugging
+    // Generic error handler
     return res.status(500).json({
       success: false,
-      message: 'Registration failed',
+      message: 'Registration failed. Please try again.',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined,
     });
   }

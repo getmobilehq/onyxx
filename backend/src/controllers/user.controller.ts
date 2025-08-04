@@ -240,7 +240,7 @@ export const updateProfile = async (
     }
 
     const userId = req.user?.id;
-    const { name, currentPassword, newPassword } = req.body;
+    const { name, currentPassword, newPassword, organizationId } = req.body;
 
     if (!userId) {
       return res.status(401).json({
@@ -298,6 +298,28 @@ export const updateProfile = async (
       const hashedPassword = await bcrypt.hash(newPassword, salt);
       updates.push(`password_hash = $${paramCount}`);
       values.push(hashedPassword);
+      paramCount++;
+    }
+
+    // Handle organization update
+    if (organizationId !== undefined) {
+      // If organizationId is provided, verify it exists
+      if (organizationId) {
+        const orgCheck = await pool.query(
+          'SELECT id FROM organizations WHERE id = $1',
+          [organizationId]
+        );
+        
+        if (orgCheck.rows.length === 0) {
+          return res.status(400).json({
+            success: false,
+            message: 'Organization not found',
+          });
+        }
+      }
+      
+      updates.push(`organization_id = $${paramCount}`);
+      values.push(organizationId);
       paramCount++;
     }
 
