@@ -69,7 +69,8 @@ export const register = async (
     const organizationId = null;
 
     // Create user with organization
-    console.log('Creating user with organization ID:', organizationId);
+    console.log('🔧 SIGNUP DEBUG: Creating user with organization ID:', organizationId);
+    console.log('🔧 SIGNUP DEBUG: User data:', { name, email, role });
     const result = await pool.query(
       `INSERT INTO users (name, email, password_hash, role, organization_id) 
        VALUES ($1, $2, $3, $4, $5) 

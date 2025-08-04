@@ -7,9 +7,9 @@ async function testSignup() {
   console.log('🔍 Testing signup with backend API:', API_URL);
   
   const testUser = {
-    name: 'Test User',
-    email: 'test' + Date.now() + '@example.com',
-    password: 'password123',
+    name: 'Test User Debug',
+    email: 'debug' + Date.now() + '@onyxtest.com',
+    password: 'debugpass123',
     role: 'admin'
   };
   
