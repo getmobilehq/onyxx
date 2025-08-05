@@ -32,9 +32,7 @@ export const errorHandler = (
 
   if (err.message?.includes('violates foreign key')) {
     statusCode = 400;
-    message = process.env.NODE_ENV === 'development' 
-      ? `Foreign key violation: ${err.message}` 
-      : 'Invalid reference';
+    message = `Foreign key violation: ${err.message}`;
   }
 
   res.status(statusCode).json({

@@ -99,7 +99,15 @@ export const register = async (
       },
     });
   } catch (error: any) {
-    console.error('Registration error:', error);
+    console.error('Registration error details:', {
+      message: error.message,
+      code: error.code,
+      detail: error.detail,
+      constraint: error.constraint,
+      table: error.table,
+      column: error.column,
+      stack: error.stack
+    });
     
     // Handle specific database errors
     if (error.code === '23505') { // Unique constraint violation
@@ -109,12 +117,8 @@ export const register = async (
       });
     }
     
-    // Generic error handler
-    return res.status(500).json({
-      success: false,
-      message: 'Registration failed. Please try again.',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
-    });
+    // Let the error middleware handle it to see the real error
+    throw error;
   }
 };
 
