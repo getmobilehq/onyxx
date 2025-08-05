@@ -1,5 +1,4 @@
 import * as Sentry from "@sentry/react";
-import { BrowserTracing } from "@sentry/tracing";
 
 export function initSentry() {
   // Only initialize if DSN is provided
@@ -14,27 +13,11 @@ export function initSentry() {
     release: import.meta.env.VITE_SENTRY_RELEASE || '1.0.0',
     
     integrations: [
-      new BrowserTracing({
-        // Set up automatic route change tracking
-        routingInstrumentation: Sentry.reactRouterV6Instrumentation(
-          // React Router integration will be added when router is available
-        ),
-      }),
-      new Sentry.Replay({
-        // Capture 10% of all sessions
-        sessionSampleRate: 0.1,
-        // Capture 100% of sessions with an error
-        errorSampleRate: 1.0,
-      }),
+      Sentry.browserTracingIntegration(),
     ],
 
     // Performance monitoring
     tracesSampleRate: import.meta.env.MODE === 'production' ? 0.1 : 1.0,
-    
-    // Capture Replay for 10% of all sessions,
-    // plus for 100% of sessions with an error
-    replaysSessionSampleRate: 0.1,
-    replaysOnErrorSampleRate: 1.0,
 
     // Filter sensitive data
     beforeSend(event, hint) {
