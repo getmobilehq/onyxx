@@ -29,7 +29,6 @@ const registerSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email address' }),
   password: z.string().min(8, { message: 'Password must be at least 8 characters' }),
   confirmPassword: z.string(),
-  organizationName: z.string().min(2, { message: 'Organization name must be at least 2 characters' }),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],
@@ -48,14 +47,13 @@ export function RegisterPage() {
       email: '',
       password: '',
       confirmPassword: '',
-      organizationName: '',
     },
   });
 
   async function onSubmit(values: RegisterFormValues) {
     setIsLoading(true);
     try {
-      await register(values.name, values.email, values.password, values.organizationName);
+      await register(values.name, values.email, values.password);
     } catch (error) {
       // Error is handled in the auth context
       console.error(error);
@@ -74,7 +72,7 @@ export function RegisterPage() {
         </div>
         <CardTitle className="text-2xl font-semibold text-center">Create an account</CardTitle>
         <CardDescription className="text-center">
-          Enter your information to create an account
+          Enter your information to create an account. You can add an organization later.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -106,23 +104,6 @@ export function RegisterPage() {
                   <FormControl>
                     <Input
                       placeholder="your.email@example.com"
-                      {...field}
-                      disabled={isLoading}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="organizationName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Organization Name</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="Acme Properties"
                       {...field}
                       disabled={isLoading}
                     />
