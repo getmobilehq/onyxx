@@ -59,12 +59,12 @@ export const securityHeaders = {
     preload: true,
   },
   frameguard: {
-    action: 'deny',
+    action: 'deny' as const,
   },
   noSniff: true,
   xssFilter: true,
   referrerPolicy: {
-    policy: 'strict-origin-when-cross-origin',
+    policy: 'strict-origin-when-cross-origin' as const,
   },
   permittedCrossDomainPolicies: false,
 };

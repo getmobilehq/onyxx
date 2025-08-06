@@ -14,7 +14,7 @@ router.use(authorize('admin'));
 router.get('/audit', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const user = (req as any).user;
-    const audit = await SecurityAuditService.runFullAudit(user.id, req.ip);
+    const audit = await SecurityAuditService.runFullAudit(user.id, req.ip || 'unknown');
     
     res.json({
       success: true,
@@ -92,7 +92,7 @@ router.post('/force-password-reset', async (req: Request, res: Response, next: N
     logSecurityEvent(
       'FORCE_PASSWORD_RESET',
       adminUser.id,
-      req.ip,
+      req.ip || 'unknown',
       {
         target_user: user_id,
         admin_user: adminUser.id,
@@ -137,7 +137,7 @@ router.post('/account-lock', async (req: Request, res: Response, next: NextFunct
     logSecurityEvent(
       action === 'lock' ? 'ACCOUNT_LOCKED' : 'ACCOUNT_UNLOCKED',
       adminUser.id,
-      req.ip,
+      req.ip || 'unknown',
       {
         target_user: user_id,
         admin_user: adminUser.id,
@@ -196,7 +196,7 @@ router.post('/ip-whitelist', async (req: Request, res: Response, next: NextFunct
     logSecurityEvent(
       'IP_WHITELIST_ADDED',
       adminUser.id,
-      req.ip,
+      req.ip || 'unknown',
       {
         whitelisted_ip: ip_address,
         description,

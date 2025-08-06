@@ -15,7 +15,7 @@ interface SecureRequest extends Request {
 // Generate request fingerprint for tracking
 export const generateFingerprint = (req: Request): string => {
   const components = [
-    req.ip,
+    req.ip || 'unknown',
     req.get('user-agent'),
     req.get('accept-language'),
     req.get('accept-encoding'),
@@ -57,7 +57,7 @@ export const validateInput = (
     logSecurityEvent(
       'INVALID_INPUT',
       (req as any).user?.id || null,
-      req.ip,
+      req.ip || 'unknown',
       { errors: errors.array(), path: req.path }
     );
     
@@ -115,7 +115,7 @@ export const preventSQLInjection = (
     logSecurityEvent(
       'SQL_INJECTION_ATTEMPT',
       (req as any).user?.id || null,
-      req.ip,
+      req.ip || 'unknown',
       {
         body: req.body,
         query: req.query,
@@ -222,7 +222,7 @@ export const detectSuspiciousBehavior = (
     logSecurityEvent(
       'SUSPICIOUS_BEHAVIOR',
       (req as any).user?.id || null,
-      req.ip,
+      req.ip || 'unknown',
       {
         indicators: suspiciousIndicators,
         fingerprint: req.securityContext?.fingerprint,
@@ -267,7 +267,7 @@ export const verifyOrigin = (
     logSecurityEvent(
       'INVALID_ORIGIN',
       (req as any).user?.id || null,
-      req.ip,
+      req.ip || 'unknown',
       {
         origin,
         referer,
@@ -299,7 +299,7 @@ export const preventParameterPollution = (
       logSecurityEvent(
         'PARAMETER_POLLUTION',
         (req as any).user?.id || null,
-        req.ip,
+        req.ip || 'unknown',
         {
           parameter: key,
           value: params[key],
@@ -337,7 +337,7 @@ export const validateAPIKey = (
     logSecurityEvent(
       'INVALID_API_KEY',
       null,
-      req.ip,
+      req.ip || 'unknown',
       {
         apiKey: apiKey.substring(0, 8) + '...',
         path: req.path,
