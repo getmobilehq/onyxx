@@ -12,6 +12,7 @@ import { initSentry } from './config/sentry';
 
 // Import database
 import pool from './config/database';
+import { ensureDatabaseConstraints } from './config/database-fix';
 
 // Import routes
 import authRoutes from './routes/auth.routes';
@@ -102,7 +103,10 @@ app.use(errorHandler);
 // Start server
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`🚀 Server is running on port ${PORT}`);
   console.log(`📍 Environment: ${process.env.NODE_ENV}`);
+  
+  // Fix database constraints on startup
+  await ensureDatabaseConstraints();
 });
