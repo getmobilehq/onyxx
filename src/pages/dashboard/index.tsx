@@ -24,6 +24,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, LineChart, Line } from 'recharts';
 import { Skeleton } from '@/components/ui/skeleton';
+import { OrganizationOnboarding } from '@/components/organization-onboarding';
 
 export function DashboardPage() {
   const { user } = useAuth();
@@ -74,6 +75,11 @@ export function DashboardPage() {
         return null;
     }
   };
+
+  // Show organization onboarding if user has no organization
+  if (user && !user.organization_id) {
+    return <OrganizationOnboarding userName={user.name} />;
+  }
 
   return (
     <div className="space-y-8 p-8 pb-16">
