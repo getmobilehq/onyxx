@@ -14,6 +14,18 @@ export const getAllBuildings = async (
 
     const user = (req as any).user;
     
+    // If user has no organization, return empty array
+    if (!user.organization_id) {
+      return res.json({
+        success: true,
+        data: {
+          buildings: [],
+          count: 0,
+        },
+        message: 'No organization associated with this account. Please join or create an organization to manage buildings.',
+      });
+    }
+    
     let query = `
       SELECT b.id, b.name, b.building_type as type, b.construction_type, b.year_built, b.square_footage,
              b.state, b.city, b.zip_code, b.address as street_address, b.image_url, b.status, b.created_at, b.updated_at,

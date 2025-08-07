@@ -86,6 +86,18 @@ export const getAllAssessments = async (
     const { building_id, type, status, assigned_to, limit = 50, offset = 0 } = req.query;
     const user = (req as any).user;
 
+    // If user has no organization, return empty array
+    if (!user.organization_id) {
+      return res.json({
+        success: true,
+        data: {
+          assessments: [],
+          count: 0,
+        },
+        message: 'No organization associated with this account. Please join or create an organization to manage assessments.',
+      });
+    }
+
     let query = `
       SELECT 
         a.*,
