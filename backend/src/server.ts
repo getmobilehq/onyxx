@@ -27,6 +27,7 @@ import organizationsRoutes from './routes/organizations.routes';
 import securityRoutes from './routes/security.routes';
 import twoFactorRoutes from './routes/two-factor.routes';
 import emailRoutes from './routes/email.routes';
+import createTokensRouter from './routes/tokens.routes';
 import mailgunEmailService from './services/mailgun-email.service';
 
 // Import middleware
@@ -75,6 +76,7 @@ app.use('/api', apiLimiter);
 app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/register', authLimiter);
 app.use('/api/auth', authRoutes);
+app.use('/api/tokens', createTokensRouter(pool));
 app.use('/api/users', userRoutes);
 app.use('/api/organizations', organizationsRoutes);
 app.use('/api/buildings', buildingsRoutes);

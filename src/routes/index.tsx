@@ -40,6 +40,7 @@ import { AdminDashboard } from '@/pages/admin/dashboard';
 import { AdminUsersPage } from '@/pages/admin/users';
 import { OrganizationDetailsPage } from '@/pages/admin/organization-details';
 import { OrganizationEditPage } from '@/pages/admin/organization-edit';
+import { TokensPage } from '@/pages/admin/tokens';
 import { LoadingScreen } from '@/components/loading-screen';
 import { NotFoundPage } from '@/pages/not-found';
 import { ProtectedRoute } from '@/components/protected-route';
@@ -159,6 +160,11 @@ export const AppRoutes = () => {
         <Route path="admin/settings" element={
           <ProtectedRoute adminOnly>
             <AdminSettingsPage />
+          </ProtectedRoute>
+        } />
+        <Route path="admin/tokens" element={
+          <ProtectedRoute adminOnly>
+            <TokensPage />
           </ProtectedRoute>
         } />
         

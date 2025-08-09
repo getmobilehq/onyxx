@@ -4,7 +4,7 @@ import { useAuth } from '@/context/auth-context';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Building2, Loader2 } from 'lucide-react';
+import { Building2, Loader2, Key } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -25,6 +25,7 @@ import {
 import { Input } from '@/components/ui/input';
 
 const registerSchema = z.object({
+  tokenCode: z.string().min(1, { message: 'Token code is required' }),
   name: z.string().min(2, { message: 'Name must be at least 2 characters' }),
   email: z.string().email({ message: 'Please enter a valid email address' }),
   password: z.string().min(8, { message: 'Password must be at least 8 characters' }),
@@ -43,6 +44,7 @@ export function RegisterPage() {
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
+      tokenCode: '',
       name: '',
       email: '',
       password: '',
@@ -53,7 +55,7 @@ export function RegisterPage() {
   async function onSubmit(values: RegisterFormValues) {
     setIsLoading(true);
     try {
-      await register(values.name, values.email, values.password);
+      await register(values.name, values.email, values.password, values.tokenCode);
     } catch (error) {
       // Error is handled in the auth context
       console.error(error);
@@ -72,12 +74,33 @@ export function RegisterPage() {
         </div>
         <CardTitle className="text-2xl font-semibold text-center">Create an account</CardTitle>
         <CardDescription className="text-center">
-          Enter your information to create an account. You can add an organization later.
+          Enter your token code and information to create your organization account.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="tokenCode"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center gap-2">
+                    <Key className="h-4 w-4" />
+                    Token Code
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="ONX-XXXX-XXXX-XXXX"
+                      {...field}
+                      disabled={isLoading}
+                      className="font-mono"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <FormField
               control={form.control}
               name="name"

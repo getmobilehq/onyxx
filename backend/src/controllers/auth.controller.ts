@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import pool from '../config/database';
 import { CreateUserDTO, LoginDTO, JWTPayload, AuthTokens } from '../types/user.types';
 import { validationResult } from 'express-validator';
+import TokensController from './tokens.controller';
 
 // Generate JWT tokens
 const generateTokens = (payload: JWTPayload): AuthTokens => {
@@ -45,7 +46,33 @@ export const register = async (
       });
     }
 
-    const { email, password, name, role } = req.body;
+    const { email, password, name, role, token_code } = req.body;
+
+    // Validate token code
+    if (!token_code) {
+      return res.status(400).json({
+        success: false,
+        message: 'A valid token code is required for signup',
+      });
+    }
+
+    // Check if token is valid
+    const tokenResult = await pool.query(
+      `SELECT * FROM tokens 
+       WHERE code = $1 
+       AND status = 'active' 
+       AND expires_at > NOW()`,
+      [token_code]
+    );
+
+    if (tokenResult.rows.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid or expired token code',
+      });
+    }
+
+    const token = tokenResult.rows[0];
 
     // Check if user already exists
     const existingUser = await pool.query(
@@ -64,16 +91,37 @@ export const register = async (
     const salt = await bcrypt.genSalt(10);
     const password_hash = await bcrypt.hash(password, salt);
 
-    // Users start without organization - they can join/create one after signup
-    // This simplifies the signup process and avoids foreign key constraints
-    const result = await pool.query(
-      `INSERT INTO users (name, email, password_hash, role) 
-       VALUES ($1, $2, $3, $4) 
-       RETURNING id, name, email, role, organization_id, created_at`,
-      [name, email, password_hash, role]
-    );
+    // Start a transaction
+    const client = await pool.connect();
+    let organization: any;
+    try {
+      await client.query('BEGIN');
 
-    const user = result.rows[0];
+      // Create organization for the token holder
+      const orgName = token.organization_name || `${name}'s Organization`;
+      const orgResult = await client.query(
+        `INSERT INTO organizations (name, subscription_plan, created_at) 
+         VALUES ($1, $2, NOW()) 
+         RETURNING id, name`,
+        [orgName, 'professional']
+      );
+      organization = orgResult.rows[0];
+
+      // Create user as admin of the new organization
+      const userResult = await client.query(
+        `INSERT INTO users (name, email, password_hash, role, organization_id, is_organization_owner, signup_token) 
+         VALUES ($1, $2, $3, 'admin', $4, true, $5) 
+         RETURNING id, name, email, role, organization_id, created_at`,
+        [name, email, password_hash, organization.id, token.id]
+      );
+      const user = userResult.rows[0];
+
+      // Mark token as used
+      const tokensController = new TokensController(pool);
+      await tokensController.markTokenAsUsed(token.id, user.id, client);
+
+      await client.query('COMMIT');
+      client.release();
 
     // Generate tokens
     const tokens = generateTokens({
@@ -84,9 +132,10 @@ export const register = async (
       organization_id: user.organization_id,
     });
 
-    res.status(201).json({
-      success: true,
-      message: 'User registered successfully - No organization required!',
+      res.status(201).json({
+        success: true,
+        message: 'User registered successfully with organization!',
+        organization: organization.name,
       data: {
         user: {
           id: user.id,
@@ -96,8 +145,13 @@ export const register = async (
           organization_id: user.organization_id, // Should be null
         },
         tokens,
-      },
-    });
+        },
+      });
+    } catch (innerError) {
+      await client.query('ROLLBACK');
+      client.release();
+      throw innerError;
+    }
   } catch (error: any) {
     console.error('Registration error details:', {
       message: error.message,

@@ -20,7 +20,7 @@ type AuthContextType = {
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
-  register: (name: string, email: string, password: string, orgName?: string) => Promise<void>;
+  register: (name: string, email: string, password: string, tokenCode: string) => Promise<void>;
   refreshUser: () => Promise<void>;
 };
 
@@ -130,7 +130,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     name: string, 
     email: string, 
     password: string, 
-    orgName?: string
+    tokenCode: string
   ) => {
     setLoading(true);
     try {
@@ -138,6 +138,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         name,
         email,
         password,
+        token_code: tokenCode,
         role: 'admin' // Default to admin for new registrations
       });
       
