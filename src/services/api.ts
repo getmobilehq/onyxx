@@ -314,4 +314,15 @@ export const analyticsAPI = {
   getEfficiency: () => api.get('/analytics/cost-efficiency'),
 };
 
+export const tokensAPI = {
+  create: (data: { organization_name?: string; expires_in_days: number }) => 
+    api.post('/tokens/create', data),
+  validate: (code: string) => 
+    api.post('/tokens/validate', { code }),
+  list: () => 
+    api.get('/tokens/list'),
+  revoke: (id: string) => 
+    api.put(`/tokens/${id}/revoke`),
+};
+
 export default api;

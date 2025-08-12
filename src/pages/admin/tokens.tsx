@@ -53,9 +53,11 @@ export function TokensPage() {
   const fetchTokens = async () => {
     try {
       const response = await api.get('/tokens/list');
-      setTokens(response.data.tokens);
-    } catch (error) {
-      toast.error('Failed to fetch tokens');
+      setTokens(response.data.tokens || []);
+    } catch (error: any) {
+      console.error('Fetch tokens error:', error);
+      const errorMessage = error.response?.data?.error || error.message || 'Failed to fetch tokens';
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -77,8 +79,10 @@ export function TokensPage() {
       
       // Auto-copy the new token
       await copyToClipboard(newToken.code);
-    } catch (error) {
-      toast.error('Failed to create token');
+    } catch (error: any) {
+      console.error('Token creation error:', error);
+      const errorMessage = error.response?.data?.error || error.message || 'Failed to create token';
+      toast.error(errorMessage);
     }
   };
 
