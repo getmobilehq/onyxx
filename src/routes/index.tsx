@@ -163,7 +163,7 @@ export const AppRoutes = () => {
           </ProtectedRoute>
         } />
         <Route path="admin/tokens" element={
-          <ProtectedRoute adminOnly>
+          <ProtectedRoute platformAdminOnly>
             <TokensPage />
           </ProtectedRoute>
         } />

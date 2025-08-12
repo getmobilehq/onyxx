@@ -13,6 +13,7 @@ type User = {
   organization_id?: string;
   organization_name?: string;
   is_organization_owner?: boolean;
+  is_platform_admin?: boolean;
 };
 
 type AuthContextType = {

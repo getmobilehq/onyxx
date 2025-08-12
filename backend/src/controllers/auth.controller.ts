@@ -196,7 +196,7 @@ export const login = async (
     // Get user from database with organization info
     const result = await pool.query(
       `SELECT u.id, u.name, u.email, u.password_hash, u.role, 
-              u.organization_id, u.is_organization_owner,
+              u.organization_id, u.is_organization_owner, u.is_platform_admin,
               o.name as organization_name, o.subscription_plan
        FROM users u
        LEFT JOIN organizations o ON o.id = u.organization_id
@@ -240,6 +240,7 @@ export const login = async (
           email: user.email,
           name: user.name,
           role: user.role,
+          is_platform_admin: user.is_platform_admin,
         },
         tokens,
       },
@@ -308,7 +309,7 @@ export const getMe = async (
 
     const result = await pool.query(
       `SELECT u.id, u.name, u.email, u.role, u.created_at,
-              u.organization_id, u.is_organization_owner,
+              u.organization_id, u.is_organization_owner, u.is_platform_admin,
               o.name as organization_name, o.subscription_plan
        FROM users u
        LEFT JOIN organizations o ON o.id = u.organization_id
@@ -336,6 +337,7 @@ export const getMe = async (
           created_at: user.created_at,
           organization_id: user.organization_id,
           is_organization_owner: user.is_organization_owner,
+          is_platform_admin: user.is_platform_admin,
           organization_name: user.organization_name,
           organization_subscription_plan: user.subscription_plan,
         },
