@@ -5,7 +5,8 @@ import {
   getReportById,
   updateReport,
   deleteReport,
-  generateReportFromAssessment
+  generateReportFromAssessment,
+  downloadAssessmentPDF
 } from '../controllers/reports.controller';
 import { 
   getUserSubscriptions, 
@@ -31,6 +32,9 @@ router.delete('/:id', authenticate, deleteReport);
 
 // Generate report from assessment
 router.post('/generate/:assessmentId', authenticate, generateReportFromAssessment);
+
+// Download PDF report
+router.get('/download/assessment/:assessmentId', authenticate, downloadAssessmentPDF);
 
 // Email report subscriptions
 router.get('/subscriptions', authenticate, getUserSubscriptions);

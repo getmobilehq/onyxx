@@ -612,3 +612,58 @@ export const generateReportFromAssessment = async (
     next(error);
   }
 };
+
+// Download assessment report as PDF
+export const downloadAssessmentPDF = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { assessmentId } = req.params;
+    const user = (req as any).user;
+
+    // Check if assessment exists and user has access
+    const assessmentCheck = await pool.query(
+      `SELECT a.*, b.organization_id 
+       FROM assessments a 
+       JOIN buildings b ON a.building_id = b.id 
+       WHERE a.id = $1`,
+      [assessmentId]
+    );
+
+    if (assessmentCheck.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Assessment not found'
+      });
+    }
+
+    const assessment = assessmentCheck.rows[0];
+
+    // Check if user has access to this organization's data
+    if (assessment.organization_id !== user.organization_id) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied to this assessment'
+      });
+    }
+
+    // Import the report generator service
+    const reportGeneratorService = require('../services/reportGenerator.service').default;
+
+    // Generate the PDF
+    const pdfBuffer = await reportGeneratorService.generateAssessmentReport(assessmentId);
+
+    // Set response headers for PDF download
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="assessment-report-${assessmentId}.pdf"`);
+    res.setHeader('Content-Length', pdfBuffer.length.toString());
+
+    // Send the PDF buffer
+    res.send(pdfBuffer);
+  } catch (error) {
+    console.error('Error generating PDF report:', error);
+    next(error);
+  }
+};

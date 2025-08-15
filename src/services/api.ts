@@ -279,6 +279,7 @@ export const reportsAPI = {
   generateFromAssessment: (assessmentId: string) => api.post(`/reports/generate/${assessmentId}`),
   getByBuildingId: (buildingId: string) => api.get('/reports', { params: { building_id: buildingId } }),
   download: (id: string) => api.get(`/reports/${id}/download`, { responseType: 'blob' }),
+  downloadAssessmentPDF: (assessmentId: string) => api.get(`/reports/download/assessment/${assessmentId}`, { responseType: 'blob' }),
 };
 
 export const usersAPI = {

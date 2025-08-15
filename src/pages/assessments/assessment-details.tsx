@@ -192,16 +192,15 @@ export function AssessmentDetailsPage() {
     
     try {
       setDownloading(true);
-      const response = await fetch(`/api/reports/pdf/${id}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
       
-      if (!response.ok) throw new Error('Failed to generate PDF');
+      // Import the reports API
+      const { reportsAPI } = await import('@/services/api');
       
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
+      // Download the PDF using the API client
+      const response = await reportsAPI.downloadAssessmentPDF(id);
+      
+      // Create a download link
+      const url = window.URL.createObjectURL(response);
       const a = document.createElement('a');
       a.href = url;
       a.download = `assessment-report-${id}.pdf`;
