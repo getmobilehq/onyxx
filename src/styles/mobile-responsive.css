@@ -1,0 +1,217 @@
+/* Mobile Responsive Styles for ONYX Platform */
+
+/* Ensure proper viewport scaling on mobile */
+@media (max-width: 768px) {
+  /* Global mobile adjustments */
+  body {
+    -webkit-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+  }
+
+  /* Make tables responsive */
+  .table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  table {
+    min-width: 100%;
+  }
+
+  /* Adjust card layouts for mobile */
+  .grid {
+    grid-template-columns: 1fr !important;
+    gap: 1rem;
+  }
+
+  /* Make forms more touch-friendly */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  textarea,
+  select {
+    min-height: 44px;
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+
+  /* Adjust button sizes for touch */
+  button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Stack navigation items vertically */
+  .nav-horizontal {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  /* Adjust modal and dialog sizes */
+  [role="dialog"] {
+    width: calc(100vw - 2rem);
+    max-width: calc(100vw - 2rem);
+    margin: 1rem;
+  }
+
+  /* Make dropdown menus full width on mobile */
+  [role="listbox"] {
+    width: 100vw;
+    left: 0 !important;
+    right: 0 !important;
+  }
+
+  /* Adjust padding for mobile screens */
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  /* Stack form fields vertically on mobile */
+  .form-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Adjust chart containers for mobile */
+  .recharts-wrapper {
+    width: 100% !important;
+    height: auto !important;
+  }
+
+  /* Hide desktop-only elements */
+  .desktop-only {
+    display: none !important;
+  }
+
+  /* Show mobile-only elements */
+  .mobile-only {
+    display: block !important;
+  }
+
+  /* Adjust breadcrumb for mobile */
+  .breadcrumb-item:not(:last-child) {
+    display: none;
+  }
+
+  /* Mobile-friendly data cards */
+  .stat-card {
+    min-height: auto;
+    padding: 1rem;
+  }
+
+  /* Responsive image handling */
+  img {
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* Touch-friendly spacing for lists */
+  .list-item {
+    padding: 1rem;
+    margin-bottom: 0.5rem;
+  }
+
+  /* Adjust sidebar for mobile */
+  .sidebar {
+    width: 100%;
+    position: fixed;
+    z-index: 50;
+  }
+
+  /* Mobile assessment form adjustments */
+  .assessment-element-card {
+    padding: 1rem;
+  }
+
+  .deficiency-form {
+    grid-template-columns: 1fr;
+  }
+
+  /* Mobile-friendly tabs */
+  .tabs-list {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    white-space: nowrap;
+  }
+
+  /* Adjust progress indicators for mobile */
+  .progress-steps {
+    font-size: 0.875rem;
+  }
+
+  /* Mobile file upload area */
+  .upload-area {
+    padding: 1.5rem;
+    font-size: 0.875rem;
+  }
+
+  /* Responsive badges and tags */
+  .badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+  }
+
+  /* Mobile-friendly alerts */
+  .alert {
+    padding: 1rem;
+    font-size: 0.875rem;
+  }
+
+  /* Adjust floating action buttons */
+  .fab {
+    bottom: 1rem;
+    right: 1rem;
+    width: 56px;
+    height: 56px;
+  }
+}
+
+/* Tablet adjustments */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .container {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Landscape phone adjustments */
+@media (max-width: 768px) and (orientation: landscape) {
+  .modal-content {
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+  /* Make all interactive elements larger */
+  a, button, [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Add padding to clickable areas */
+  .clickable {
+    padding: 0.75rem;
+  }
+
+  /* Disable hover effects on touch devices */
+  .hover\\:bg-* {
+    background-color: inherit !important;
+  }
+}
+
+/* Print styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  .page-break {
+    page-break-after: always;
+  }
+}
