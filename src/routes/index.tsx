@@ -33,6 +33,7 @@ import { AnalyticsTestPage } from '@/pages/analytics/test';
 import { SimpleAnalyticsPage } from '@/pages/analytics/simple';
 import { DebugAnalyticsPage } from '@/pages/analytics/debug';
 import { FixedAnalyticsPage } from '@/pages/analytics/fixed';
+import { PredictiveMaintenancePage } from '@/pages/predictive-maintenance';
 import { TeamPage } from '@/pages/team';
 import { OrganizationPage } from '@/pages/organization';
 import { AdminSettingsPage } from '@/pages/admin/settings';
@@ -129,6 +130,9 @@ export const AppRoutes = () => {
         
         {/* Analytics */}
         <Route path="analytics" element={<FixedAnalyticsPage />} />
+        
+        {/* Predictive Maintenance */}
+        <Route path="predictive-maintenance" element={<PredictiveMaintenancePage />} />
         
         {/* Team Management */}
         <Route path="team" element={<TeamPage />} />

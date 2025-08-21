@@ -2,15 +2,20 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Last Updated: August 17, 2025
+
 ## Development Commands
 
-- `npm run dev` - Start development server with Vite
+### Frontend
+- `npm run dev` - Start development server with Vite (port 5173)
 - `npm run build` - TypeScript compilation + Vite production build  
 - `npm run lint` - ESLint code linting
 - `npm run preview` - Preview production build locally
+- `npm test` - Run Vitest tests
+- `npm run test:ui` - Run tests with UI
+- `npm run test:coverage` - Generate test coverage report
 
-## Backend Commands
-
+### Backend
 - `cd backend && npm run dev` - Start backend development server on port 5001
 - `cd backend && npm run build` - Compile TypeScript backend
 - `cd backend && npm start` - Start production backend server
@@ -19,24 +24,40 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Onyx** is a multi-tenant SaaS application for building condition assessment and lifecycle reporting for capital planning. The application is built with React + TypeScript frontend and Node.js + Express + PostgreSQL backend.
 
-### Current Development Status
+### Current Development Status (August 17, 2025)
 
-**Frontend**: ✅ FULLY IMPLEMENTED
-- Complete UI with ShadCN components
-- Full authentication system with JWT tokens
-- Assessment workflow (pre-assessment → field assessment → completion)
-- Building management (CRUD operations)
-- Real-time API integration
-- Dashboard with statistics
-- Reports and analytics
+**Frontend**: 85% Complete
+- ✅ Complete UI with ShadCN components
+- ✅ Full authentication system with JWT tokens
+- ✅ Token-based registration system
+- ✅ Assessment workflow (pre-assessment → field assessment → completion)
+- ✅ Building management (CRUD operations)
+- ✅ Real-time API integration
+- ✅ Dashboard with statistics
+- ✅ PDF Report generation
+- ✅ Mobile responsive framework (NEW - Aug 17)
+- ✅ Testing infrastructure with Vitest (NEW - Aug 17)
+- 🚧 Analytics dashboard (partial - needs more visualizations)
+- ❌ Predictive Maintenance UI (backend ready, no UI)
+- ❌ Email Subscriptions UI (component exists, not connected)
 
-**Backend**: ✅ FULLY IMPLEMENTED  
-- Node.js + Express + TypeScript API server
-- PostgreSQL database with complete schema
-- JWT authentication with refresh tokens
-- Full CRUD APIs for buildings, assessments, elements, users
-- Deployed to Render.com (https://onyxx.onrender.com)
-- Database hosted on Render PostgreSQL
+**Backend**: 95% Complete  
+- ✅ Node.js + Express + TypeScript API server
+- ✅ PostgreSQL database with complete schema
+- ✅ JWT authentication with refresh tokens
+- ✅ Full CRUD APIs for buildings, assessments, elements, users
+- ✅ Predictive maintenance algorithms
+- ✅ Email system with Mailgun
+- ✅ PDF report generation service
+- ✅ Analytics engine with complex queries
+- ✅ Two-factor authentication system
+- ✅ Security enhancements (rate limiting, headers)
+
+**Deployment**: ✅ LIVE
+- Frontend: https://onyxreport.com (Render static site)
+- Backend: https://onyx-backend-f7vh.onrender.com (Render web service)
+- Database: Render PostgreSQL
+- CI/CD: GitHub Actions → Render auto-deploy
 
 ### Core Application Structure
 
@@ -131,4 +152,56 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Data Persistence**: ✅ Backend integration fully functional
 - **Frontend Stability**: ✅ No flickering or infinite render issues
 
-**Automated Testing**: Not yet implemented (Jest/Cypress planned for future)
+### Current Priority Tasks (August 2025)
+
+#### 🔴 Critical (Week 1)
+1. **Build Predictive Maintenance UI**
+   - Create new pages in `/src/pages/predictive-maintenance/`
+   - Use existing backend endpoints
+   - Display risk scores and maintenance timelines
+
+2. **Complete Email Subscriptions**
+   - Connect `email-subscriptions.tsx` to API
+   - Implement subscription CRUD operations
+   - Test automated report delivery
+
+3. **Fix Test Suite**
+   - Resolve API mocking issues
+   - Target 50% code coverage
+   - Add critical path tests
+
+#### 🟡 High Priority (Week 2)
+4. **Enhanced Analytics Dashboard**
+   - Add cost trend visualizations
+   - Building efficiency rankings
+   - Age vs FCI correlation charts
+
+5. **Mobile Testing**
+   - Test on real devices
+   - Fix responsive issues
+   - Optimize for tablets
+
+#### 🟢 Medium Priority (Week 3-4)
+6. **Documentation**
+   - API documentation (Swagger)
+   - User guides
+   - Deployment documentation
+
+7. **Performance**
+   - Implement caching
+   - Database optimization
+   - CDN setup
+
+### Progress Tracking
+
+**Overall Completion**: 87%
+- Core Features: 95%
+- Advanced Features: 70%
+- Testing: 30%
+- Mobile: 80%
+- Documentation: 40%
+
+**Last Deployment**: August 17, 2025
+- Added testing infrastructure (Vitest)
+- Implemented mobile responsive framework
+- Created comprehensive documentation

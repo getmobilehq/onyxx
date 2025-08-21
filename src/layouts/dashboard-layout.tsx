@@ -22,6 +22,7 @@ import {
   Users,
   Building,
   X,
+  Activity,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -88,13 +89,18 @@ export function DashboardLayout() {
       icon: FileText,
       current: pathname.startsWith('/reports'),
     },
-    // Temporarily hidden due to API issues
-    // {
-    //   name: 'Analytics',
-    //   href: '/analytics',
-    //   icon: BarChart3,
-    //   current: pathname.startsWith('/analytics'),
-    // },
+    {
+      name: 'Analytics',
+      href: '/analytics',
+      icon: BarChart3,
+      current: pathname.startsWith('/analytics'),
+    },
+    {
+      name: 'Predictive Maintenance',
+      href: '/predictive-maintenance',
+      icon: Activity,
+      current: pathname.startsWith('/predictive-maintenance'),
+    },
     {
       name: 'Team',
       href: '/team',

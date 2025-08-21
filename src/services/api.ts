@@ -326,4 +326,11 @@ export const tokensAPI = {
     api.put(`/tokens/${id}/revoke`),
 };
 
+export const predictiveMaintenanceAPI = {
+  getPredictions: () => api.get('/analytics/predictions'),
+  getRiskAnalysis: () => api.get('/analytics/risk-analysis'),
+  getOptimizationSuggestions: () => api.get('/analytics/optimization'),
+  getDashboard: () => api.get('/analytics/predictive-dashboard'),
+};
+
 export default api;
