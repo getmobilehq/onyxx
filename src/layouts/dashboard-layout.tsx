@@ -42,8 +42,6 @@ import {
   SheetTitle,
   SheetTrigger 
 } from '@/components/ui/sheet';
-import { OrgSwitcher } from '@/components/org-switcher';
-import { AdminOrgSwitcher } from '@/components/admin-org-switcher';
 import { LoadingScreen } from '@/components/loading-screen';
 
 export function DashboardLayout() {
@@ -153,10 +151,6 @@ export function DashboardLayout() {
               </div>
               <span className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">Onyx</span>
             </Link>
-          </div>
-          <div className="mt-8 px-6 space-y-4">
-            <OrgSwitcher />
-            {user?.role === 'admin' && <AdminOrgSwitcher />}
           </div>
           <div className="mt-10 flex flex-grow flex-col">
             <nav className="flex-1 space-y-1.5 px-4">

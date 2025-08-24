@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/context/auth-context';
 import { useDashboard } from '@/hooks/use-dashboard';
+import { useOnboarding } from '@/hooks/use-onboarding';
 import { cn } from '@/lib/utils';
 import { 
   Activity,
@@ -14,7 +15,8 @@ import {
   Clock,
   ClipboardList,
   FileText,
-  Plus
+  Plus,
+  Users
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -25,10 +27,12 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, LineChart, Line } from 'recharts';
 import { Skeleton } from '@/components/ui/skeleton';
 import { OrganizationOnboarding } from '@/components/organization-onboarding';
+import { FirstTimeUserWelcome } from '@/components/first-time-user-welcome';
 
 export function DashboardPage() {
   const { user } = useAuth();
   const [greeting, setGreeting] = useState('');
+  const { shouldShowOnboarding, completeOnboarding } = useOnboarding();
   const {
     metrics,
     buildingsAtRisk,
@@ -81,13 +85,26 @@ export function DashboardPage() {
     return <OrganizationOnboarding userName={user.name} />;
   }
 
+  // Show first-time user welcome screen
+  if (shouldShowOnboarding) {
+    return (
+      <FirstTimeUserWelcome 
+        userName={user?.name || 'User'} 
+        onComplete={completeOnboarding}
+      />
+    );
+  }
+
+  // Show empty state for users with no data
+  const hasData = metrics.totalBuildings > 0 || !loading;
+  
   return (
     <div className="space-y-8 p-8 pb-16">
       <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
         <div>
           <h2 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">{greeting}, {user?.name}</h2>
           <p className="text-muted-foreground mt-2 text-base">
-            Here's what's happening across your facilities today for capital planning.
+            {hasData ? "Here's what's happening across your facilities today for capital planning." : "Get started by adding your first building to begin tracking facility conditions."}
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -97,12 +114,14 @@ export function DashboardPage() {
               Add Building
             </Link>
           </Button>
-          <Button asChild variant="outline" className="rounded-xl hover:bg-muted/50 transition-all duration-200">
-            <Link to="/reports">
-              <FileText className="mr-2 h-4 w-4" />
-              View Reports
-            </Link>
-          </Button>
+          {hasData && (
+            <Button asChild variant="outline" className="rounded-xl hover:bg-muted/50 transition-all duration-200">
+              <Link to="/reports">
+                <FileText className="mr-2 h-4 w-4" />
+                View Reports
+              </Link>
+            </Button>
+          )}
         </div>
       </div>
 
@@ -174,70 +193,116 @@ export function DashboardPage() {
         </Card>
       </div>
 
-      {/* Main Content Area */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        {/* Buildings At Risk */}
-        <Card className="lg:col-span-3">
-          <CardHeader className="pb-3">
-            <CardTitle>Buildings At Risk</CardTitle>
-            <CardDescription>
-              Buildings with highest FCI scores
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="space-y-4">
-              {loading ? (
-                <>
-                  <Skeleton className="h-20" />
-                  <Skeleton className="h-20" />
-                  <Skeleton className="h-20" />
-                  <Skeleton className="h-20" />
-                </>
-              ) : buildingsAtRisk.length === 0 ? (
-                <div className="p-8 text-center text-muted-foreground">
-                  No buildings with FCI {'>'} 0.10
-                </div>
-              ) : (
-                buildingsAtRisk.map((building) => (
-                  <div
-                    key={building.id}
-                    className="flex items-center justify-between border-b p-4 last:border-0"
-                  >
-                    <div className="space-y-1">
-                      <p className="font-medium leading-none">{building.name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        FCI Score: {(building.fci * 100).toFixed(1)}%
-                      </p>
-                    </div>
-                    <div className="flex flex-col items-end">
-                      <div className={cn("font-medium", 
-                        building.status === 'critical' ? 'text-red-500' :
-                        building.status === 'warning' ? 'text-orange-500' :
-                        'text-yellow-500'
-                      )}>
-                        {building.status.charAt(0).toUpperCase() + building.status.slice(1)}
-                      </div>
-                      <Progress
-                        value={building.fci * 100}
-                        className="h-2 w-24"
-                      />
-                    </div>
+      {/* Main Content Area - Show different layout based on data */}
+      {!hasData && metrics.totalBuildings === 0 ? (
+        // Empty state for new users
+        <div className="grid gap-6 md:grid-cols-2">
+          <Card className="border-dashed border-2 border-primary/30 bg-primary/5">
+            <CardHeader className="text-center pb-4">
+              <div className="mx-auto w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-3">
+                <Building2 className="w-6 h-6 text-primary" />
+              </div>
+              <CardTitle className="text-lg">Add Your First Building</CardTitle>
+              <CardDescription>
+                Start tracking facility conditions by adding a building to your portfolio
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="text-center">
+              <Button asChild className="w-full">
+                <Link to="/buildings/new">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Building
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+          
+          <Card className="border-dashed border-2 border-secondary/30 bg-secondary/5">
+            <CardHeader className="text-center pb-4">
+              <div className="mx-auto w-12 h-12 bg-secondary/10 rounded-xl flex items-center justify-center mb-3">
+                <Users className="w-6 h-6 text-secondary-foreground" />
+              </div>
+              <CardTitle className="text-lg">Invite Your Team</CardTitle>
+              <CardDescription>
+                Collaborate with managers and assessors to conduct facility assessments
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="text-center">
+              <Button asChild variant="outline" className="w-full">
+                <Link to="/team">
+                  <Users className="mr-2 h-4 w-4" />
+                  Invite Team
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+          {/* Buildings At Risk */}
+          <Card className="lg:col-span-3">
+            <CardHeader className="pb-3">
+              <CardTitle>Buildings At Risk</CardTitle>
+              <CardDescription>
+                Buildings with highest FCI scores requiring attention
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="space-y-4">
+                {loading ? (
+                  <>
+                    <Skeleton className="h-20" />
+                    <Skeleton className="h-20" />
+                    <Skeleton className="h-20" />
+                    <Skeleton className="h-20" />
+                  </>
+                ) : buildingsAtRisk.length === 0 ? (
+                  <div className="p-8 text-center text-muted-foreground">
+                    <CheckCircle2 className="mx-auto h-12 w-12 text-green-500 mb-3" />
+                    <p className="font-medium">All buildings in good condition</p>
+                    <p className="text-sm">No buildings with FCI {'>'} 0.10</p>
                   </div>
-                ))
-              )}
-            </div>
-          </CardContent>
-          <CardFooter className="pt-0">
-            <Button asChild variant="ghost" className="w-full">
-              <Link to="/buildings" className="flex items-center justify-center">
-                View all buildings
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-          </CardFooter>
-        </Card>
+                ) : (
+                  buildingsAtRisk.map((building) => (
+                    <div
+                      key={building.id}
+                      className="flex items-center justify-between border-b p-4 last:border-0"
+                    >
+                      <div className="space-y-1">
+                        <p className="font-medium leading-none">{building.name}</p>
+                        <p className="text-sm text-muted-foreground">
+                          FCI Score: {(building.fci * 100).toFixed(1)}%
+                        </p>
+                      </div>
+                      <div className="flex flex-col items-end">
+                        <div className={cn("font-medium text-xs uppercase tracking-wide", 
+                          building.status === 'critical' ? 'text-red-500' :
+                          building.status === 'warning' ? 'text-orange-500' :
+                          'text-yellow-500'
+                        )}>
+                          {building.status}
+                        </div>
+                        <Progress
+                          value={building.fci * 100}
+                          className="h-2 w-24 mt-1"
+                        />
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </CardContent>
+            <CardFooter className="pt-0">
+              <Button asChild variant="ghost" className="w-full">
+                <Link to="/buildings" className="flex items-center justify-center">
+                  View all buildings
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+            </CardFooter>
+          </Card>
 
-        {/* Assessment Activity */}
+          {/* Assessment Activity */}
         <Card className="lg:col-span-4">
           <CardHeader>
             <CardTitle>Assessment Activity</CardTitle>
@@ -373,10 +438,12 @@ export function DashboardPage() {
               </Link>
             </Button>
           </CardFooter>
-        </Card>
-      </div>
+          </Card>
+        </div>
+      )}
 
-      {/* Charts and Analytics */}
+      {/* Charts and Analytics - Only show if user has data */}
+      {hasData && metrics.totalBuildings > 0 && (
       <div className="grid gap-4 md:grid-cols-2">
         {/* FCI Distribution */}
         <Card>
@@ -434,6 +501,7 @@ export function DashboardPage() {
           </CardContent>
         </Card>
       </div>
+      )}
     </div>
   );
 }
