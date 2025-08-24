@@ -142,4 +142,46 @@ export const getOptimizedImageUrl = (
   });
 };
 
+/**
+ * Clean and validate Cloudinary URL to fix HTML entity encoding issues
+ * @param url - The potentially encoded URL
+ * @returns Clean Cloudinary URL
+ */
+export const cleanCloudinaryUrl = (url: string): string => {
+  if (!url || typeof url !== 'string') {
+    return url;
+  }
+  
+  try {
+    let cleanUrl = url;
+    
+    // Decode HTML entities (&#x2F; -> /)
+    cleanUrl = cleanUrl
+      .replace(/&#x2F;/g, '/')
+      .replace(/&#x3A;/g, ':')
+      .replace(/&quot;/g, '"')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>');
+    
+    // Remove any incorrect domain prefix and extract the Cloudinary URL
+    if (cleanUrl.includes('res.cloudinary.com')) {
+      const cloudinaryMatch = cleanUrl.match(/(https?:\/\/res\.cloudinary\.com\/[^"'\s]+)/);
+      if (cloudinaryMatch) {
+        cleanUrl = cloudinaryMatch[1];
+      }
+    }
+    
+    // Validate that it's a proper Cloudinary URL
+    if (!cleanUrl.startsWith('https://res.cloudinary.com/')) {
+      console.warn('⚠️ URL does not appear to be a valid Cloudinary URL:', cleanUrl);
+    }
+    
+    return cleanUrl;
+  } catch (error) {
+    console.error('❌ Error cleaning Cloudinary URL:', error);
+    return url; // Return original URL if cleaning fails
+  }
+};
+
 export default cloudinary;

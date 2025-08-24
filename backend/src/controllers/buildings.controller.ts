@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import pool from '../config/database';
 import { validationResult } from 'express-validator';
-import { uploadImageToCloudinary } from '../services/cloudinary.service';
+import { uploadImageToCloudinary, cleanCloudinaryUrl } from '../services/cloudinary.service';
 
 // Get all buildings
 export const getAllBuildings = async (
@@ -141,6 +141,13 @@ export const createBuilding = async (
       image_url
     } = req.body;
 
+    // Clean and decode the image URL to fix HTML entity encoding issues
+    const cleanImageUrl = cleanCloudinaryUrl(image_url);
+    
+    if (cleanImageUrl !== image_url) {
+      console.log('🖼️ Image URL cleaned:', { original: image_url, cleaned: cleanImageUrl });
+    }
+
     const user = (req as any).user;
 
     // Validate required user data
@@ -166,7 +173,7 @@ export const createBuilding = async (
       [
         user.organization_id, name, type, construction_type, year_built, square_footage,
         state, city, zip_code, street_address,
-        image_url, user.id, 'active'
+        cleanImageUrl, user.id, 'active'
       ]
     );
 
@@ -238,8 +245,19 @@ export const updateBuilding = async (
     allowedFields.forEach(field => {
       if (updateFields[field] !== undefined) {
         const dbField = field === 'type' ? 'building_type' : field === 'street_address' ? 'address' : field;
+        let fieldValue = updateFields[field];
+        
+        // Clean image_url if it's being updated
+        if (field === 'image_url' && fieldValue && typeof fieldValue === 'string') {
+          const cleanedValue = cleanCloudinaryUrl(fieldValue);
+          if (cleanedValue !== fieldValue) {
+            console.log('🖼️ Image URL cleaned in update:', { original: fieldValue, cleaned: cleanedValue });
+          }
+          fieldValue = cleanedValue;
+        }
+        
         updates.push(`${dbField} = $${paramCount}`);
-        values.push(updateFields[field]);
+        values.push(fieldValue);
         paramCount++;
       }
     });
