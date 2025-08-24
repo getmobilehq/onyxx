@@ -139,12 +139,18 @@ export function NewBuildingPage() {
         cost_per_sqft: costPerSqft,
       };
       
-      await createBuilding(buildingData);
-      toast.success('Building added successfully');
+      const newBuilding = await createBuilding(buildingData);
+      toast.success(`Building "${newBuilding.name}" added successfully`);
       navigate('/buildings');
-    } catch (error) {
-      toast.error('Failed to add building');
-      console.error(error);
+    } catch (error: any) {
+      console.error('Building creation error:', error);
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to add building';
+      toast.error(errorMessage);
+      
+      // If it's an authentication error, suggest re-login
+      if (error.response?.status === 401) {
+        toast.error('Please log in again and try again');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -188,11 +194,21 @@ export function NewBuildingPage() {
           setBuildingPhotos(prev => [...prev, newPhoto]);
           toast.success(`Photo ${file.name} uploaded successfully`);
         } else {
-          toast.error(`Failed to upload ${file.name}`);
+          console.error('Image upload failed:', response.data);
+          toast.error(`Failed to upload ${file.name}: ${response.data?.message || 'Unknown error'}`);
         }
       } catch (error: any) {
         console.error('Upload error:', error);
-        toast.error(`Failed to upload ${file.name}: ${error.response?.data?.message || error.message}`);
+        const errorMessage = error.response?.data?.message || error.message || 'Network error';
+        
+        // Handle specific error cases
+        if (error.response?.status === 401) {
+          toast.error('Please log in again to upload images');
+        } else if (error.response?.status === 413) {
+          toast.error(`File ${file.name} is too large. Maximum size is 10MB.`);
+        } else {
+          toast.error(`Failed to upload ${file.name}: ${errorMessage}`);
+        }
       }
     }
   };

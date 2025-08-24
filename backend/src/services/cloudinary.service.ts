@@ -1,6 +1,17 @@
 import { v2 as cloudinary } from 'cloudinary';
 import { UploadApiResponse, UploadApiErrorResponse } from 'cloudinary';
 
+// Validate required environment variables
+if (!process.env.CLOUDINARY_CLOUD_NAME) {
+  console.error('❌ CLOUDINARY_CLOUD_NAME environment variable is not set');
+}
+if (!process.env.CLOUDINARY_API_KEY) {
+  console.error('❌ CLOUDINARY_API_KEY environment variable is not set');
+}
+if (!process.env.CLOUDINARY_API_SECRET) {
+  console.error('❌ CLOUDINARY_API_SECRET environment variable is not set');
+}
+
 // Configure Cloudinary
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -28,6 +39,14 @@ export const uploadImageToCloudinary = async (
   public_id?: string
 ): Promise<CloudinaryUploadResult> => {
   try {
+    // Check if Cloudinary is properly configured
+    if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+      console.error('❌ Cloudinary not properly configured. Missing environment variables.');
+      return {
+        success: false,
+        error: 'Image upload service not configured. Please contact support.',
+      };
+    }
     return new Promise((resolve) => {
       const uploadOptions: any = {
         folder,

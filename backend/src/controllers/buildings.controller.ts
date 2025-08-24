@@ -143,6 +143,17 @@ export const createBuilding = async (
 
     const user = (req as any).user;
 
+    // Validate required user data
+    if (!user || !user.id || !user.organization_id) {
+      console.error('❌ Invalid user data for building creation:', { userId: user?.id, orgId: user?.organization_id });
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication error. Please log in again.',
+      });
+    }
+
+    console.log('ℹ️ Creating building for user:', user.id, 'org:', user.organization_id);
+
     const result = await pool.query(
       `INSERT INTO buildings (
         organization_id, name, building_type, construction_type, year_built, square_footage,
@@ -159,15 +170,39 @@ export const createBuilding = async (
       ]
     );
 
+    const building = result.rows[0];
+    console.log('✅ Building created successfully:', building.id);
+
     res.status(201).json({
       success: true,
       message: 'Building created successfully',
       data: {
-        building: result.rows[0],
+        building,
       },
     });
-  } catch (error) {
-    next(error);
+  } catch (error: any) {
+    console.error('❌ Error creating building:', error);
+    
+    // Handle specific database errors
+    if (error.code === '23505') { // Unique constraint violation
+      return res.status(409).json({
+        success: false,
+        message: 'A building with similar details already exists.',
+      });
+    }
+    
+    if (error.code === '23503') { // Foreign key constraint violation
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid organization or user reference.',
+      });
+    }
+    
+    res.status(500).json({
+      success: false,
+      message: 'Failed to create building. Please try again.',
+      ...(process.env.NODE_ENV === 'development' && { error: error.message })
+    });
   }
 };
 
@@ -315,12 +350,21 @@ export const uploadBuildingImage = async (
   next: NextFunction
 ) => {
   try {
+    console.log('ℹ️ Image upload request received');
+    
     if (!req.file) {
+      console.error('❌ No image file provided in request');
       return res.status(400).json({
         success: false,
         message: 'No image file provided',
       });
     }
+    
+    console.log('ℹ️ Uploading image:', { 
+      filename: req.file.originalname, 
+      size: req.file.size, 
+      mimetype: req.file.mimetype 
+    });
 
     // Upload image to Cloudinary
     const uploadResult = await uploadImageToCloudinary(
@@ -330,11 +374,14 @@ export const uploadBuildingImage = async (
     );
 
     if (!uploadResult.success) {
+      console.error('❌ Cloudinary upload failed:', uploadResult.error);
       return res.status(500).json({
         success: false,
         message: uploadResult.error || 'Failed to upload image',
       });
     }
+
+    console.log('✅ Image uploaded successfully:', uploadResult.url);
 
     // Return the Cloudinary URL
     res.json({
@@ -345,8 +392,12 @@ export const uploadBuildingImage = async (
         public_id: uploadResult.public_id,
       },
     });
-  } catch (error) {
-    console.error('Image upload error:', error);
-    next(error);
+  } catch (error: any) {
+    console.error('❌ Image upload error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to upload image. Please try again.',
+      ...(process.env.NODE_ENV === 'development' && { error: error.message })
+    });
   }
 };
