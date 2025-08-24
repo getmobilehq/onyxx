@@ -130,6 +130,7 @@ export const register = async (
       role: user.role,
       name: user.name,
       organization_id: user.organization_id,
+      is_platform_admin: user.is_platform_admin,
     });
 
       res.status(201).json({
@@ -229,6 +230,7 @@ export const login = async (
       role: user.role,
       name: user.name,
       organization_id: user.organization_id,
+      is_platform_admin: user.is_platform_admin,
     });
 
     res.json({
@@ -281,6 +283,7 @@ export const refreshToken = async (
       role: decoded.role,
       name: decoded.name,
       organization_id: decoded.organization_id,
+      is_platform_admin: decoded.is_platform_admin,
     });
 
     res.json({

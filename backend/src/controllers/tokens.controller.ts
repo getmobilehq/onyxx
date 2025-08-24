@@ -20,8 +20,9 @@ export class TokensController {
       const { organization_name, expires_in_days = 30 } = req.body;
       const created_by = (req as any).user?.id;
 
-      if (!(req as any).user?.is_platform_admin) {
-        return res.status(403).json({ error: 'Only platform admins can create tokens' });
+      // For MVP: Allow all admin users to create tokens
+      if ((req as any).user?.role !== 'admin') {
+        return res.status(403).json({ error: 'Only admin users can create tokens' });
       }
 
       const code = this.generateTokenCode();
@@ -68,8 +69,9 @@ export class TokensController {
 
   listTokens = async (req: Request, res: Response) => {
     try {
-      if (!(req as any).user?.is_platform_admin) {
-        return res.status(403).json({ error: 'Only platform admins can view tokens' });
+      // For MVP: Allow all admin users to view tokens
+      if ((req as any).user?.role !== 'admin') {
+        return res.status(403).json({ error: 'Only admin users can view tokens' });
       }
 
       const query = `
@@ -92,8 +94,9 @@ export class TokensController {
     try {
       const { id } = req.params;
 
-      if (!(req as any).user?.is_platform_admin) {
-        return res.status(403).json({ error: 'Only platform admins can revoke tokens' });
+      // For MVP: Allow all admin users to revoke tokens
+      if ((req as any).user?.role !== 'admin') {
+        return res.status(403).json({ error: 'Only admin users can revoke tokens' });
       }
 
       const query = `

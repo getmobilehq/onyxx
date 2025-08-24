@@ -39,4 +39,5 @@ export interface JWTPayload {
   role: string;
   name: string;
   organization_id: string;
+  is_platform_admin: boolean;
 }

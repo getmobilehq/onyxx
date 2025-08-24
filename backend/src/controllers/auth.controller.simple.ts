@@ -81,6 +81,7 @@ export const register = async (
       role: user.role,
       name: user.name,
       organization_id: user.organization_id || 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+      is_platform_admin: user.is_platform_admin || false,
     });
 
     res.status(201).json({
@@ -151,6 +152,7 @@ export const login = async (
       role: user.role,
       name: user.name,
       organization_id: user.organization_id || 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+      is_platform_admin: user.is_platform_admin || false,
     });
 
     res.json({
@@ -202,6 +204,7 @@ export const refreshToken = async (
       role: decoded.role,
       name: decoded.name,
       organization_id: decoded.organization_id,
+      is_platform_admin: decoded.is_platform_admin,
     });
 
     res.json({
