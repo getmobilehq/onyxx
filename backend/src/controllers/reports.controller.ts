@@ -622,10 +622,31 @@ export const downloadAssessmentPDF = async (
   try {
     const { assessmentId } = req.params;
     const user = (req as any).user;
+    
+    console.log('📄 Generating PDF report for assessment:', assessmentId, 'user:', user?.id);
+
+    // Validate UUID format
+    if (!assessmentId || typeof assessmentId !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(assessmentId)) {
+      console.error('❌ Invalid assessment ID format for PDF:', assessmentId);
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid assessment ID format'
+      });
+    }
+
+    // Check user authentication
+    if (!user || !user.organization_id) {
+      console.error('❌ User not authenticated for PDF download');
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required'
+      });
+    }
 
     // Check if assessment exists and user has access
+    console.log('🔍 Checking assessment access...');
     const assessmentCheck = await pool.query(
-      `SELECT a.*, b.organization_id 
+      `SELECT a.*, b.organization_id, b.name as building_name
        FROM assessments a 
        JOIN buildings b ON a.building_id = b.id 
        WHERE a.id = $1`,
@@ -633,6 +654,7 @@ export const downloadAssessmentPDF = async (
     );
 
     if (assessmentCheck.rows.length === 0) {
+      console.error('❌ Assessment not found for PDF:', assessmentId);
       return res.status(404).json({
         success: false,
         message: 'Assessment not found'
@@ -640,30 +662,80 @@ export const downloadAssessmentPDF = async (
     }
 
     const assessment = assessmentCheck.rows[0];
+    console.log('ℹ️ Assessment found:', { 
+      id: assessment.id, 
+      status: assessment.status, 
+      building_name: assessment.building_name,
+      organization_id: assessment.organization_id 
+    });
 
     // Check if user has access to this organization's data
     if (assessment.organization_id !== user.organization_id) {
+      console.error('❌ Access denied to assessment PDF:', { 
+        userOrg: user.organization_id, 
+        assessmentOrg: assessment.organization_id 
+      });
       return res.status(403).json({
         success: false,
         message: 'Access denied to this assessment'
       });
     }
 
-    // Import the report generator service
-    const reportGeneratorService = require('../services/reportGenerator.service').default;
+    // Import the report generator service with error handling
+    console.log('🔧 Loading report generator service...');
+    let reportGeneratorService;
+    try {
+      reportGeneratorService = require('../services/reportGenerator.service').default;
+      if (!reportGeneratorService || !reportGeneratorService.generateAssessmentReport) {
+        throw new Error('Report generator service not properly configured');
+      }
+    } catch (serviceError: any) {
+      console.error('❌ Report generator service error:', serviceError);
+      return res.status(500).json({
+        success: false,
+        message: 'PDF generation service unavailable',
+        ...(process.env.NODE_ENV === 'development' && { error: serviceError.message })
+      });
+    }
 
     // Generate the PDF
+    console.log('📄 Generating PDF...');
     const pdfBuffer = await reportGeneratorService.generateAssessmentReport(assessmentId);
+    
+    if (!pdfBuffer || pdfBuffer.length === 0) {
+      console.error('❌ Empty PDF buffer generated');
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to generate PDF report'
+      });
+    }
+
+    console.log('✅ PDF generated successfully:', { size: pdfBuffer.length, 'bytes': true });
 
     // Set response headers for PDF download
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="assessment-report-${assessmentId}.pdf"`);
     res.setHeader('Content-Length', pdfBuffer.length.toString());
+    res.setHeader('Cache-Control', 'no-cache');
 
     // Send the PDF buffer
     res.send(pdfBuffer);
-  } catch (error) {
-    console.error('Error generating PDF report:', error);
-    next(error);
+  } catch (error: any) {
+    console.error('❌ PDF generation error:', {
+      message: error.message,
+      stack: error.stack,
+      assessmentId: req.params.assessmentId
+    });
+    
+    if (!res.headersSent) {
+      res.status(500).json({
+        success: false,
+        message: 'Failed to generate PDF report',
+        ...(process.env.NODE_ENV === 'development' && { 
+          error: error.message,
+          details: error.stack 
+        })
+      });
+    }
   }
 };

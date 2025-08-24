@@ -693,22 +693,43 @@ export const calculateFCI = async (
 ) => {
   try {
     const { id } = req.params;
+    
+    console.log('🧮 Calculating FCI for assessment:', id);
+
+    // Validate UUID format
+    if (!id || typeof id !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)) {
+      console.error('❌ Invalid assessment ID format:', id);
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid assessment ID format'
+      });
+    }
 
     // Check if assessment exists
     const assessmentCheck = await pool.query(
-      'SELECT id, status FROM assessments WHERE id = $1',
+      'SELECT id, status, building_id FROM assessments WHERE id = $1',
       [id]
     );
 
     if (assessmentCheck.rows.length === 0) {
+      console.error('❌ Assessment not found:', id);
       return res.status(404).json({
         success: false,
         message: 'Assessment not found'
       });
     }
 
-    // Calculate FCI
+    const assessment = assessmentCheck.rows[0];
+    console.log('ℹ️ Assessment found:', { id: assessment.id, status: assessment.status, building_id: assessment.building_id });
+
+    // Calculate FCI with detailed error handling
     const fciResults = await calculateAssessmentFCI(id);
+    
+    console.log('✅ FCI calculation completed:', {
+      fci_score: fciResults.fci_score,
+      total_repair_cost: fciResults.total_repair_cost,
+      condition_rating: fciResults.condition_rating
+    });
 
     res.json({
       success: true,
@@ -716,9 +737,21 @@ export const calculateFCI = async (
         fci_results: fciResults
       }
     });
-  } catch (error) {
-    console.error('FCI calculation error:', error);
-    next(error);
+  } catch (error: any) {
+    console.error('❌ FCI calculation error:', {
+      message: error.message,
+      stack: error.stack,
+      assessmentId: req.params.id
+    });
+    
+    res.status(500).json({
+      success: false,
+      message: 'Failed to calculate FCI',
+      ...(process.env.NODE_ENV === 'development' && { 
+        error: error.message,
+        details: error.stack 
+      })
+    });
   }
 };
 
@@ -730,14 +763,26 @@ export const completeAssessment = async (
 ) => {
   try {
     const { id } = req.params;
+    
+    console.log('🏁 Completing assessment:', id);
+
+    // Validate UUID format
+    if (!id || typeof id !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)) {
+      console.error('❌ Invalid assessment ID format:', id);
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid assessment ID format'
+      });
+    }
 
     // Check if assessment exists and is not already completed
     const assessmentCheck = await pool.query(
-      'SELECT id, status FROM assessments WHERE id = $1',
+      'SELECT id, status, building_id FROM assessments WHERE id = $1',
       [id]
     );
 
     if (assessmentCheck.rows.length === 0) {
+      console.error('❌ Assessment not found:', id);
       return res.status(404).json({
         success: false,
         message: 'Assessment not found'
@@ -745,8 +790,10 @@ export const completeAssessment = async (
     }
 
     const assessment = assessmentCheck.rows[0];
+    console.log('ℹ️ Assessment status check:', { id: assessment.id, status: assessment.status });
     
     if (assessment.status === 'completed') {
+      console.log('⚠️ Assessment already completed:', id);
       return res.status(400).json({
         success: false,
         message: 'Assessment is already completed'
@@ -754,7 +801,12 @@ export const completeAssessment = async (
     }
 
     // Complete assessment with FCI calculation
+    console.log('🧮 Starting assessment completion with FCI calculation...');
     const fciResults = await completeAssessmentWithFCI(id);
+    console.log('✅ Assessment completion with FCI successful:', {
+      fci_score: fciResults.fci_score,
+      condition_rating: fciResults.condition_rating
+    });
 
     // Get updated assessment
     const updatedAssessment = await pool.query(
@@ -774,8 +826,20 @@ export const completeAssessment = async (
         fci_results: fciResults
       }
     });
-  } catch (error) {
-    console.error('Assessment completion error:', error);
-    next(error);
+  } catch (error: any) {
+    console.error('❌ Assessment completion error:', {
+      message: error.message,
+      stack: error.stack,
+      assessmentId: req.params.id
+    });
+    
+    res.status(500).json({
+      success: false,
+      message: 'Failed to complete assessment',
+      ...(process.env.NODE_ENV === 'development' && { 
+        error: error.message,
+        details: error.stack 
+      })
+    });
   }
 };
