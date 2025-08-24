@@ -128,7 +128,7 @@ export const createOrganization = async (
     }
 
     const userId = req.user?.id;
-    const { name, description, industry, size, website, phone, address, city, state, zip_code, country } = req.body;
+    const { name, description, industry, size, website, phone, address, city, state, zip_code, country, subscription_plan } = req.body;
 
     if (!userId) {
       return res.status(401).json({
@@ -155,7 +155,7 @@ export const createOrganization = async (
       `INSERT INTO organizations (name, description, industry, size, website, phone, address, city, state, zip_code, country, subscription_plan) 
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) 
        RETURNING *`,
-      [name, description, industry, size, website, phone, address, city, state, zip_code, country, 'free']
+      [name, description, industry, size, website, phone, address, city, state, zip_code, country, subscription_plan || 'free']
     );
 
     const organization = result.rows[0];

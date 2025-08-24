@@ -206,7 +206,17 @@ export function AdminDashboard() {
     try {
       const response = await organizationsAPI.create({
         name: data.name,
-        subscription: data.subscription_plan,
+        description: data.description || '',
+        industry: 'Real Estate',
+        size: 'Medium',
+        website: '',
+        phone: '',
+        address: '',
+        city: '',
+        state: '',
+        zip_code: '',
+        country: 'US',
+        subscription_plan: data.subscription_plan
       });
       
       if (response.data.success) {
@@ -215,9 +225,10 @@ export function AdminDashboard() {
         form.reset();
         fetchData();
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to create organization:', error);
-      toast.error('Failed to create organization');
+      const message = error.response?.data?.message || 'Failed to create organization';
+      toast.error(message);
     }
   };
 

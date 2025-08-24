@@ -1,0 +1,13 @@
+# Cache static assets
+/assets/*
+  Cache-Control: max-age=31536000, immutable
+
+# Don't cache HTML files
+/*.html
+  Cache-Control: no-cache, no-store, must-revalidate
+
+# Security headers
+/*
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin

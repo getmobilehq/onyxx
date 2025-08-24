@@ -302,7 +302,20 @@ export const organizationsAPI = {
   getAll: () => api.get('/organizations'),
   getById: (id: string) => api.get(`/organizations/${id}`),
   getCurrent: () => api.get('/organizations/current'),
-  create: (data: { name: string; subscription?: string }) => api.post('/organizations', data),
+  create: (data: { 
+    name: string; 
+    description?: string;
+    industry?: string;
+    size?: string;
+    website?: string;
+    phone?: string;
+    address?: string;
+    city?: string;
+    state?: string;
+    zip_code?: string;
+    country?: string;
+    subscription_plan?: string;
+  }) => api.post('/organizations', data),
   update: (id: string, data: any) => api.put(`/organizations/${id}`, data),
   delete: (id: string) => api.delete(`/organizations/${id}`),
 };
