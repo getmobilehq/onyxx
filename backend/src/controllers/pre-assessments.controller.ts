@@ -9,7 +9,15 @@ export const getPreAssessmentByAssessmentId = async (
   next: NextFunction
 ) => {
   try {
+    console.log('ℹ️ Getting pre-assessment by assessment ID:', req.params.assessmentId);
     const { assessmentId } = req.params;
+
+    if (!assessmentId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Assessment ID is required',
+      });
+    }
 
     const result = await pool.query(
       `SELECT * FROM pre_assessments WHERE assessment_id = $1`,
@@ -17,20 +25,27 @@ export const getPreAssessmentByAssessmentId = async (
     );
 
     if (result.rows.length === 0) {
+      console.log('❌ Pre-assessment not found for assessment ID:', assessmentId);
       return res.status(404).json({
         success: false,
         message: 'Pre-assessment not found',
       });
     }
 
+    console.log('✅ Pre-assessment found:', result.rows[0].id);
     res.json({
       success: true,
       data: {
         preAssessment: result.rows[0],
       },
     });
-  } catch (error) {
-    next(error);
+  } catch (error: any) {
+    console.error('❌ Error getting pre-assessment by assessment ID:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch pre-assessment',
+      ...(process.env.NODE_ENV === 'development' && { error: error.message })
+    });
   }
 };
 
@@ -100,7 +115,17 @@ export const savePreAssessment = async (
       status = 'draft'
     } = req.body;
 
-    const userId = req.user?.id;
+    const userId = (req as any).user?.id;
+    
+    if (!userId) {
+      console.error('❌ No user ID found in request');
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required',
+      });
+    }
+    
+    console.log('ℹ️ Saving pre-assessment for user:', userId);
 
     // Check if pre-assessment already exists for this assessment
     const existingResult = await pool.query(
@@ -236,21 +261,31 @@ export const getAllPreAssessments = async (
   next: NextFunction
 ) => {
   try {
+    console.log('ℹ️ Getting all pre-assessments with query:', req.query);
     const { page = 1, limit = 10, status, building_id } = req.query;
     const offset = (Number(page) - 1) * Number(limit);
+    
+    const user = (req as any).user;
+    if (!user || !user.organization_id) {
+      console.error('❌ User or organization not found in getAllPreAssessments');
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required',
+      });
+    }
 
     let query = `
       SELECT pa.*, 
              b.name as building_name,
-             b.type as building_type_name,
+             b.building_type as building_type_name,
              u.name as created_by_name
       FROM pre_assessments pa
-      LEFT JOIN buildings b ON pa.building_id = b.id
+      LEFT JOIN buildings b ON pa.building_id = b.id AND b.organization_id = $1
       LEFT JOIN users u ON pa.created_by_user_id = u.id
-      WHERE 1=1
+      WHERE b.organization_id = $1
     `;
-    const params: any[] = [];
-    let paramCount = 0;
+    const params: any[] = [user.organization_id];
+    let paramCount = 1;
 
     // Add filters
     if (status) {
@@ -282,10 +317,11 @@ export const getAllPreAssessments = async (
     let countQuery = `
       SELECT COUNT(*) 
       FROM pre_assessments pa
-      WHERE 1=1
+      LEFT JOIN buildings b ON pa.building_id = b.id
+      WHERE b.organization_id = $1
     `;
-    const countParams: any[] = [];
-    let countParamCount = 0;
+    const countParams: any[] = [user.organization_id];
+    let countParamCount = 1;
 
     if (status) {
       countParamCount++;
@@ -302,6 +338,8 @@ export const getAllPreAssessments = async (
     const countResult = await pool.query(countQuery, countParams);
     const totalCount = parseInt(countResult.rows[0].count);
 
+    console.log('✅ Found', result.rows.length, 'pre-assessments');
+    
     res.json({
       success: true,
       data: {
@@ -314,7 +352,12 @@ export const getAllPreAssessments = async (
         },
       },
     });
-  } catch (error) {
-    next(error);
+  } catch (error: any) {
+    console.error('❌ Error getting all pre-assessments:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch pre-assessments',
+      ...(process.env.NODE_ENV === 'development' && { error: error.message })
+    });
   }
 };
