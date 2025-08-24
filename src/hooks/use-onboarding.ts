@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/auth-context';
 
 export function useOnboarding() {
-  const { user } = useAuth();
+  const { user, isFirstLogin, clearFirstLogin } = useAuth();
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -21,6 +21,7 @@ export function useOnboarding() {
       const onboardingKey = `onboarding_completed_${user.id}`;
       localStorage.setItem(onboardingKey, 'true');
       setHasCompletedOnboarding(true);
+      clearFirstLogin(); // Clear the first login flag
     }
   };
 
@@ -32,8 +33,8 @@ export function useOnboarding() {
     }
   };
 
-  // Check if user should see onboarding (new user or hasn't completed onboarding)
-  const shouldShowOnboarding = user && !hasCompletedOnboarding && user.organization_id;
+  // Check if user should see onboarding (new user, first login, or hasn't completed onboarding)
+  const shouldShowOnboarding = user && !hasCompletedOnboarding && user.organization_id && (isFirstLogin || !hasCompletedOnboarding);
 
   return {
     hasCompletedOnboarding,

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
   Building2, 
@@ -12,6 +12,7 @@ import {
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useConfetti } from '@/components/confetti';
 
 interface FirstTimeUserWelcomeProps {
   userName: string;
@@ -21,6 +22,7 @@ interface FirstTimeUserWelcomeProps {
 export function FirstTimeUserWelcome({ userName, onComplete }: FirstTimeUserWelcomeProps) {
   const navigate = useNavigate();
   const [completedActions, setCompletedActions] = useState<Set<string>>(new Set());
+  const { triggerConfetti, ConfettiComponent } = useConfetti();
 
   const handleActionComplete = (actionId: string) => {
     setCompletedActions(prev => new Set([...prev, actionId]));
@@ -56,9 +58,20 @@ export function FirstTimeUserWelcome({ userName, onComplete }: FirstTimeUserWelc
     'Generate reports and manage your facility portfolio'
   ];
 
+  // Trigger confetti on component mount
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      triggerConfetti();
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [triggerConfetti]);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5 flex items-center justify-center p-4">
       <div className="max-w-4xl w-full space-y-8">
+        
+        {/* Confetti Animation */}
+        <ConfettiComponent onComplete={() => {}} />
         
         {/* Header */}
         <div className="text-center space-y-4">

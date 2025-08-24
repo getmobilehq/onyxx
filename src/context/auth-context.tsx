@@ -19,10 +19,12 @@ type User = {
 type AuthContextType = {
   user: User | null;
   loading: boolean;
+  isFirstLogin: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   register: (name: string, email: string, password: string, tokenCode: string) => Promise<void>;
   refreshUser: () => Promise<void>;
+  clearFirstLogin: () => void;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -30,6 +32,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isFirstLogin, setIsFirstLogin] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -91,6 +94,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           organization_id: user.organization_id,
         });
         
+        // Check if this might be a first login (user created recently)
+        const userCreatedAt = new Date(user.created_at || '');
+        const now = new Date();
+        const timeDiff = now.getTime() - userCreatedAt.getTime();
+        const isRecentUser = timeDiff < 24 * 60 * 60 * 1000; // Within 24 hours
+        
+        if (isRecentUser) {
+          setIsFirstLogin(true);
+        }
+        
         toast.success('Login successful');
         
         // Navigate after a short delay to prevent flash
@@ -120,6 +133,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     
     // Clear local state and storage
     setUser(null);
+    setIsFirstLogin(false);
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
     
@@ -166,6 +180,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           user_role: user.role,
         });
         
+        // Mark as first login since they just registered
+        setIsFirstLogin(true);
+        
         toast.success('Registration successful');
         navigate('/dashboard');
       }
@@ -189,8 +206,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const clearFirstLogin = () => {
+    setIsFirstLogin(false);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, register, refreshUser }}>
+    <AuthContext.Provider value={{ user, loading, isFirstLogin, login, logout, register, refreshUser, clearFirstLogin }}>
       {children}
     </AuthContext.Provider>
   );
