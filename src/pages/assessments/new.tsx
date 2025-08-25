@@ -38,23 +38,9 @@ export function NewAssessmentPage() {
     type: building.type || 'Unknown',
     size: building.square_footage || 0,
     lastAssessment: building.updated_at ? new Date(building.updated_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-    fci: calculateFCI(building),
+    fci: building.latest_fci_score, // Use actual FCI score from completed assessments, null if never assessed
+    hasBeenAssessed: building.latest_fci_score !== null && building.latest_fci_score !== undefined,
   }));
-
-  function calculateFCI(building: unknown) {
-  if (
-    typeof building === 'object' &&
-    building !== null &&
-    'year_built' in building &&
-    typeof (building as unknown).year_built === 'number'
-  ) {
-    const age = new Date().getFullYear() - (building as unknown).year_built;
-    const baseFCI = age * 0.01;
-    return Math.min(baseFCI, 0.9);
-  }
-  // fallback if year_built is missing or invalid
-  return 0.1;
-}
 
   const filteredBuildings = buildingsData.filter((building) =>
     building.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -186,9 +172,11 @@ export function NewAssessmentPage() {
                         <p className="text-sm text-muted-foreground">{building.location}</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-sm font-medium">FCI: {building.fci.toFixed(2)}</p>
+                        <p className="text-sm font-medium">
+                          FCI: {building.hasBeenAssessed ? building.fci.toFixed(2) : 'N/A'}
+                        </p>
                         <p className="text-xs text-muted-foreground">
-                          Last: {new Date(building.lastAssessment).toLocaleDateString()}
+                          Last: {building.hasBeenAssessed ? new Date(building.lastAssessment).toLocaleDateString() : 'Never assessed'}
                         </p>
                       </div>
                     </div>
