@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/context/auth-context';
 import { useAssessments } from '@/hooks/use-assessments';
+import { toast } from 'sonner';
 import { 
   ArrowRight, 
   Building2, 
@@ -15,7 +16,8 @@ import {
   MoreHorizontal, 
   Plus, 
   Search, 
-  X 
+  X,
+  Trash2
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -48,6 +50,16 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
   Table,
   TableBody,
   TableCell,
@@ -62,11 +74,14 @@ const assessmentStatuses = ['All Statuses', 'Pending', 'In Progress', 'Completed
 
 export function AssessmentsPage() {
   const { user } = useAuth();
-  const { assessments, loading, error, fetchAssessments } = useAssessments();
+  const { assessments, loading, error, fetchAssessments, deleteAssessment } = useAssessments();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedType, setSelectedType] = useState('All Types');
   const [selectedStatus, setSelectedStatus] = useState('All Statuses');
   const [filterOpen, setFilterOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [assessmentToDelete, setAssessmentToDelete] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   // Refresh assessments when component mounts (useful when returning from completed assessment)
   useEffect(() => {
@@ -154,6 +169,37 @@ export function AssessmentsPage() {
         return null;
     }
   };
+
+  // Delete handlers
+  const handleDeleteClick = (assessmentId: string) => {
+    setAssessmentToDelete(assessmentId);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!assessmentToDelete) return;
+    
+    setDeleting(true);
+    try {
+      await deleteAssessment(assessmentToDelete);
+      toast.success('Assessment deleted successfully');
+      setDeleteDialogOpen(false);
+      setAssessmentToDelete(null);
+    } catch (error: any) {
+      console.error('Delete failed:', error);
+      toast.error(error.message || 'Failed to delete assessment');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteDialogOpen(false);
+    setAssessmentToDelete(null);
+  };
+
+  // Check if user is admin
+  const isAdmin = user?.role === 'admin';
 
   // Loading state
   if (loading) {
@@ -447,6 +493,18 @@ export function AssessmentsPage() {
                             View report
                           </Link>
                         </DropdownMenuItem>
+                        {isAdmin && (
+                          <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onClick={() => handleDeleteClick(assessment.id)}
+                              className="text-destructive focus:text-destructive"
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Delete assessment
+                            </DropdownMenuItem>
+                          </>
+                        )}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
@@ -456,6 +514,38 @@ export function AssessmentsPage() {
           </TableBody>
         </Table>
       </Card>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Assessment</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this assessment? This action cannot be undone. 
+              All assessment data, including element ratings and reports, will be permanently deleted.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleDeleteCancel} disabled={deleting}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                'Delete Assessment'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

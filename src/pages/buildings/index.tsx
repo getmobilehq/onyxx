@@ -9,11 +9,14 @@ import {
   Plus, 
   Search, 
   X,
-  Loader2
+  Loader2,
+  Trash2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useBuildings } from '@/hooks/use-buildings';
 import { useBuildingsDebug } from '@/hooks/use-buildings-debug';
+import { useAuth } from '@/context/auth-context';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -44,6 +47,16 @@ import {
   SheetTrigger,
   SheetFooter,
 } from '@/components/ui/sheet';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import {
@@ -178,7 +191,8 @@ const getFciLabel = (fci: number | null) => {
 };
 
 export function BuildingsPage() {
-  const { buildings, loading, error, fetchBuildings } = useBuildings();
+  const { buildings, loading, error, fetchBuildings, deleteBuilding } = useBuildings();
+  const { user } = useAuth();
   const [view, setView] = useState<'grid' | 'table'>('grid');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedType, setSelectedType] = useState('All Types');
@@ -186,6 +200,9 @@ export function BuildingsPage() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [sortField, setSortField] = useState<string>('name');
   const [filterOpen, setFilterOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [buildingToDelete, setBuildingToDelete] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   // Transform API data to match expected format
   const buildingsData = buildings.filter(building => building && building.id).map(building => ({
@@ -262,6 +279,37 @@ export function BuildingsPage() {
     setSortField('name');
     setSortOrder('asc');
   };
+
+  // Delete handlers
+  const handleDeleteClick = (buildingId: string, buildingName: string) => {
+    setBuildingToDelete(buildingId);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!buildingToDelete) return;
+    
+    setDeleting(true);
+    try {
+      await deleteBuilding(buildingToDelete);
+      toast.success('Building deleted successfully');
+      setDeleteDialogOpen(false);
+      setBuildingToDelete(null);
+    } catch (error: any) {
+      console.error('Delete failed:', error);
+      toast.error(error.message || 'Failed to delete building');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteDialogOpen(false);
+    setBuildingToDelete(null);
+  };
+
+  // Check if user is admin
+  const isAdmin = user?.role === 'admin';
 
   // Loading state
   if (loading) {
@@ -750,6 +798,18 @@ export function BuildingsPage() {
                               View reports
                             </Link>
                           </DropdownMenuItem>
+                          {isAdmin && (
+                            <>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onClick={() => handleDeleteClick(building.id, building.name)}
+                                className="text-destructive focus:text-destructive"
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Delete building
+                              </DropdownMenuItem>
+                            </>
+                          )}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
@@ -760,6 +820,38 @@ export function BuildingsPage() {
           </Table>
         </Card>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Building</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this building? This action cannot be undone. 
+              All associated assessments and reports will also be deleted.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleDeleteCancel} disabled={deleting}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                'Delete Building'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
