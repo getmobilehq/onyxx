@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/auth-context';
 import { useDashboard } from '@/hooks/use-dashboard';
 import { useOnboarding } from '@/hooks/use-onboarding';
@@ -16,7 +16,10 @@ import {
   ClipboardList,
   FileText,
   Plus,
-  Users
+  Users,
+  TrendingUp,
+  TrendingDown,
+  RefreshCw
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -27,11 +30,12 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, LineChart, Line } from 'recharts';
 import { Skeleton } from '@/components/ui/skeleton';
 import { OrganizationOnboarding } from '@/components/organization-onboarding';
-import { FirstTimeUserWelcome } from '@/components/first-time-user-welcome';
 
 export function DashboardPage() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [greeting, setGreeting] = useState('');
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const { shouldShowOnboarding, completeOnboarding } = useOnboarding();
   const {
     metrics,
@@ -40,7 +44,8 @@ export function DashboardPage() {
     upcomingAssessments,
     fciDistribution,
     fciTrend,
-    loading
+    loading,
+    refreshDashboard
   } = useDashboard();
 
   // Set greeting based on time of day
@@ -85,15 +90,12 @@ export function DashboardPage() {
     return <OrganizationOnboarding userName={user.name} />;
   }
 
-  // Show first-time user welcome screen
-  if (shouldShowOnboarding) {
-    return (
-      <FirstTimeUserWelcome 
-        userName={user?.name || 'User'} 
-        onComplete={completeOnboarding}
-      />
-    );
-  }
+  // Auto-complete onboarding for first-time users (skip welcome screen)
+  useEffect(() => {
+    if (shouldShowOnboarding) {
+      completeOnboarding();
+    }
+  }, [shouldShowOnboarding, completeOnboarding]);
 
   // Show empty state for users with no data
   const hasData = metrics.totalBuildings > 0 || !loading;
@@ -115,12 +117,27 @@ export function DashboardPage() {
             </Link>
           </Button>
           {hasData && (
-            <Button asChild variant="outline" className="rounded-xl hover:bg-muted/50 transition-all duration-200">
-              <Link to="/reports">
-                <FileText className="mr-2 h-4 w-4" />
-                View Reports
-              </Link>
-            </Button>
+            <>
+              <Button asChild variant="outline" className="rounded-xl hover:bg-muted/50 transition-all duration-200">
+                <Link to="/reports">
+                  <FileText className="mr-2 h-4 w-4" />
+                  View Reports
+                </Link>
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="icon"
+                className="rounded-xl"
+                onClick={async () => {
+                  setIsRefreshing(true);
+                  await refreshDashboard();
+                  setIsRefreshing(false);
+                }}
+                disabled={isRefreshing || loading}
+              >
+                <RefreshCw className={cn("h-4 w-4", isRefreshing && "animate-spin")} />
+              </Button>
+            </>
           )}
         </div>
       </div>
@@ -136,11 +153,13 @@ export function DashboardPage() {
             {loading ? (
               <Skeleton className="h-8 w-16" />
             ) : (
-              <div className="text-2xl font-bold">{metrics.totalBuildings}</div>
+              <>
+                <div className="text-2xl font-bold">{metrics.totalBuildings}</div>
+                <p className="text-xs text-muted-foreground">
+                  Active facilities
+                </p>
+              </>
             )}
-            <p className="text-xs text-muted-foreground">
-              Active facilities
-            </p>
           </CardContent>
         </Card>
         <Card>
@@ -152,11 +171,13 @@ export function DashboardPage() {
             {loading ? (
               <Skeleton className="h-8 w-16" />
             ) : (
-              <div className="text-2xl font-bold">{metrics.assessmentsYTD}</div>
+              <>
+                <div className="text-2xl font-bold">{metrics.assessmentsYTD}</div>
+                <p className="text-xs text-muted-foreground">
+                  Completed this year
+                </p>
+              </>
             )}
-            <p className="text-xs text-muted-foreground">
-              Completed this year
-            </p>
           </CardContent>
         </Card>
         <Card>
@@ -168,11 +189,29 @@ export function DashboardPage() {
             {loading ? (
               <Skeleton className="h-8 w-16" />
             ) : (
-              <div className="text-2xl font-bold">{metrics.averageFCI.toFixed(2)}</div>
+              <>
+                <div className="flex items-baseline gap-2">
+                  <div className="text-2xl font-bold">{metrics.averageFCI.toFixed(3)}</div>
+                  {metrics.averageFCI > 0 && (
+                    <span className={cn(
+                      "text-xs font-medium",
+                      metrics.averageFCI <= 0.05 ? "text-green-500" :
+                      metrics.averageFCI <= 0.10 ? "text-yellow-500" :
+                      metrics.averageFCI <= 0.30 ? "text-orange-500" :
+                      "text-red-500"
+                    )}>
+                      {metrics.averageFCI <= 0.05 ? "Excellent" :
+                       metrics.averageFCI <= 0.10 ? "Good" :
+                       metrics.averageFCI <= 0.30 ? "Fair" :
+                       "Critical"}
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Facility condition index
+                </p>
+              </>
             )}
-            <p className="text-xs text-muted-foreground">
-              Facility condition index
-            </p>
           </CardContent>
         </Card>
         <Card>
@@ -184,11 +223,20 @@ export function DashboardPage() {
             {loading ? (
               <Skeleton className="h-8 w-24" />
             ) : (
-              <div className="text-2xl font-bold">${(metrics.estimatedRepairs / 1000000).toFixed(1)}M</div>
+              <>
+                <div className="text-2xl font-bold">
+                  ${metrics.estimatedRepairs >= 1000000 
+                    ? `${(metrics.estimatedRepairs / 1000000).toFixed(1)}M`
+                    : metrics.estimatedRepairs >= 1000
+                    ? `${(metrics.estimatedRepairs / 1000).toFixed(0)}K`
+                    : metrics.estimatedRepairs.toFixed(0)
+                  }
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Total repair costs
+                </p>
+              </>
             )}
-            <p className="text-xs text-muted-foreground">
-              Total repair costs
-            </p>
           </CardContent>
         </Card>
       </div>
@@ -242,10 +290,17 @@ export function DashboardPage() {
           {/* Buildings At Risk */}
           <Card className="lg:col-span-3">
             <CardHeader className="pb-3">
-              <CardTitle>Buildings At Risk</CardTitle>
-              <CardDescription>
-                Buildings with highest FCI scores requiring attention
-              </CardDescription>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Buildings At Risk</CardTitle>
+                  <CardDescription>
+                    Buildings with FCI {'>'} 0.10 requiring attention
+                  </CardDescription>
+                </div>
+                {buildingsAtRisk.length > 0 && (
+                  <AlertTriangle className="h-5 w-5 text-orange-500" />
+                )}
+              </div>
             </CardHeader>
             <CardContent className="p-0">
               <div className="space-y-4">
@@ -438,6 +493,67 @@ export function DashboardPage() {
               </Link>
             </Button>
           </CardFooter>
+          </Card>
+        </div>
+      )}
+
+      {/* Quick Actions - Only show if user has data */}
+      {hasData && metrics.totalBuildings > 0 && (
+        <div className="grid gap-4 md:grid-cols-4 mb-6">
+          <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate('/assessments/new')}>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-primary/10 rounded-lg">
+                  <ClipboardList className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <p className="font-medium text-sm">New Assessment</p>
+                  <p className="text-xs text-muted-foreground">Start assessment</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate('/buildings/new')}>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-500/10 rounded-lg">
+                  <Building2 className="h-5 w-5 text-blue-600" />
+                </div>
+                <div>
+                  <p className="font-medium text-sm">Add Building</p>
+                  <p className="text-xs text-muted-foreground">New facility</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate('/reports')}>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-green-500/10 rounded-lg">
+                  <FileText className="h-5 w-5 text-green-600" />
+                </div>
+                <div>
+                  <p className="font-medium text-sm">View Reports</p>
+                  <p className="text-xs text-muted-foreground">Capital planning</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate('/analytics')}>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-purple-500/10 rounded-lg">
+                  <BarChart3 className="h-5 w-5 text-purple-600" />
+                </div>
+                <div>
+                  <p className="font-medium text-sm">Analytics</p>
+                  <p className="text-xs text-muted-foreground">View insights</p>
+                </div>
+              </div>
+            </CardContent>
           </Card>
         </div>
       )}

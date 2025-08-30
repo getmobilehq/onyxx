@@ -33,8 +33,8 @@ export function useOnboarding() {
     }
   };
 
-  // Check if user should see onboarding (new user, first login, or hasn't completed onboarding)
-  const shouldShowOnboarding = user && !hasCompletedOnboarding && user.organization_id && (isFirstLogin || !hasCompletedOnboarding);
+  // Check if user should see onboarding (new user or first login and hasn't completed onboarding)
+  const shouldShowOnboarding = user && !hasCompletedOnboarding && user.organization_id && isFirstLogin;
 
   return {
     hasCompletedOnboarding,

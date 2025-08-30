@@ -61,10 +61,10 @@ export function useDashboard() {
 
         // Calculate FCI distribution
         const distribution = [
-          { condition: 'Good', value: buildings.filter((b: any) => b.fci_score && parseFloat(b.fci_score) <= 0.05).length },
-          { condition: 'Fair', value: buildings.filter((b: any) => b.fci_score && parseFloat(b.fci_score) > 0.05 && parseFloat(b.fci_score) <= 0.10).length },
-          { condition: 'Poor', value: buildings.filter((b: any) => b.fci_score && parseFloat(b.fci_score) > 0.10 && parseFloat(b.fci_score) <= 0.30).length },
-          { condition: 'Critical', value: buildings.filter((b: any) => b.fci_score && parseFloat(b.fci_score) > 0.30).length },
+          { name: 'Excellent', value: buildings.filter((b: any) => b.fci_score && parseFloat(b.fci_score) <= 0.05).length },
+          { name: 'Good', value: buildings.filter((b: any) => b.fci_score && parseFloat(b.fci_score) > 0.05 && parseFloat(b.fci_score) <= 0.10).length },
+          { name: 'Fair', value: buildings.filter((b: any) => b.fci_score && parseFloat(b.fci_score) > 0.10 && parseFloat(b.fci_score) <= 0.30).length },
+          { name: 'Critical', value: buildings.filter((b: any) => b.fci_score && parseFloat(b.fci_score) > 0.30).length },
         ];
         setFciDistribution(distribution);
       }
@@ -92,11 +92,12 @@ export function useDashboard() {
         setRecentAssessments(recent);
         setUpcomingAssessments(upcoming);
 
-        // Calculate average FCI from completed assessments
-        const completedAssessments = assessments.filter((a: any) => a.status === 'completed' && a.fci_score);
-        if (completedAssessments.length > 0) {
-          const totalFCI = completedAssessments.reduce((sum: number, a: any) => sum + (a.fci_score || 0), 0);
-          const avgFCI = totalFCI / completedAssessments.length;
+        // Calculate average FCI from buildings with FCI scores
+        const buildingsWithFCI = buildings.filter((b: any) => b.fci_score && parseFloat(b.fci_score) > 0);
+        let avgFCI = 0;
+        if (buildingsWithFCI.length > 0) {
+          const totalFCI = buildingsWithFCI.reduce((sum: number, b: any) => sum + parseFloat(b.fci_score), 0);
+          avgFCI = totalFCI / buildingsWithFCI.length;
           
           // Calculate estimated repairs using actual building replacement values
           const buildings = buildingsRes.data.data.buildings || [];
@@ -113,7 +114,21 @@ export function useDashboard() {
             }
           }, 0);
           
-          const estimatedRepairs = avgFCI * totalReplacementValue;
+          // Calculate estimated repairs based on individual building FCIs and replacement values
+          const estimatedRepairs = buildings.reduce((sum: number, building: any) => {
+            const fci = building.fci_score ? parseFloat(building.fci_score) : 0;
+            let replacementValue = 0;
+            
+            if (building.replacement_value) {
+              replacementValue = parseFloat(building.replacement_value);
+            } else if (building.square_footage) {
+              replacementValue = building.square_footage * 200; // $200/sqft estimate
+            } else {
+              replacementValue = 1500000; // Default $1.5M
+            }
+            
+            return sum + (fci * replacementValue);
+          }, 0);
           
           setMetrics(prev => ({
             ...prev,
@@ -139,12 +154,14 @@ export function useDashboard() {
           
           const monthAvgFCI = monthAssessments.length > 0
             ? monthAssessments.reduce((sum: number, a: any) => sum + (a.fci_score || 0), 0) / monthAssessments.length
-            : 0;
+            : null; // Use null for no data instead of 0
           
-          trendData.push({
-            month: month.toLocaleDateString('en-US', { month: 'short' }),
-            fci: Number((monthAvgFCI * 100).toFixed(1)),
-          });
+          if (monthAvgFCI !== null) {
+            trendData.push({
+              month: month.toLocaleDateString('en-US', { month: 'short' }),
+              fci: Number((monthAvgFCI * 100).toFixed(1)),
+            });
+          }
         }
         setFciTrend(trendData);
       }

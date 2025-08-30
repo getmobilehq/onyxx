@@ -226,12 +226,13 @@ export function AnalyticsPage() {
 
       {/* Analytics Tabs */}
       <Tabs defaultValue="age-fci" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="age-fci">Age vs FCI</TabsTrigger>
           <TabsTrigger value="cost-efficiency">Cost Efficiency</TabsTrigger>
           <TabsTrigger value="trends">Cost Trends</TabsTrigger>
           <TabsTrigger value="performance">Performance</TabsTrigger>
-          <TabsTrigger value="predictive">Predictive</TabsTrigger>
+          {/* TODO: Fast follow after MVP launch */}
+          {/* <TabsTrigger value="predictive">Predictive</TabsTrigger> */}
         </TabsList>
 
         {/* Age vs FCI Analysis */}
@@ -492,12 +493,12 @@ export function AnalyticsPage() {
           </div>
         </TabsContent>
 
-        {/* Predictive Maintenance */}
-        <TabsContent value="predictive" className="space-y-4">
+        {/* TODO: Fast follow after MVP launch - Predictive Maintenance */}
+        {/* <TabsContent value="predictive" className="space-y-4">
           <div className="p-6 text-center text-muted-foreground">
             Predictive Maintenance section temporarily disabled for debugging
           </div>
-        </TabsContent>
+        </TabsContent> */}
       </Tabs>
     </div>
   );

@@ -93,12 +93,13 @@ export function DashboardLayout() {
       icon: BarChart3,
       current: pathname.startsWith('/analytics'),
     },
-    {
-      name: 'Predictive Maintenance',
-      href: '/predictive-maintenance',
-      icon: Activity,
-      current: pathname.startsWith('/predictive-maintenance'),
-    },
+    // TODO: Fast follow after MVP launch
+    // {
+    //   name: 'Predictive Maintenance',
+    //   href: '/predictive-maintenance',
+    //   icon: Activity,
+    //   current: pathname.startsWith('/predictive-maintenance'),
+    // },
     {
       name: 'Team',
       href: '/team',
