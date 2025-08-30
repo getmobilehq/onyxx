@@ -85,10 +85,9 @@ export function DashboardPage() {
     }
   };
 
-  // Show organization onboarding if user has no organization
-  if (user && !user.organization_id) {
-    return <OrganizationOnboarding userName={user.name} />;
-  }
+  // Skip organization onboarding for returning users - go straight to dashboard
+  // The OrganizationOnboarding screen is only needed for truly new users without organizations
+  // For existing users, show the main dashboard regardless of organization_id status
 
   // Auto-complete onboarding for first-time users (skip welcome screen)
   useEffect(() => {
