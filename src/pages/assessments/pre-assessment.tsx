@@ -242,9 +242,20 @@ export function PreAssessmentPage() {
       // Update form with existing data
       form.setValue('assessmentType', currentPreAssessment.assessment_type);
       // Convert ISO date to yyyy-MM-dd format for date input
-      const assessmentDate = currentPreAssessment.assessment_date ? 
-        new Date(currentPreAssessment.assessment_date).toISOString().split('T')[0] : 
-        new Date().toISOString().split('T')[0];
+      let assessmentDate = currentPreAssessment.assessment_date;
+      if (assessmentDate) {
+        // Handle different date formats
+        if (typeof assessmentDate === 'string' && assessmentDate.includes('T')) {
+          // ISO format - convert to yyyy-MM-dd
+          assessmentDate = assessmentDate.split('T')[0];
+        } else if (assessmentDate instanceof Date) {
+          // Date object - convert to yyyy-MM-dd
+          assessmentDate = assessmentDate.toISOString().split('T')[0];
+        }
+        // If it's already in yyyy-MM-dd format, use as-is
+      } else {
+        assessmentDate = new Date().toISOString().split('T')[0];
+      }
       form.setValue('assessmentDate', assessmentDate);
       form.setValue('assessmentScope', currentPreAssessment.assessment_scope);
       form.setValue('buildingSize', currentPreAssessment.building_size);
@@ -305,9 +316,26 @@ export function PreAssessmentPage() {
     };
 
     // Save to database
-    const savedPreAssessment = await completePreAssessment(preAssessmentData);
+    let savedPreAssessment = null;
+    try {
+      console.log('💾 Saving pre-assessment data to backend:', preAssessmentData);
+      savedPreAssessment = await completePreAssessment(preAssessmentData);
+      console.log('✅ Pre-assessment saved successfully:', savedPreAssessment);
+    } catch (error: any) {
+      console.error('❌ Failed to save pre-assessment to backend:', error);
+      console.error('Error details:', {
+        status: error.response?.status,
+        message: error.response?.data?.message,
+        assessmentId,
+        buildingId
+      });
+      
+      // Continue with local storage even if backend fails
+      toast.warning('Pre-assessment saved locally, but failed to sync with server. You can still continue.');
+    }
     
-    if (savedPreAssessment) {
+    // Always save to localStorage and continue, regardless of backend status
+    if (savedPreAssessment || true) {
       // Also save to localStorage for backward compatibility
       const legacyData = {
         ...data,
