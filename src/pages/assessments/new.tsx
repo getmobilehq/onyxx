@@ -24,7 +24,7 @@ export function NewAssessmentPage() {
   const [searchParams] = useSearchParams();
   const preselectedBuildingId = searchParams.get('buildingId');
   
-  const { buildings, loading: buildingsLoading } = useBuildings();
+  const { buildings, loading: buildingsLoading, error: buildingsError } = useBuildings();
   const { createAssessment } = useAssessments();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedBuildingId, setSelectedBuildingId] = useState(preselectedBuildingId || '');
@@ -48,6 +48,79 @@ export function NewAssessmentPage() {
   );
 
   const selectedBuilding = buildingsData.find(b => b.id === selectedBuildingId);
+
+  // Show loading state while buildings are being fetched
+  if (buildingsLoading) {
+    return (
+      <div className="space-y-6 p-6 pb-16">
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink asChild><Link to="/dashboard">Dashboard</Link></BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbLink asChild><Link to="/assessments">Assessments</Link></BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbLink>New Assessment</BreadcrumbLink>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+
+        <div className="flex items-center justify-center h-96">
+          <div className="text-center">
+            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+            <p className="text-muted-foreground">Loading buildings...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state if buildings failed to load
+  if (buildingsError || (!buildingsLoading && buildings.length === 0)) {
+    return (
+      <div className="space-y-6 p-6 pb-16">
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink asChild><Link to="/dashboard">Dashboard</Link></BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbLink asChild><Link to="/assessments">Assessments</Link></BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbLink>New Assessment</BreadcrumbLink>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+
+        <div className="flex items-center justify-center h-96">
+          <div className="text-center space-y-4">
+            <div className="text-4xl">🏢</div>
+            <div>
+              <h3 className="text-lg font-medium">No Buildings Available</h3>
+              <p className="text-muted-foreground">
+                {buildingsError ? 'Failed to load buildings' : 'You need to add buildings before creating assessments'}
+              </p>
+            </div>
+            <div className="flex gap-2 justify-center">
+              <Button asChild>
+                <Link to="/buildings/new">Add Building</Link>
+              </Button>
+              <Button variant="outline" asChild>
+                <Link to="/buildings">View Buildings</Link>
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const handleStartAssessment = async () => {
     if (!selectedBuildingId) {
@@ -173,7 +246,7 @@ export function NewAssessmentPage() {
                       </div>
                       <div className="text-right">
                         <p className="text-sm font-medium">
-                          FCI: {building.hasBeenAssessed ? building.fci.toFixed(2) : 'N/A'}
+                          FCI: {building.hasBeenAssessed && building.fci !== null ? building.fci.toFixed(2) : 'N/A'}
                         </p>
                         <p className="text-xs text-muted-foreground">
                           Last: {building.hasBeenAssessed ? new Date(building.lastAssessment).toLocaleDateString() : 'Never assessed'}
