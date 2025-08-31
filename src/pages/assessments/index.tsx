@@ -83,9 +83,18 @@ export function AssessmentsPage() {
   const [assessmentToDelete, setAssessmentToDelete] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  // Refresh assessments when component mounts (useful when returning from completed assessment)
+  // Refresh assessments when component mounts or when window gets focus
+  // This ensures the list is always up to date when returning from completed assessment
   useEffect(() => {
     fetchAssessments();
+    
+    // Also refresh when window regains focus
+    const handleFocus = () => {
+      fetchAssessments();
+    };
+    
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
   }, []); // Empty dependency array to run only once on mount
 
   // Helper function to extract FCI from assessment notes

@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Building2, Info, Camera, Plus, X, Upload, FileText, CheckCircle2 } from 'lucide-react';
 import { useAssessments } from '@/hooks/use-assessments';
 import { useBuildings } from '@/hooks/use-buildings';
+import { useReports } from '@/hooks/use-reports';
 import { AssessmentCompletion } from '@/components/assessment-completion';
 
 import { Button } from '@/components/ui/button';
@@ -83,8 +84,9 @@ export function FieldAssessmentPage() {
   const buildingId = searchParams.get('buildingId');
   const assessmentId = searchParams.get('assessmentId');
   
-  const { updateAssessment, saveAssessmentElements, updateAssessmentElement } = useAssessments();
+  const { updateAssessment, saveAssessmentElements, updateAssessmentElement, completeAssessment: completeAssessmentAPI } = useAssessments();
   const { getBuilding } = useBuildings();
+  const { createReport } = useReports();
   const [currentElementIndex, setCurrentElementIndex] = useState(0);
   const [assessmentData, setAssessmentData] = useState<any>(null);
   const [preAssessmentData, setPreAssessmentData] = useState<any>(null);
@@ -401,12 +403,43 @@ export function FieldAssessmentPage() {
         // Save all assessment elements with deficiencies
         await saveAssessmentElements(assessmentId, elementsForBackend);
 
-        // Update assessment status
-        await updateAssessment(assessmentId, {
-          status: 'completed',
-          completed_at: new Date().toISOString(),
-          notes: `Assessment completed with FCI of ${fci.toFixed(4)}. Total repair cost: $${totalRepairCost.toLocaleString()}`
-        });
+        // Complete the assessment with FCI calculation
+        const completionResult = await completeAssessmentAPI(assessmentId);
+        
+        // Update local assessment data with the result
+        if (completionResult && completionResult.assessment) {
+          completeAssessment.fieldAssessmentData.fci = completionResult.fci_results?.fci || fci;
+          completeAssessment.fieldAssessmentData.totalRepairCost = completionResult.fci_results?.total_repair_cost || totalRepairCost;
+          
+          // Automatically create a report from the completed assessment
+          try {
+            const reportData = {
+              assessment_id: assessmentId,
+              building_id: buildingId || '',
+              title: `Assessment Report - ${buildingData?.name || 'Building'}`,
+              description: `Facility condition assessment completed on ${new Date().toLocaleDateString()}`,
+              report_type: 'facility_condition' as const,
+              status: 'draft' as const,
+              assessment_date: new Date().toISOString(),
+              assessor_name: completionResult.assessment.assessor_name || 'Unknown',
+              fci_score: completionResult.fci_results?.fci || fci,
+              total_repair_cost: completionResult.fci_results?.total_repair_cost || totalRepairCost,
+              replacement_value: preAssessmentData.replacementValue || 0,
+              element_count: elementAssessments.length,
+              deficiency_count: elementAssessments.reduce((sum, e) => sum + (e.deficiencies?.length || 0), 0),
+              executive_summary: `Assessment completed with FCI of ${(completionResult.fci_results?.fci || fci).toFixed(4)}. Total repair cost: $${(completionResult.fci_results?.total_repair_cost || totalRepairCost).toLocaleString()}.`,
+              systems_data: {
+                elements: elementAssessments
+              }
+            };
+            
+            await createReport(reportData);
+            console.log('Report automatically created for completed assessment');
+          } catch (reportError) {
+            console.error('Failed to auto-create report:', reportError);
+            // Don't fail the assessment completion if report creation fails
+          }
+        }
         
         toast.success('Field assessment completed with all deficiency data saved!');
       } catch (error) {
