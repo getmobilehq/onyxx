@@ -42,8 +42,9 @@ export function useDashboard() {
       ]);
 
       // Process buildings data
+      let buildings: any[] = [];
       if (buildingsRes.data.success) {
-        const buildings = buildingsRes.data.data.buildings || [];
+        buildings = buildingsRes.data.data.buildings || [];
         setMetrics(prev => ({ ...prev, totalBuildings: buildings.length }));
 
         // Calculate buildings at risk (FCI > 0.10)
@@ -100,7 +101,6 @@ export function useDashboard() {
           avgFCI = totalFCI / buildingsWithFCI.length;
           
           // Calculate estimated repairs using actual building replacement values
-          const buildings = buildingsRes.data.data.buildings || [];
           const totalReplacementValue = buildings.reduce((sum: number, building: any) => {
             // Use actual replacement value from building data, fallback to reasonable estimates based on square footage
             if (building.replacement_value) {

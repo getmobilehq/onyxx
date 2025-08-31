@@ -401,10 +401,24 @@ export function FieldAssessmentPage() {
           }));
 
         // Save all assessment elements with deficiencies
+        console.log('💾 Saving assessment elements:', { assessmentId, elementCount: elementsForBackend.length });
+        if (!assessmentId) {
+          console.error('❌ No assessment ID available for saving elements');
+          throw new Error('Assessment ID is required for saving elements');
+        }
+        
         await saveAssessmentElements(assessmentId, elementsForBackend);
+        console.log('✅ Assessment elements saved successfully');
 
         // Complete the assessment with FCI calculation
+        console.log('🎯 Attempting to complete assessment with ID:', assessmentId);
+        if (!assessmentId) {
+          console.error('❌ No assessment ID available for completion');
+          throw new Error('Assessment ID is required for completion');
+        }
+        
         const completionResult = await completeAssessmentAPI(assessmentId);
+        console.log('✅ Assessment completion result:', completionResult);
         
         // Update local assessment data with the result
         if (completionResult && completionResult.assessment) {
@@ -442,9 +456,27 @@ export function FieldAssessmentPage() {
         }
         
         toast.success('Field assessment completed with all deficiency data saved!');
-      } catch (error) {
-        console.error('Failed to save assessment to backend:', error);
-        toast.warning('Assessment completed locally but failed to save complete data to database');
+      } catch (error: any) {
+        console.error('❌ Failed to complete assessment:', error);
+        
+        // Provide specific error messages
+        if (error.response?.status === 400) {
+          toast.error('Invalid assessment data - please check all fields are completed correctly');
+        } else if (error.response?.status === 404) {
+          toast.error('Assessment not found - it may have been deleted');
+        } else if (error.response?.status === 500) {
+          toast.error('Server error - please try again in a few minutes');
+        } else {
+          toast.warning('Assessment completed locally but failed to save complete data to database');
+        }
+        
+        // Log detailed error for debugging
+        console.error('Error details:', {
+          status: error.response?.status,
+          message: error.response?.data?.message,
+          assessmentId,
+          buildingId
+        });
       }
     } else {
       toast.success('Field assessment completed successfully!');

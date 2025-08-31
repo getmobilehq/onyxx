@@ -60,6 +60,7 @@ const preAssessmentSchema = z.object({
   assessmentDate: z.string().min(1, 'Assessment date is required'),
   assessmentScope: z.string().min(1, 'Assessment scope is required'),
   buildingSize: z.number().min(1, 'Building size is required'),
+  replacementValue: z.number().min(1, 'Replacement value is required'),
   checklist: z.object({
     buildingPlans: z.boolean(),
     accessPermissions: z.boolean(),
@@ -160,11 +161,12 @@ export function PreAssessmentPage() {
     }
 
     // Load existing pre-assessment from database if assessmentId exists
+    // TODO: Pre-assessment API endpoints need to be implemented on backend
+    // For now, pre-assessment data is stored locally and submitted directly
     if (assessmentId) {
-      console.log('🔄 Loading pre-assessment from database...');
-      getByAssessmentId(assessmentId);
+      console.log('🔄 Pre-assessment will be stored locally for assessment:', assessmentId);
     }
-  }, [buildingId, assessmentId, navigate, getByAssessmentId]);
+  }, [buildingId, assessmentId, navigate]);
 
   // Load building data from API
   useEffect(() => {
@@ -206,6 +208,7 @@ export function PreAssessmentPage() {
       assessmentDate: new Date().toISOString().split('T')[0],
       assessmentScope: 'Full',
       buildingSize: buildingData?.size || 0,
+      replacementValue: buildingData?.replacement_value || 0,
       checklist: {
         buildingPlans: false,
         accessPermissions: false,
@@ -224,6 +227,10 @@ export function PreAssessmentPage() {
   useEffect(() => {
     if (buildingData) {
       form.setValue('buildingSize', buildingData.size);
+      // Use building's replacement value if available, otherwise calculate based on type
+      const replacementValue = buildingData.replacement_value || 
+        (buildingData.size * (buildingTypeCosts[buildingData.type] || 300));
+      form.setValue('replacementValue', replacementValue);
     }
   }, [buildingData, form]);
 
@@ -234,9 +241,14 @@ export function PreAssessmentPage() {
       
       // Update form with existing data
       form.setValue('assessmentType', currentPreAssessment.assessment_type);
-      form.setValue('assessmentDate', currentPreAssessment.assessment_date);
+      // Convert ISO date to yyyy-MM-dd format for date input
+      const assessmentDate = currentPreAssessment.assessment_date ? 
+        new Date(currentPreAssessment.assessment_date).toISOString().split('T')[0] : 
+        new Date().toISOString().split('T')[0];
+      form.setValue('assessmentDate', assessmentDate);
       form.setValue('assessmentScope', currentPreAssessment.assessment_scope);
       form.setValue('buildingSize', currentPreAssessment.building_size);
+      form.setValue('replacementValue', currentPreAssessment.replacement_value || 0);
       form.setValue('additionalNotes', currentPreAssessment.additional_notes || '');
       
       // Update checklist
@@ -272,9 +284,9 @@ export function PreAssessmentPage() {
       return;
     }
 
-    // Calculate replacement value using building's type
+    // Use the replacement value from the form (user-entered or from building data)
     const buildingType = buildingData?.type || '';
-    const replacementValue = data.buildingSize * (buildingTypeCosts[buildingType as keyof typeof buildingTypeCosts] || 300);
+    const replacementValue = data.replacementValue;
 
     // Prepare pre-assessment data for database
     const preAssessmentData = {
@@ -556,6 +568,48 @@ export function PreAssessmentPage() {
               />
 
               {/* Building Type - Hidden, automatically used from building data */}
+              
+              <FormField
+                control={form.control}
+                name="buildingSize"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Building Size (sq ft)</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="number" 
+                        {...field} 
+                        onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Total square footage of the building
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="replacementValue"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Replacement Value ($)</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="number" 
+                        {...field} 
+                        onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Current replacement value of the building
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </CardContent>
           </Card>
 
