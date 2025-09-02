@@ -29,6 +29,7 @@ export const getAllBuildings = async (
     let query = `
       SELECT b.id, b.name, b.building_type as type, b.construction_type, b.year_built, b.square_footage,
              b.state, b.city, b.zip_code, b.address as street_address, b.image_url, b.status, b.created_at, b.updated_at,
+             b.cost_per_sqft, b.replacement_value,
              (
                SELECT a.fci_score 
                FROM assessments a 
@@ -88,7 +89,8 @@ export const getBuildingById = async (
     const result = await pool.query(
       `SELECT id, name, building_type as type, construction_type, year_built, square_footage,
               state, city, zip_code, address as street_address, 
-              image_url, status, created_by as created_by_user_id, created_at, updated_at
+              image_url, status, created_by as created_by_user_id, created_at, updated_at,
+              cost_per_sqft, replacement_value
        FROM buildings
        WHERE id = $1 AND organization_id = $2`,
       [id, user.organization_id]
@@ -161,19 +163,23 @@ export const createBuilding = async (
 
     console.log('ℹ️ Creating building for user:', user.id, 'org:', user.organization_id);
 
+    // Get cost_per_sqft from request or use default
+    const cost_per_sqft = req.body.cost_per_sqft || 200;
+    const replacement_value = square_footage ? square_footage * cost_per_sqft : null;
+
     const result = await pool.query(
       `INSERT INTO buildings (
         organization_id, name, building_type, construction_type, year_built, square_footage,
         state, city, zip_code, address, 
-        image_url, created_by, status
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+        image_url, created_by, status, cost_per_sqft, replacement_value
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
       RETURNING id, name, building_type as type, construction_type, year_built, square_footage,
                 state, city, zip_code, address as street_address, 
-                image_url, status, created_at`,
+                image_url, status, created_at, cost_per_sqft, replacement_value`,
       [
         user.organization_id, name, type, construction_type, year_built, square_footage,
         state, city, zip_code, street_address,
-        cleanImageUrl, user.id, 'active'
+        cleanImageUrl, user.id, 'active', cost_per_sqft, replacement_value
       ]
     );
 
@@ -239,7 +245,7 @@ export const updateBuilding = async (
     const allowedFields = [
       'name', 'building_type', 'construction_type', 'year_built', 'square_footage',
       'state', 'city', 'zip_code', 'address',
-      'image_url', 'status'
+      'image_url', 'status', 'cost_per_sqft'
     ];
 
     allowedFields.forEach(field => {
@@ -269,6 +275,26 @@ export const updateBuilding = async (
       });
     }
 
+    // Check if we need to recalculate replacement_value
+    if (updateFields.square_footage !== undefined || updateFields.cost_per_sqft !== undefined) {
+      // Get current building data to calculate replacement value
+      const currentBuilding = await pool.query(
+        'SELECT square_footage, cost_per_sqft FROM buildings WHERE id = $1',
+        [id]
+      );
+      
+      if (currentBuilding.rows.length > 0) {
+        const current = currentBuilding.rows[0];
+        const newSquareFootage = updateFields.square_footage !== undefined ? updateFields.square_footage : current.square_footage;
+        const newCostPerSqft = updateFields.cost_per_sqft !== undefined ? updateFields.cost_per_sqft : (current.cost_per_sqft || 200);
+        const newReplacementValue = newSquareFootage ? newSquareFootage * newCostPerSqft : null;
+        
+        updates.push(`replacement_value = $${paramCount}`);
+        values.push(newReplacementValue);
+        paramCount++;
+      }
+    }
+
     // Add updated_at
     updates.push(`updated_at = CURRENT_TIMESTAMP`);
     values.push(id);
@@ -279,7 +305,7 @@ export const updateBuilding = async (
        WHERE id = $${paramCount}
        RETURNING id, name, building_type as type, construction_type, year_built, square_footage,
                  state, city, zip_code, address as street_address, 
-                 image_url, status, updated_at`,
+                 image_url, status, updated_at, cost_per_sqft, replacement_value`,
       values
     );
 

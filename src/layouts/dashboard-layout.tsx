@@ -10,6 +10,7 @@ import {
   BarChart3,
   Building2,
   ClipboardList,
+  DollarSign,
   FileText,
   LayoutDashboard,
   LogOut,
@@ -121,6 +122,12 @@ export function DashboardLayout() {
       href: '/admin/dashboard',
       icon: Shield,
       current: pathname === '/admin/dashboard',
+    },
+    {
+      name: 'Building Costs',
+      href: '/admin/building-costs',
+      icon: DollarSign,
+      current: pathname === '/admin/building-costs',
     },
     {
       name: 'Admin Settings',

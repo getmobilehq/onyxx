@@ -191,7 +191,7 @@ export function BuildingDetailsPage() {
             shortTerm: 0,
             longTerm: 0,
             total: 0,
-            replacementValue: (buildingData.square_footage || 0) * (buildingData.cost_per_sqft || 200),
+            replacementValue: buildingData.replacement_value || ((buildingData.square_footage || 0) * (buildingData.cost_per_sqft || 200)),
           }
         };
         
