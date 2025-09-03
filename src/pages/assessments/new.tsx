@@ -30,17 +30,31 @@ export function NewAssessmentPage() {
   const [selectedBuildingId, setSelectedBuildingId] = useState(preselectedBuildingId || '');
   const [creating, setCreating] = useState(false);
 
+  // Debug logging
+  console.log('NewAssessmentPage render:', { 
+    buildings, 
+    buildingsLoading, 
+    buildingsError, 
+    buildingsLength: buildings?.length 
+  });
+
   // Transform buildings data to match expected format
-  const buildingsData = buildings.map(building => ({
-    id: building.id,
-    name: building.name || 'Unknown Building',
-    location: `${building.city || 'Unknown'}, ${building.state || ''}`,
-    type: building.type || 'Unknown',
-    size: building.square_footage || 0,
-    lastAssessment: building.updated_at ? new Date(building.updated_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-    fci: building.latest_fci_score, // Use actual FCI score from completed assessments, null if never assessed
-    hasBeenAssessed: building.latest_fci_score !== null && building.latest_fci_score !== undefined,
-  }));
+  let buildingsData = [];
+  try {
+    buildingsData = (buildings || []).map(building => ({
+      id: building.id,
+      name: building.name || 'Unknown Building',
+      location: `${building.city || 'Unknown'}, ${building.state || ''}`,
+      type: building.type || 'Unknown',
+      size: building.square_footage || 0,
+      lastAssessment: building.updated_at ? new Date(building.updated_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+      fci: building.latest_fci_score, // Use actual FCI score from completed assessments, null if never assessed
+      hasBeenAssessed: building.latest_fci_score !== null && building.latest_fci_score !== undefined,
+    }));
+  } catch (error) {
+    console.error('Error transforming buildings data:', error);
+    buildingsData = [];
+  }
 
   const filteredBuildings = buildingsData.filter((building) =>
     building.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -48,6 +62,33 @@ export function NewAssessmentPage() {
   );
 
   const selectedBuilding = buildingsData.find(b => b.id === selectedBuildingId);
+
+  // Early return for critical errors
+  if (!buildingsLoading && buildingsError && !buildings) {
+    return (
+      <div className="space-y-6 p-6 pb-16">
+        <div className="flex items-center justify-center h-96">
+          <div className="text-center space-y-4">
+            <div className="text-4xl">⚠️</div>
+            <div>
+              <h3 className="text-lg font-medium">Error Loading Page</h3>
+              <p className="text-muted-foreground">
+                {buildingsError || 'Something went wrong while loading the assessment page'}
+              </p>
+            </div>
+            <div className="flex gap-2 justify-center">
+              <Button onClick={() => window.location.reload()}>
+                Reload Page
+              </Button>
+              <Button variant="outline" asChild>
+                <Link to="/dashboard">Go to Dashboard</Link>
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Show loading state while buildings are being fetched
   if (buildingsLoading) {
@@ -80,7 +121,7 @@ export function NewAssessmentPage() {
   }
 
   // Show error state if buildings failed to load
-  if (buildingsError || (!buildingsLoading && buildings.length === 0)) {
+  if (buildingsError || (!buildingsLoading && (!buildings || buildings.length === 0))) {
     return (
       <div className="space-y-6 p-6 pb-16">
         <Breadcrumb>
