@@ -20,15 +20,17 @@ import { toast } from 'sonner';
 
 
 export function NewAssessmentPage() {
-  const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const preselectedBuildingId = searchParams.get('buildingId');
-  
-  const { buildings, loading: buildingsLoading, error: buildingsError } = useBuildings();
-  const { createAssessment } = useAssessments();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedBuildingId, setSelectedBuildingId] = useState(preselectedBuildingId || '');
-  const [creating, setCreating] = useState(false);
+  // Add try-catch around the entire component logic
+  try {
+    const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+    const preselectedBuildingId = searchParams.get('buildingId');
+    
+    const { buildings, loading: buildingsLoading, error: buildingsError } = useBuildings();
+    const { createAssessment } = useAssessments();
+    const [searchQuery, setSearchQuery] = useState('');
+    const [selectedBuildingId, setSelectedBuildingId] = useState(preselectedBuildingId || '');
+    const [creating, setCreating] = useState(false);
 
   // Debug logging
   console.log('NewAssessmentPage render:', { 

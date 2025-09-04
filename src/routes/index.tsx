@@ -18,6 +18,7 @@ import { NewBuildingPage } from '@/pages/buildings/new-building';
 import { EditBuildingPage } from '@/pages/buildings/edit-building';
 import { AssessmentsPage } from '@/pages/assessments';
 import { NewAssessmentPage } from '@/pages/assessments/new';
+import { NewAssessmentPageSimple } from '@/pages/assessments/new-simple';
 import { PreAssessmentPage } from '@/pages/assessments/pre-assessment';
 import { FieldAssessmentPage } from '@/pages/assessments/field-assessment';
 import { AssessmentDetailsPage } from '@/pages/assessments/assessment-details';
@@ -118,7 +119,7 @@ export const AppRoutes = () => {
         
         {/* Assessments */}
         <Route path="assessments" element={<AssessmentsPage />} />
-        <Route path="assessments/new" element={<NewAssessmentPage />} />
+        <Route path="assessments/new" element={<NewAssessmentPageSimple />} />
         <Route path="assessments/:id" element={<AssessmentDetailsPage />} />
         <Route path="assessments/:id/edit" element={<EditAssessmentPage />} />
         <Route path="assessments/pre-assessment" element={<PreAssessmentPage />} />
