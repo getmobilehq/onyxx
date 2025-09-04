@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, Building2, Info, Camera, Plus, X, Upload, FileText, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Building2, Info, Camera, Plus, X, Upload, FileText, CheckCircle2, Loader2 } from 'lucide-react';
 import { useAssessments } from '@/hooks/use-assessments';
 import { useBuildings } from '@/hooks/use-buildings';
 import { useReports } from '@/hooks/use-reports';
@@ -96,6 +96,7 @@ export function FieldAssessmentPage() {
   const [isCompleted, setIsCompleted] = useState(false);
   const [completedAssessment, setCompletedAssessment] = useState<any>(null);
   const [buildingData, setBuildingData] = useState<any>(null);
+  const [isCompleting, setIsCompleting] = useState(false); // Add loading state for completion
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Load building data
@@ -328,7 +329,14 @@ export function FieldAssessmentPage() {
   };
 
   const handleComplete = async () => {
+    // Prevent double-clicks
+    if (isCompleting) {
+      console.log('⚠️ Already completing assessment, ignoring duplicate click');
+      return;
+    }
+
     try {
+      setIsCompleting(true); // Set loading state immediately
       const data = form.getValues();
       
       // Include deficiencies in validation
@@ -427,6 +435,12 @@ export function FieldAssessmentPage() {
           
           // Automatically create a report from the completed assessment
           try {
+            // Ensure we have valid replacement value
+            const replacementValue = preAssessmentData?.replacementValue || 
+                                   preAssessmentData?.replacement_value || 
+                                   buildingData?.replacement_value || 
+                                   0;
+            
             const reportData = {
               assessment_id: assessmentId,
               building_id: buildingId || '',
@@ -435,11 +449,11 @@ export function FieldAssessmentPage() {
               report_type: 'facility_condition' as const,
               status: 'draft' as const,
               assessment_date: new Date().toISOString(),
-              assessor_name: completionResult.assessment.assessor_name || 'Unknown',
+              assessor_name: completionResult.assessment.assessor_name || preAssessmentData?.assessor_name || 'Unknown',
               fci_score: completionResult.fci_results?.fci || fci,
               total_repair_cost: completionResult.fci_results?.total_repair_cost || totalRepairCost,
-              replacement_value: preAssessmentData.replacementValue || 0,
-              element_count: elementAssessments.length,
+              replacement_value: replacementValue,
+              element_count: elementAssessments.filter(e => e.assessed).length,
               deficiency_count: elementAssessments.reduce((sum, e) => sum + (e.deficiencies?.length || 0), 0),
               executive_summary: `Assessment completed with FCI of ${(completionResult.fci_results?.fci || fci).toFixed(4)}. Total repair cost: $${(completionResult.fci_results?.total_repair_cost || totalRepairCost).toLocaleString()}.`,
               systems_data: {
@@ -447,10 +461,13 @@ export function FieldAssessmentPage() {
               }
             };
             
+            console.log('📝 Creating report with data:', reportData);
             await createReport(reportData);
-            console.log('Report automatically created for completed assessment');
-          } catch (reportError) {
-            console.error('Failed to auto-create report:', reportError);
+            console.log('✅ Report automatically created for completed assessment');
+            toast.success('Report generated successfully');
+          } catch (reportError: any) {
+            console.error('❌ Failed to auto-create report:', reportError);
+            toast.error(`Report generation failed: ${reportError.response?.data?.message || reportError.message || 'Unknown error'}`);
             // Don't fail the assessment completion if report creation fails
           }
         }
@@ -486,12 +503,18 @@ export function FieldAssessmentPage() {
     setCompletedAssessment(completeAssessment);
     setIsCompleted(true);
     
-    } catch (error) {
+    } catch (error: any) {
+      console.error('❌ Assessment completion failed:', error);
       if (error instanceof z.ZodError) {
         error.errors.forEach(err => {
           toast.error(err.message);
         });
+      } else {
+        const errorMessage = error.response?.data?.message || error.message || 'Failed to complete assessment';
+        toast.error(errorMessage);
       }
+    } finally {
+      setIsCompleting(false); // Always reset loading state
     }
   };
 
@@ -881,9 +904,18 @@ export function FieldAssessmentPage() {
         </div>
 
         {currentElementIndex === elementAssessments.length - 1 ? (
-          <Button onClick={handleComplete}>
-            <FileText className="mr-2 h-4 w-4" />
-            Complete Assessment
+          <Button onClick={handleComplete} disabled={isCompleting}>
+            {isCompleting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Completing Assessment...
+              </>
+            ) : (
+              <>
+                <FileText className="mr-2 h-4 w-4" />
+                Complete Assessment
+              </>
+            )}
           </Button>
         ) : (
           <Button onClick={handleNext}>

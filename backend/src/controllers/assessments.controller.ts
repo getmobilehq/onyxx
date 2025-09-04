@@ -793,10 +793,39 @@ export const completeAssessment = async (
     console.log('ℹ️ Assessment status check:', { id: assessment.id, status: assessment.status });
     
     if (assessment.status === 'completed') {
-      console.log('⚠️ Assessment already completed:', id);
-      return res.status(400).json({
-        success: false,
-        message: 'Assessment is already completed'
+      console.log('⚠️ Assessment already completed, returning existing data:', id);
+      
+      // Get existing FCI data and return it instead of erroring
+      const existingData = await pool.query(
+        `SELECT a.*, b.name as building_name, u.name as assigned_to_name
+         FROM assessments a
+         LEFT JOIN buildings b ON a.building_id = b.id
+         LEFT JOIN users u ON a.assigned_to = u.id
+         WHERE a.id = $1`,
+        [id]
+      );
+      
+      // Get FCI results from assessment or calculate if missing
+      let fciResults = null;
+      try {
+        fciResults = await calculateAssessmentFCI(id);
+      } catch (fciError) {
+        console.log('Could not calculate FCI for completed assessment:', fciError);
+        // Use default FCI results if calculation fails
+        fciResults = {
+          fci_score: existingData.rows[0]?.fci_score || 0,
+          total_repair_cost: existingData.rows[0]?.total_repair_cost || 0,
+          condition_rating: 'fair'
+        };
+      }
+      
+      return res.json({
+        success: true,
+        message: 'Assessment already completed',
+        data: {
+          assessment: existingData.rows[0],
+          fci_results: fciResults
+        }
       });
     }
 
