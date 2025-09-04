@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Last Updated: August 17, 2025
+## Last Updated: September 4, 2025
 
 ## Development Commands
 
@@ -24,34 +24,38 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Onyx** is a multi-tenant SaaS application for building condition assessment and lifecycle reporting for capital planning. The application is built with React + TypeScript frontend and Node.js + Express + PostgreSQL backend.
 
-### Current Development Status (August 17, 2025)
+### Current Development Status (September 4, 2025)
 
-**Frontend**: 85% Complete
+**Frontend**: 90% Complete
 - ✅ Complete UI with ShadCN components
 - ✅ Full authentication system with JWT tokens
-- ✅ Token-based registration system
+- ✅ **Simplified registration system** (token requirement removed for MVP)
 - ✅ Assessment workflow (pre-assessment → field assessment → completion)
 - ✅ Building management (CRUD operations)
 - ✅ Real-time API integration
 - ✅ Dashboard with statistics
 - ✅ PDF Report generation
-- ✅ Mobile responsive framework (NEW - Aug 17)
-- ✅ Testing infrastructure with Vitest (NEW - Aug 17)
+- ✅ Mobile responsive framework
+- ✅ Testing infrastructure with Vitest
+- ✅ **Building cost management system** (admin controls for replacement values)
 - 🚧 Analytics dashboard (partial - needs more visualizations)
-- ❌ Predictive Maintenance UI (backend ready, no UI)
+- ❌ Predictive Maintenance UI (post-MVP, backend ready)
 - ❌ Email Subscriptions UI (component exists, not connected)
 
-**Backend**: 95% Complete  
+**Backend**: 98% Complete  
 - ✅ Node.js + Express + TypeScript API server
 - ✅ PostgreSQL database with complete schema
 - ✅ JWT authentication with refresh tokens
 - ✅ Full CRUD APIs for buildings, assessments, elements, users
+- ✅ **Hybrid registration system** (supports both token-based and direct signup)
+- ✅ **Dynamic building cost management** with database-driven pricing
 - ✅ Predictive maintenance algorithms
 - ✅ Email system with Mailgun
 - ✅ PDF report generation service
 - ✅ Analytics engine with complex queries
 - ✅ Two-factor authentication system
 - ✅ Security enhancements (rate limiting, headers)
+- ✅ **Comprehensive error handling** and production stability fixes
 
 **Deployment**: ✅ LIVE
 - Frontend: https://onyxreport.com (Render static site)
@@ -70,8 +74,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 1. **Authentication System**: ✅ COMPLETE
    - JWT-based authentication with refresh tokens
-   - User registration, login, logout
+   - **Simplified user registration** (organization name instead of tokens)
+   - User login, logout with session management
    - Protected routes and token management
+   - **Backward compatibility** with existing token-based flow
    - Login: admin@onyx.com / password123
 
 2. **Buildings Management**: ✅ COMPLETE
@@ -111,9 +117,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Sample data populated for testing
 
 **API Configuration**:
-- Production API: https://onyxx.onrender.com/api
+- Production API: https://onyx-backend-f7vh.onrender.com/api
 - Local Development: http://localhost:5001/api
 - Auto-fallback configured in frontend
+- CORS configured for www.onyxreport.com domain
 
 ### Import Patterns
 
@@ -133,16 +140,31 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Recent Fixes and Improvements
 
-**Assessment List Page Flickering (RESOLVED)**:
-- Fixed infinite re-render loop in `/src/pages/assessments/index.tsx`
-- Changed useEffect dependency array from `[fetchAssessments]` to `[]`
-- Assessment list now stable and shows completed assessments correctly
+**Token-Free Registration System (NEW - Sep 4, 2025)**:
+- ✅ Removed token requirement from signup process for MVP testing
+- ✅ Updated frontend registration to collect organization name instead
+- ✅ Enhanced backend to support both token-based and direct registration
+- ✅ Maintained backward compatibility for existing users
+- ✅ Automatic organization creation during signup
 
-**API Integration**:
-- Full end-to-end assessment workflow tested and working
-- Pre-assessment data persistence via localStorage and backend API
-- Field assessment with element condition ratings and deficiency tracking
-- Assessment completion saves to backend with FCI calculation
+**Building Cost Management System (Aug 2025)**:
+- ✅ Dynamic replacement value calculation based on building type
+- ✅ Admin interface for managing cost per square foot by building type
+- ✅ Database-driven pricing with automatic calculation
+- ✅ Fixed assessment completion with accurate replacement values
+
+**Assessment Workflow Stability (Aug 2025)**:
+- ✅ Fixed assessment list page flickering and infinite re-render issues
+- ✅ Resolved double-click problems in assessment completion
+- ✅ Improved error handling for assessment creation and completion
+- ✅ Enhanced report generation with proper replacement value handling
+- ✅ Fixed blank page issues in new assessment creation
+
+**API Integration & Error Handling**:
+- ✅ Full end-to-end assessment workflow tested and working
+- ✅ Comprehensive error handling for production deployment
+- ✅ CORS configuration for multi-domain support
+- ✅ Fixed TypeScript compilation issues and type safety improvements
 
 ### Testing Status
 
@@ -152,56 +174,103 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Data Persistence**: ✅ Backend integration fully functional
 - **Frontend Stability**: ✅ No flickering or infinite render issues
 
-### Current Priority Tasks (August 2025)
+### MVP-Ready Status (September 2025)
 
-#### 🔴 Critical (Week 1)
-1. **Build Predictive Maintenance UI**
-   - Create new pages in `/src/pages/predictive-maintenance/`
-   - Use existing backend endpoints
-   - Display risk scores and maintenance timelines
+**🎯 MVP is Production-Ready for User Testing**
+- ✅ Simplified signup process (no tokens required)
+- ✅ Complete assessment workflow from building creation to report generation
+- ✅ Stable dashboard with real-time statistics
+- ✅ Mobile-responsive design
+- ✅ Production deployment with CI/CD
+- ✅ Error handling and production stability
 
-2. **Complete Email Subscriptions**
-   - Connect `email-subscriptions.tsx` to API
-   - Implement subscription CRUD operations
-   - Test automated report delivery
+#### 🔴 Critical Post-MVP Features (Next Phase)
+1. **Predictive Maintenance UI** (Commented out for MVP)
+   - Backend endpoints ready, UI implementation needed
+   - Risk scoring and maintenance timeline visualization
+   - Integration with existing assessment data
 
-3. **Fix Test Suite**
-   - Resolve API mocking issues
-   - Target 50% code coverage
-   - Add critical path tests
-
-#### 🟡 High Priority (Week 2)
-4. **Enhanced Analytics Dashboard**
-   - Add cost trend visualizations
-   - Building efficiency rankings
+2. **Enhanced Analytics Dashboard**
+   - Cost trend visualizations over time
+   - Building efficiency rankings and comparisons
    - Age vs FCI correlation charts
+   - Portfolio-wide analytics and insights
 
-5. **Mobile Testing**
-   - Test on real devices
-   - Fix responsive issues
-   - Optimize for tablets
+3. **Email Subscriptions System**
+   - Connect existing UI components to backend API
+   - Automated report delivery scheduling
+   - Subscription management for stakeholders
 
-#### 🟢 Medium Priority (Week 3-4)
-6. **Documentation**
-   - API documentation (Swagger)
-   - User guides
-   - Deployment documentation
+#### 🟡 High Priority (Ongoing)
+4. **Testing Infrastructure**
+   - Expand automated test coverage beyond current 30%
+   - Integration tests for critical user workflows
+   - Performance testing for large datasets
 
-7. **Performance**
-   - Implement caching
-   - Database optimization
-   - CDN setup
+5. **Mobile Optimization**
+   - Real device testing across iOS/Android
+   - Tablet-specific UI optimizations
+   - Offline capability for field assessments
+
+#### 🟢 Medium Priority (Future Enhancements)
+6. **API Documentation**
+   - Swagger/OpenAPI specification
+   - Developer onboarding guides
+   - Integration examples and SDKs
+
+7. **Performance Optimization**
+   - Database query optimization
+   - CDN implementation for static assets
+   - Caching strategies for frequently accessed data
 
 ### Progress Tracking
 
-**Overall Completion**: 87%
-- Core Features: 95%
-- Advanced Features: 70%
+**Overall Completion**: 92% (MVP Ready)
+- Core Features: 98% ✅
+- Assessment Workflow: 100% ✅
+- Authentication & User Management: 100% ✅
+- Building Management: 100% ✅
+- Advanced Features: 75%
 - Testing: 30%
-- Mobile: 80%
-- Documentation: 40%
+- Mobile: 85%
+- Documentation: 60%
 
-**Last Deployment**: August 17, 2025
-- Added testing infrastructure (Vitest)
-- Implemented mobile responsive framework
-- Created comprehensive documentation
+**Latest Deployment**: September 4, 2025
+- ✅ Removed token requirement for simplified MVP signup
+- ✅ Enhanced building cost management system
+- ✅ Fixed all critical assessment workflow bugs
+- ✅ Improved error handling and production stability
+- ✅ Updated documentation and implementation status
+
+**Production URLs**:
+- 🌐 Frontend: https://onyxreport.com (Render)
+- 🔗 Backend: https://onyx-backend-f7vh.onrender.com (Render)
+- 📊 Database: Render PostgreSQL (Multi-tenant ready)
+
+**Ready for MVP User Testing** 🚀
+
+### Key Changes in Latest Release (Sep 4, 2025)
+
+**1. Simplified User Registration**
+- Frontend: Updated register form to collect organization name instead of token
+- Backend: Enhanced auth controller to support both registration methods
+- Database: Automatic organization creation during signup
+- UI/UX: Improved onboarding flow for new users
+
+**2. Building Cost Management**
+- Admin interface for managing building type costs
+- Dynamic replacement value calculation
+- Database-driven pricing with `cost_per_sqft` column
+- Accurate FCI calculations with proper replacement values
+
+**3. Assessment Workflow Fixes**
+- Resolved blank page issues in assessment creation
+- Fixed double-click problems in assessment completion
+- Improved error handling throughout the workflow
+- Enhanced report generation reliability
+
+**4. Production Stability**
+- Comprehensive error handling for all critical paths
+- Fixed TypeScript compilation issues
+- CORS configuration for production domain
+- Improved logging and debugging capabilities
