@@ -20,35 +20,16 @@ import { toast } from 'sonner';
 
 
 export function NewAssessmentPage() {
-  // Add try-catch around the entire component logic
-  try {
-    const navigate = useNavigate();
-    const [searchParams] = useSearchParams();
-    const preselectedBuildingId = searchParams.get('buildingId');
-    
-    const { buildings, loading: buildingsLoading, error: buildingsError } = useBuildings();
-    const { createAssessment } = useAssessments();
-    const [searchQuery, setSearchQuery] = useState('');
-    const [selectedBuildingId, setSelectedBuildingId] = useState(preselectedBuildingId || '');
-    const [creating, setCreating] = useState(false);
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const preselectedBuildingId = searchParams.get('buildingId');
+  
+  const { buildings, loading: buildingsLoading, error: buildingsError } = useBuildings();
+  const { createAssessment } = useAssessments();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedBuildingId, setSelectedBuildingId] = useState(preselectedBuildingId || '');
+  const [creating, setCreating] = useState(false);
 
-  // Debug logging
-  console.log('NewAssessmentPage render:', { 
-    buildings, 
-    buildingsLoading, 
-    buildingsError, 
-    buildingsLength: buildings?.length,
-    buildingsType: typeof buildings,
-    preselectedBuildingId
-  });
-
-  // Add error boundary-like error handling
-  if (buildingsError) {
-    console.error('Buildings error in NewAssessmentPage:', buildingsError);
-  }
-
-  // Temporary debug - show if component is rendering at all
-  console.log('NewAssessmentPage component is rendering...');
 
   // Transform buildings data to match expected format
   let buildingsData = [];
@@ -299,7 +280,7 @@ export function NewAssessmentPage() {
                       </div>
                       <div className="text-right">
                         <p className="text-sm font-medium">
-                          FCI: {building.hasBeenAssessed && building.fci !== null ? building.fci.toFixed(2) : 'N/A'}
+                          FCI: {building.hasBeenAssessed && building.fci !== null && typeof building.fci === 'number' ? building.fci.toFixed(2) : 'N/A'}
                         </p>
                         <p className="text-xs text-muted-foreground">
                           Last: {building.hasBeenAssessed ? new Date(building.lastAssessment).toLocaleDateString() : 'Never assessed'}
