@@ -8,21 +8,28 @@ export function useBuildings() {
   const [error, setError] = useState<string | null>(null);
 
   const fetchBuildings = async () => {
+    console.log('🏢 useBuildings: Starting fetchBuildings...');
     setLoading(true);
     setError(null);
     
     try {
+      console.log('🏢 useBuildings: Calling buildingsAPI.getAll()...');
       const response = await buildingsAPI.getAll();
+      console.log('🏢 useBuildings: API response received:', response?.data);
+      
       if (response.data.success) {
+        console.log('🏢 useBuildings: Setting buildings:', response.data.data.buildings?.length || 0, 'buildings');
         setBuildings(response.data.data.buildings);
       } else {
+        console.error('🏢 useBuildings: API returned success=false');
         throw new Error('Failed to fetch buildings');
       }
     } catch (err: any) {
-      console.error('Failed to fetch buildings:', err);
+      console.error('🏢 useBuildings: Error in fetchBuildings:', err);
       setError(err.response?.data?.message || 'Failed to fetch buildings');
       toast.error('Failed to load buildings');
     } finally {
+      console.log('🏢 useBuildings: fetchBuildings completed');
       setLoading(false);
     }
   };
@@ -89,6 +96,7 @@ export function useBuildings() {
   };
 
   useEffect(() => {
+    console.log('🏢 useBuildings: useEffect triggered, calling fetchBuildings...');
     fetchBuildings();
   }, []);
 

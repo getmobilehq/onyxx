@@ -35,8 +35,18 @@ export function NewAssessmentPage() {
     buildings, 
     buildingsLoading, 
     buildingsError, 
-    buildingsLength: buildings?.length 
+    buildingsLength: buildings?.length,
+    buildingsType: typeof buildings,
+    preselectedBuildingId
   });
+
+  // Add error boundary-like error handling
+  if (buildingsError) {
+    console.error('Buildings error in NewAssessmentPage:', buildingsError);
+  }
+
+  // Temporary debug - show if component is rendering at all
+  console.log('NewAssessmentPage component is rendering...');
 
   // Transform buildings data to match expected format
   let buildingsData = [];
