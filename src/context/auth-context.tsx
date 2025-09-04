@@ -22,7 +22,7 @@ type AuthContextType = {
   isFirstLogin: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
-  register: (name: string, email: string, password: string, tokenCode: string) => Promise<void>;
+  register: (name: string, email: string, password: string, organizationName: string) => Promise<void>;
   refreshUser: () => Promise<void>;
   clearFirstLogin: () => void;
 };
@@ -145,7 +145,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     name: string, 
     email: string, 
     password: string, 
-    tokenCode: string
+    organizationName: string
   ) => {
     setLoading(true);
     try {
@@ -153,7 +153,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         name,
         email,
         password,
-        token_code: tokenCode,
+        organization_name: organizationName,
         role: 'admin' // Default to admin for new registrations
       });
       

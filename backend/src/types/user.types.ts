@@ -12,6 +12,7 @@ export interface CreateUserDTO {
   email: string;
   password: string;
   token_code?: string;
+  organization_name?: string;
   role: 'admin' | 'manager' | 'assessor';
 }
 

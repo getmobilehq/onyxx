@@ -139,7 +139,7 @@ export const createBuilding = async (
       city,
       zip_code,
       street_address,
-      cost_per_sqft,
+      cost_per_sqft: requestCostPerSqft,
       image_url
     } = req.body;
 
@@ -164,7 +164,7 @@ export const createBuilding = async (
     console.log('ℹ️ Creating building for user:', user.id, 'org:', user.organization_id);
 
     // Get cost_per_sqft from request or use default
-    const cost_per_sqft = req.body.cost_per_sqft || 200;
+    const cost_per_sqft = requestCostPerSqft || 200;
     const replacement_value = square_footage ? square_footage * cost_per_sqft : null;
 
     const result = await pool.query(

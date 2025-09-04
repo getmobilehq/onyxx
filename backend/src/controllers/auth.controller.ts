@@ -46,33 +46,38 @@ export const register = async (
       });
     }
 
-    const { email, password, name, role, token_code } = req.body;
+    const { email, password, name, role, token_code, organization_name } = req.body;
 
-    // Validate token code
-    if (!token_code) {
+    // Support both token-based and direct organization registration
+    let token = null;
+    let orgNameToUse = organization_name;
+    
+    // If token_code is provided, validate it (backward compatibility)
+    if (token_code) {
+      const tokenResult = await pool.query(
+        `SELECT * FROM tokens 
+         WHERE code = $1 
+         AND status = 'active' 
+         AND expires_at > NOW()`,
+        [token_code]
+      );
+
+      if (tokenResult.rows.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid or expired token code',
+        });
+      }
+
+      token = tokenResult.rows[0];
+      orgNameToUse = token.organization_name || organization_name;
+    } else if (!organization_name) {
+      // If no token and no organization name, error
       return res.status(400).json({
         success: false,
-        message: 'A valid token code is required for signup',
+        message: 'Either a token code or organization name is required',
       });
     }
-
-    // Check if token is valid
-    const tokenResult = await pool.query(
-      `SELECT * FROM tokens 
-       WHERE code = $1 
-       AND status = 'active' 
-       AND expires_at > NOW()`,
-      [token_code]
-    );
-
-    if (tokenResult.rows.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid or expired token code',
-      });
-    }
-
-    const token = tokenResult.rows[0];
 
     // Check if user already exists
     const existingUser = await pool.query(
@@ -97,13 +102,13 @@ export const register = async (
     try {
       await client.query('BEGIN');
 
-      // Create organization for the token holder
-      const orgName = token.organization_name || `${name}'s Organization`;
+      // Create organization with appropriate name
+      const finalOrgName = orgNameToUse || `${name}'s Organization`;
       const orgResult = await client.query(
         `INSERT INTO organizations (name, subscription_plan, created_at) 
          VALUES ($1, $2, NOW()) 
          RETURNING id, name`,
-        [orgName, 'professional']
+        [finalOrgName, 'professional']
       );
       organization = orgResult.rows[0];
 
@@ -112,13 +117,15 @@ export const register = async (
         `INSERT INTO users (name, email, password_hash, role, organization_id, is_organization_owner, signup_token) 
          VALUES ($1, $2, $3, 'admin', $4, true, $5) 
          RETURNING id, name, email, role, organization_id, created_at`,
-        [name, email, password_hash, organization.id, token.id]
+        [name, email, password_hash, organization.id, token ? token.id : null]
       );
       const user = userResult.rows[0];
 
-      // Mark token as used
-      const tokensController = new TokensController(pool);
-      await tokensController.markTokenAsUsed(token.id, user.id, client);
+      // Mark token as used if one was provided
+      if (token) {
+        const tokensController = new TokensController(pool);
+        await tokensController.markTokenAsUsed(token.id, user.id, client);
+      }
 
       await client.query('COMMIT');
       client.release();

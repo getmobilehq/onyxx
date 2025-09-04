@@ -159,7 +159,7 @@ export const authAPI = {
     email: string;
     password: string;
     name: string;
-    token_code: string;
+    organization_name: string;
     role: 'admin' | 'manager' | 'assessor';
   }) => api.post('/auth/register', data),
   
