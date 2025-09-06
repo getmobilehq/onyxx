@@ -80,7 +80,7 @@ class ReportGeneratorService {
                u.name as assessor_name,
                u.email as assessor_email
         FROM assessments a
-        JOIN users u ON a.assigned_to = u.id
+        LEFT JOIN users u ON a.assigned_to_user_id = u.id
         WHERE a.id = $1
       `;
       const assessmentResult = await client.query(assessmentQuery, [assessmentId]);
@@ -100,11 +100,11 @@ class ReportGeneratorService {
       const organization = orgResult.rows[0];
 
       const elementsQuery = `
-        SELECT ae.*, e.name, e.major_group, e.minor_group, e.replacement_unit_cost
+        SELECT ae.*, e.individual_element as name, e.major_group, e.group_element as minor_group
         FROM assessment_elements ae
         JOIN elements e ON ae.element_id = e.id
         WHERE ae.assessment_id = $1
-        ORDER BY e.major_group, e.minor_group
+        ORDER BY e.major_group, e.group_element
       `;
       const elementsResult = await client.query(elementsQuery, [assessmentId]);
       const elements = elementsResult.rows;

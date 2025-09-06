@@ -50,8 +50,8 @@ export const createAssessment = async (
 
     const result = await pool.query(
       `INSERT INTO assessments (
-        organization_id, building_id, assessment_type, status, scheduled_date, 
-        assigned_to, created_by, created_at, updated_at
+        organization_id, building_id, type, status, scheduled_date, 
+        assigned_to_user_id, created_by_user_id, created_at, updated_at
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW()) 
       RETURNING *`,
       [
@@ -102,15 +102,13 @@ export const getAllAssessments = async (
       SELECT 
         a.*,
         b.name as building_name,
-        b.address as street_address,
+        b.street_address as street_address,
         b.city,
         b.state,
-        u1.name as assigned_to_name,
         u2.name as created_by_name
       FROM assessments a
       LEFT JOIN buildings b ON a.building_id = b.id
-      LEFT JOIN users u1 ON a.assigned_to = u1.id
-      LEFT JOIN users u2 ON a.created_by = u2.id
+      LEFT JOIN users u2 ON a.created_by_user_id = u2.id
       WHERE a.organization_id = $1
     `;
     const params: any[] = [user.organization_id];
@@ -130,10 +128,11 @@ export const getAllAssessments = async (
       query += ` AND a.status = $${params.length}`;
     }
 
-    if (assigned_to) {
-      params.push(assigned_to);
-      query += ` AND a.assigned_to = $${params.length}`;
-    }
+    // Assigned_to column doesn't exist - commented out
+    // if (assigned_to) {
+    //   params.push(assigned_to);
+    //   query += ` AND a.assigned_to = $${params.length}`;
+    // }
 
     query += ` ORDER BY a.created_at DESC`;
 
@@ -166,10 +165,11 @@ export const getAllAssessments = async (
       countQuery += ` AND a.status = $${countParams.length}`;
     }
 
-    if (assigned_to) {
-      countParams.push(assigned_to);
-      countQuery += ` AND a.assigned_to = $${countParams.length}`;
-    }
+    // Assigned_to column doesn't exist - commented out
+    // if (assigned_to) {
+    //   countParams.push(assigned_to);
+    //   countQuery += ` AND a.assigned_to = $${countParams.length}`;
+    // }
 
     const countResult = await pool.query(countQuery, countParams);
 
@@ -203,7 +203,7 @@ export const getAssessmentById = async (
       `SELECT 
         a.*,
         b.name as building_name,
-        b.address as street_address,
+        b.street_address as street_address,
         b.city,
         b.state,
         b.building_type as building_type,
@@ -214,7 +214,7 @@ export const getAssessmentById = async (
       FROM assessments a
       LEFT JOIN buildings b ON a.building_id = b.id
       LEFT JOIN users u1 ON a.assigned_to = u1.id
-      LEFT JOIN users u2 ON a.created_by = u2.id
+      LEFT JOIN users u2 ON a.created_by_user_id = u2.id
       WHERE a.id = $1 AND a.organization_id = $2`,
       [id, user.organization_id]
     );
@@ -251,7 +251,7 @@ export const updateAssessment = async (
       scheduled_date,
       assigned_to,
       started_at,
-      completion_date,
+      completed_at,
       notes
     } = req.body;
 
@@ -303,9 +303,9 @@ export const updateAssessment = async (
       paramCount++;
     }
 
-    if (completion_date !== undefined) {
-      updates.push(`completion_date = $${paramCount}`);
-      params.push(completion_date);
+    if (completed_at !== undefined) {
+      updates.push(`completed_at = $${paramCount}`);
+      params.push(completed_at);
       paramCount++;
     }
 
@@ -842,7 +842,7 @@ export const completeAssessment = async (
       `SELECT a.*, b.name as building_name, u.name as assigned_to_name
        FROM assessments a
        LEFT JOIN buildings b ON a.building_id = b.id
-       LEFT JOIN users u ON a.assigned_to = u.id
+       LEFT JOIN users u ON a.assigned_to_user_id = u.id
        WHERE a.id = $1`,
       [id]
     );

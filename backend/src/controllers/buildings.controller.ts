@@ -27,8 +27,8 @@ export const getAllBuildings = async (
     }
     
     let query = `
-      SELECT b.id, b.name, b.building_type as type, b.construction_type, b.year_built, b.square_footage,
-             b.state, b.city, b.zip_code, b.address as street_address, b.image_url, b.status, b.created_at, b.updated_at,
+      SELECT b.id, b.name, b.type, b.construction_type, b.year_built, b.square_footage,
+             b.state, b.city, b.zip_code, b.street_address, b.image_url, b.status, b.created_at, b.updated_at,
              b.cost_per_sqft, b.replacement_value,
              (
                SELECT a.fci_score 
@@ -36,7 +36,7 @@ export const getAllBuildings = async (
                WHERE a.building_id = b.id 
                  AND a.status = 'completed' 
                  AND a.fci_score IS NOT NULL
-               ORDER BY a.completion_date DESC 
+               ORDER BY a.completed_at DESC 
                LIMIT 1
              ) as latest_fci_score
       FROM buildings b
@@ -47,7 +47,7 @@ export const getAllBuildings = async (
     // Add filters
     if (type) {
       params.push(type);
-      query += ` AND building_type = $${params.length}`;
+      query += ` AND type = $${params.length}`;
     }
 
     if (status) {
@@ -57,7 +57,7 @@ export const getAllBuildings = async (
 
     if (search) {
       params.push(`%${search}%`);
-      query += ` AND (name ILIKE $${params.length} OR address ILIKE $${params.length} OR city ILIKE $${params.length})`;
+      query += ` AND (name ILIKE $${params.length} OR street_address ILIKE $${params.length} OR city ILIKE $${params.length})`;
     }
 
     query += ' ORDER BY created_at DESC';
@@ -169,12 +169,12 @@ export const createBuilding = async (
 
     const result = await pool.query(
       `INSERT INTO buildings (
-        organization_id, name, building_type, construction_type, year_built, square_footage,
-        state, city, zip_code, address, 
-        image_url, created_by, status, cost_per_sqft, replacement_value
+        organization_id, name, type, construction_type, year_built, square_footage,
+        state, city, zip_code, street_address, 
+        image_url, created_by_user_id, status, cost_per_sqft, replacement_value
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
-      RETURNING id, name, building_type as type, construction_type, year_built, square_footage,
-                state, city, zip_code, address as street_address, 
+      RETURNING id, name, type, construction_type, year_built, square_footage,
+                state, city, zip_code, street_address, 
                 image_url, status, created_at, cost_per_sqft, replacement_value`,
       [
         user.organization_id, name, type, construction_type, year_built, square_footage,
@@ -250,7 +250,7 @@ export const updateBuilding = async (
 
     allowedFields.forEach(field => {
       if (updateFields[field] !== undefined) {
-        const dbField = field === 'type' ? 'building_type' : field === 'street_address' ? 'address' : field;
+        const dbField = field === 'street_address' ? 'street_address' : field;
         let fieldValue = updateFields[field];
         
         // Clean image_url if it's being updated
@@ -303,8 +303,8 @@ export const updateBuilding = async (
       `UPDATE buildings 
        SET ${updates.join(', ')}
        WHERE id = $${paramCount}
-       RETURNING id, name, building_type as type, construction_type, year_built, square_footage,
-                 state, city, zip_code, address as street_address, 
+       RETURNING id, name, type, construction_type, year_built, square_footage,
+                 state, city, zip_code, street_address, 
                  image_url, status, updated_at, cost_per_sqft, replacement_value`,
       values
     );

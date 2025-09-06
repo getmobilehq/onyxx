@@ -21,7 +21,7 @@ export class ReportGeneratorService {
         SELECT a.*, b.*, u.name as assessor_name
         FROM assessments a
         JOIN buildings b ON a.building_id = b.id
-        LEFT JOIN users u ON a.assigned_to = u.id
+        LEFT JOIN users u ON a.assigned_to_user_id = u.id
         WHERE a.id = $1
       `;
       

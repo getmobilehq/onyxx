@@ -320,7 +320,7 @@ export const saveFCIReport = async (
 ): Promise<string> => {
   try {
     const insertQuery = `
-      INSERT INTO fci_reports (
+      INSERT INTO reports (
         building_id,
         assessment_id,
         total_repair_cost,
@@ -382,7 +382,7 @@ export const completeAssessmentWithFCI = async (assessmentId: string): Promise<F
     const updateQuery = `
       UPDATE assessments 
       SET status = 'completed', 
-          completion_date = CURRENT_TIMESTAMP,
+          completed_at = CURRENT_TIMESTAMP,
           notes = $2
       WHERE id = $1
     `;
