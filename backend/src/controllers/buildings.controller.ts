@@ -135,13 +135,18 @@ export const createBuilding = async (
       construction_type,
       year_built,
       square_footage,
+      size, // Accept both size and square_footage for backward compatibility
       state,
       city,
       zip_code,
       street_address,
       cost_per_sqft: requestCostPerSqft,
+      replacement_value: requestReplacementValue, // Accept replacement_value from frontend
       image_url
     } = req.body;
+    
+    // Use square_footage if provided, otherwise use size
+    const finalSquareFootage = square_footage || size;
 
     // Clean and decode the image URL to fix HTML entity encoding issues
     const cleanImageUrl = cleanCloudinaryUrl(image_url);
@@ -165,7 +170,9 @@ export const createBuilding = async (
 
     // Get cost_per_sqft from request or use default
     const cost_per_sqft = requestCostPerSqft || 200;
-    const replacement_value = square_footage ? square_footage * cost_per_sqft : null;
+    // Use requestReplacementValue if provided, otherwise calculate from square footage
+    const replacement_value = requestReplacementValue || 
+                             (finalSquareFootage ? finalSquareFootage * cost_per_sqft : null);
 
     const result = await pool.query(
       `INSERT INTO buildings (
@@ -177,7 +184,7 @@ export const createBuilding = async (
                 state, city, zip_code, street_address, 
                 image_url, status, created_at, cost_per_sqft, replacement_value`,
       [
-        user.organization_id, name, type, construction_type, year_built, square_footage,
+        user.organization_id, name, type, construction_type, year_built, finalSquareFootage,
         state, city, zip_code, street_address,
         cleanImageUrl, user.id, 'active', cost_per_sqft, replacement_value
       ]

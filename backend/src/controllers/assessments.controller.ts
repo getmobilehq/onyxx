@@ -1,6 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import pool from '../config/database';
 import { calculateAssessmentFCI, completeAssessmentWithFCI } from '../services/fci.service';
+import { mapFrontendToDbCategory } from '../utils/category-mapper';
+import { processElementDataForAssessment } from '../utils/element-mapper';
 
 // Create a new assessment
 export const createAssessment = async (
@@ -610,10 +612,13 @@ export const saveAssessmentElements = async (
     try {
       const savedElements = [];
 
-      for (const element of elements) {
-        if (!element.element_id || !element.condition_rating) {
+      for (const rawElement of elements) {
+        if (!rawElement.element_id || !rawElement.condition_rating) {
           continue; // Skip invalid elements
         }
+
+        // Process element data to handle code-to-UUID mapping
+        const element = await processElementDataForAssessment(rawElement);
 
         // Upsert assessment element
         const elementResult = await pool.query(
@@ -648,6 +653,14 @@ export const saveAssessmentElements = async (
         if (element.deficiencies && Array.isArray(element.deficiencies)) {
           for (const deficiency of element.deficiencies) {
             if (deficiency.description && deficiency.description.trim()) {
+              // Map frontend category to database category
+              const dbCategory = mapFrontendToDbCategory(deficiency.category || '');
+              
+              if (!dbCategory) {
+                console.warn(`Invalid category: ${deficiency.category}, skipping deficiency`);
+                continue;
+              }
+
               await pool.query(
                 `INSERT INTO assessment_deficiencies (
                   assessment_element_id, description, cost, category, photos, created_at, updated_at
@@ -656,7 +669,7 @@ export const saveAssessmentElements = async (
                   assessmentElementId,
                   deficiency.description,
                   deficiency.cost || 0,
-                  deficiency.category || '',
+                  dbCategory,
                   deficiency.photos ? JSON.stringify(deficiency.photos) : null
                 ]
               );
@@ -831,7 +844,8 @@ export const completeAssessment = async (
 
     // Complete assessment with FCI calculation
     console.log('🧮 Starting assessment completion with FCI calculation...');
-    const fciResults = await completeAssessmentWithFCI(id);
+    const user = (req as any).user;
+    const fciResults = await completeAssessmentWithFCI(id, user?.id);
     console.log('✅ Assessment completion with FCI successful:', {
       fci_score: fciResults.fci_score,
       condition_rating: fciResults.condition_rating

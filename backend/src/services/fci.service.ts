@@ -316,35 +316,41 @@ const getFCIRating = (fci: number): 'Good' | 'Fair' | 'Poor' | 'Critical' => {
 export const saveFCIReport = async (
   assessmentId: string, 
   buildingId: string, 
-  fciResults: FCICalculationResult
+  fciResults: FCICalculationResult,
+  userId?: string
 ): Promise<string> => {
   try {
     const insertQuery = `
       INSERT INTO reports (
         building_id,
         assessment_id,
+        title,
+        created_by_user_id,
         total_repair_cost,
+        replacement_value,
         replacement_cost,
         fci_score,
         immediate_repair_cost,
         short_term_repair_cost,
         long_term_repair_cost,
-        condition_rating,
+        status,
+        report_type,
         created_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, CURRENT_TIMESTAMP)
+      ) VALUES ($1, $2, $3, $4, $5, $6, $6, $7, $8, $9, $10, 'draft', 'facility_condition', CURRENT_TIMESTAMP)
       RETURNING id
     `;
     
     const result = await pool.query(insertQuery, [
       buildingId,
       assessmentId,
+      `FCI Assessment Report - ${new Date().toLocaleDateString()}`, // title
+      userId || null, // created_by_user_id
       fciResults.total_repair_cost,
-      fciResults.replacement_cost,
+      fciResults.replacement_cost, // This goes to both replacement_value and replacement_cost
       fciResults.fci_score,
       fciResults.immediate_repair_cost,
       fciResults.short_term_repair_cost,
-      fciResults.long_term_repair_cost,
-      fciResults.condition_rating
+      fciResults.long_term_repair_cost
     ]);
     
     return result.rows[0].id;
@@ -357,7 +363,7 @@ export const saveFCIReport = async (
 /**
  * Update assessment with FCI calculation and mark as completed
  */
-export const completeAssessmentWithFCI = async (assessmentId: string): Promise<FCICalculationResult> => {
+export const completeAssessmentWithFCI = async (assessmentId: string, userId?: string): Promise<FCICalculationResult> => {
   try {
     // Calculate FCI
     const fciResults = await calculateAssessmentFCI(assessmentId);
@@ -373,7 +379,7 @@ export const completeAssessmentWithFCI = async (assessmentId: string): Promise<F
     const buildingId = assessmentResult.rows[0].building_id;
     
     // Save FCI report
-    await saveFCIReport(assessmentId, buildingId, fciResults);
+    await saveFCIReport(assessmentId, buildingId, fciResults, userId);
     
     // Create detailed notes with FCI information
     const detailedNotes = generateFCINotes(fciResults);
