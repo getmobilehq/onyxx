@@ -100,7 +100,7 @@ class ReportGeneratorService {
       const organization = orgResult.rows[0];
 
       const elementsQuery = `
-        SELECT ae.*, e.individual_element as name, e.major_group, e.group_element as minor_group
+        SELECT ae.*, e.name, e.major_group, e.group_element as minor_group
         FROM assessment_elements ae
         JOIN elements e ON ae.element_id = e.id
         WHERE ae.assessment_id = $1
@@ -144,7 +144,7 @@ class ReportGeneratorService {
       .moveDown();
 
     this.doc.fontSize(16)
-      .text(data.building.address, { align: 'center' })
+      .text(`${data.building.street_address}, ${data.building.city}, ${data.building.state}`, { align: 'center' })
       .moveDown(3);
 
     const qrData = `onyx://assessment/${data.assessment.id}`;
@@ -155,7 +155,7 @@ class ReportGeneratorService {
     this.doc.moveDown(8);
 
     this.doc.fontSize(14)
-      .text(`Assessment Date: ${format(new Date(data.assessment.completed_date || Date.now()), 'MMMM dd, yyyy')}`, { align: 'center' })
+      .text(`Assessment Date: ${format(new Date(data.assessment.completed_at || Date.now()), 'MMMM dd, yyyy')}`, { align: 'center' })
       .text(`Assessor: ${data.assessment.assessor_name}`, { align: 'center' })
       .moveDown(2);
 
@@ -183,7 +183,7 @@ class ReportGeneratorService {
     this.addKeyMetric('Building Condition', fciStatus.label, fciStatus.color);
     this.addKeyMetric('Total Deficiency Cost', `$${data.totalDeficiencyCost.toLocaleString()}`, this.dangerColor);
     this.addKeyMetric('Replacement Value', `$${data.building.replacement_value?.toLocaleString() || 'N/A'}`, this.primaryColor);
-    this.addKeyMetric('Building Size', `${data.building.size?.toLocaleString() || 'N/A'} sq ft`, this.secondaryColor);
+    this.addKeyMetric('Building Size', `${data.building.square_footage?.toLocaleString() || 'N/A'} sq ft`, this.secondaryColor);
     
     this.doc.moveDown();
     
@@ -210,13 +210,13 @@ class ReportGeneratorService {
 
     const details = [
       { label: 'Building Name', value: data.building.name },
-      { label: 'Address', value: data.building.address },
+      { label: 'Address', value: `${data.building.street_address}, ${data.building.city}, ${data.building.state}` },
       { label: 'Year Built', value: data.building.year_built || 'N/A' },
-      { label: 'Building Type', value: data.building.building_type || 'N/A' },
-      { label: 'Number of Floors', value: data.building.floors || 'N/A' },
-      { label: 'Total Size', value: `${data.building.size?.toLocaleString() || 'N/A'} sq ft` },
-      { label: 'Primary Use', value: data.building.use || 'N/A' },
-      { label: 'Occupancy', value: data.building.occupancy || 'N/A' }
+      { label: 'Building Type', value: data.building.type || 'N/A' },
+      { label: 'Construction Type', value: data.building.construction_type || 'N/A' },
+      { label: 'Total Size', value: `${data.building.square_footage?.toLocaleString() || 'N/A'} sq ft` },
+      { label: 'Cost per Sq Ft', value: `$${data.building.cost_per_sqft || 'N/A'}` },
+      { label: 'Replacement Value', value: `$${data.building.replacement_value?.toLocaleString() || 'N/A'}` }
     ];
 
     details.forEach(detail => {
