@@ -139,7 +139,7 @@ export const getAllReports = async (
         b.state,
         b.type as building_type,
         u.name as created_by_name,
-        a.type as assessment_type
+        a.type
       FROM reports r
       LEFT JOIN buildings b ON r.building_id = b.id
       LEFT JOIN users u ON r.generated_by = u.id
@@ -253,7 +253,7 @@ export const getReportById = async (
         b.year_built,
         b.square_footage,
         u.name as created_by_name,
-        a.type as assessment_type,
+        a.type,
         a.start_date as assessment_started,
         a.completed_at as assessment_completed
       FROM reports r
