@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Building2, CheckCircle2, Plus, X } from 'lucide-react';
 import { useBuildings } from '@/hooks/use-buildings';
@@ -168,38 +168,38 @@ export function PreAssessmentPage() {
     }
   }, [buildingId, assessmentId, navigate]);
 
-  // Load building data from API
+  // Load building data from API with useCallback to prevent re-renders
+  const loadBuilding = useCallback(async () => {
+    if (!buildingId) return;
+    
+    console.log('🏢 Loading building data for ID:', buildingId);
+    setLoadingBuilding(true);
+    
+    try {
+      const building = await getBuilding(buildingId);
+      console.log('✅ Building loaded:', building);
+      
+      // Transform to match expected format
+      const transformedBuilding = {
+        id: building.id,
+        name: building.name,
+        location: `${building.city}, ${building.state}`,
+        type: building.type,
+        size: building.square_footage || 0
+      };
+      
+      setBuildingData(transformedBuilding);
+    } catch (error) {
+      console.error('❌ Failed to load building:', error);
+      toast.error('Failed to load building data');
+    } finally {
+      setLoadingBuilding(false);
+    }
+  }, [buildingId, getBuilding]);
+  
   useEffect(() => {
-    const loadBuilding = async () => {
-      if (!buildingId) return;
-      
-      console.log('🏢 Loading building data for ID:', buildingId);
-      setLoadingBuilding(true);
-      
-      try {
-        const building = await getBuilding(buildingId);
-        console.log('✅ Building loaded:', building);
-        
-        // Transform to match expected format
-        const transformedBuilding = {
-          id: building.id,
-          name: building.name,
-          location: `${building.city}, ${building.state}`,
-          type: building.type,
-          size: building.square_footage || 0
-        };
-        
-        setBuildingData(transformedBuilding);
-      } catch (error) {
-        console.error('❌ Failed to load building:', error);
-        toast.error('Failed to load building data');
-      } finally {
-        setLoadingBuilding(false);
-      }
-    };
-
     loadBuilding();
-  }, [buildingId]); // Removed getBuilding from dependencies to prevent re-renders
+  }, [loadBuilding]);
   
   const form = useForm<PreAssessmentForm>({
     resolver: zodResolver(preAssessmentSchema),
@@ -207,8 +207,8 @@ export function PreAssessmentPage() {
       assessmentType: 'Annual',
       assessmentDate: new Date().toISOString().split('T')[0],
       assessmentScope: 'Full',
-      buildingSize: buildingData?.size || 0,
-      replacementValue: buildingData?.replacement_value || 0,
+      buildingSize: 0,
+      replacementValue: 0,
       checklist: {
         buildingPlans: false,
         accessPermissions: false,
@@ -232,7 +232,7 @@ export function PreAssessmentPage() {
         (buildingData.size * (buildingTypeCosts[buildingData.type] || 300));
       form.setValue('replacementValue', replacementValue);
     }
-  }, [buildingData, form]);
+  }, [buildingData]); // Removed form from dependencies
 
   // Load existing pre-assessment data into form
   useEffect(() => {
@@ -282,7 +282,7 @@ export function PreAssessmentPage() {
         setSelectedElements(elements);
       }
     }
-  }, [currentPreAssessment, form]);
+  }, [currentPreAssessment]); // Removed form from dependencies
 
   const onSubmit = async (data: PreAssessmentForm) => {
     if (selectedElements.length === 0) {
