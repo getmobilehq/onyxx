@@ -87,9 +87,9 @@ export const getBuildingById = async (
     const user = (req as any).user;
 
     const result = await pool.query(
-      `SELECT id, name, building_type as type, construction_type, year_built, square_footage,
-              state, city, zip_code, address as street_address, 
-              image_url, status, created_by as created_by_user_id, created_at, updated_at,
+      `SELECT id, name, type, construction_type, year_built, square_footage,
+              state, city, zip_code, street_address, 
+              image_url, status, created_by_user_id, created_at, updated_at,
               cost_per_sqft, replacement_value
        FROM buildings
        WHERE id = $1 AND organization_id = $2`,
