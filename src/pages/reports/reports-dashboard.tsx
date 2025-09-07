@@ -39,7 +39,7 @@ import {
 } from 'recharts';
 
 import { cn } from '@/lib/utils';
-import { useAssessments } from '@/hooks/use-assessments';
+import { useReports } from '@/hooks/use-reports';
 import { useBuildings } from '@/hooks/use-buildings';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -96,112 +96,82 @@ const getFciColor = (fci: number) => {
 };
 
 export function ReportsDashboard() {
-  const { assessments, fetchAssessments } = useAssessments();
+  const { reports, fetchReports, loading } = useReports();
   const { buildings } = useBuildings();
-  const [loading, setLoading] = useState(true);
   const [selectedTimeRange, setSelectedTimeRange] = useState('30d');
   const [selectedBuildingType, setSelectedBuildingType] = useState('all');
 
   useEffect(() => {
     const loadData = async () => {
-      setLoading(true);
       try {
-        await fetchAssessments({ status: 'completed' });
+        await fetchReports({ status: 'published' });
       } catch (error) {
-        console.error('Failed to load assessments:', error);
-        toast.error('Failed to load assessment data');
-      } finally {
-        setLoading(false);
+        console.error('Failed to load reports:', error);
+        toast.error('Failed to load reports data');
       }
     };
     loadData();
   }, []);
 
-  // Extract FCI from assessment notes
-  const extractFCIFromNotes = (notes: string): number | null => {
-    if (!notes) return null;
-    const fciMatch = notes.match(/FCI Score: (\d+\.?\d*)/);
-    if (fciMatch && fciMatch[1]) {
-      return parseFloat(fciMatch[1]);
-    }
-    return null;
-  };
-
-  // Extract costs from notes
-  const extractCostsFromNotes = (notes: string) => {
+  // Process reports data - reports already contain structured FCI and cost data
+  const validReports = reports.filter(report => 
+    report.fci_score !== null && 
+    report.fci_score !== undefined &&
+    report.status === 'published'
+  );
+  
+  const reportsWithProcessedData = validReports.map(report => {
+    // Build cost structure from report fields
     const costs = {
-      immediate: 0,
-      shortTerm: 0,
-      longTerm: 0,
-      total: 0,
+      immediate: report.immediate_repair_cost || 0,
+      shortTerm: report.short_term_repair_cost || 0,
+      longTerm: report.long_term_repair_cost || 0,
+      total: report.total_repair_cost || 0,
     };
-
-    if (!notes) return costs;
-
-    const immediateMatch = notes.match(/Immediate Repairs: \$([0-9,]+)/);
-    const shortTermMatch = notes.match(/Short-term \(1-3 years\): \$([0-9,]+)/);
-    const longTermMatch = notes.match(/Long-term \(3-5 years\): \$([0-9,]+)/);
-    const totalMatch = notes.match(/Total Repair Cost: \$([0-9,]+)/);
-
-    if (immediateMatch) costs.immediate = parseInt(immediateMatch[1].replace(/,/g, ''));
-    if (shortTermMatch) costs.shortTerm = parseInt(shortTermMatch[1].replace(/,/g, ''));
-    if (longTermMatch) costs.longTerm = parseInt(longTermMatch[1].replace(/,/g, ''));
-    if (totalMatch) costs.total = parseInt(totalMatch[1].replace(/,/g, ''));
-
-    return costs;
-  };
-
-  // Process assessment data
-  const completedAssessments = assessments.filter(a => a.status === 'completed' && a.notes);
-  const assessmentsWithFCI = completedAssessments.map(assessment => {
-    const fci = extractFCIFromNotes(assessment.notes || '');
-    const costs = extractCostsFromNotes(assessment.notes || '');
-    const building = buildings.find(b => b.id === assessment.building_id);
     
     return {
-      ...assessment,
-      fci,
+      ...report,
+      fci: report.fci_score,
       costs,
-      building,
-      buildingName: building?.name || 'Unknown Building',
-      buildingType: building?.type || 'unknown',
+      buildingName: report.building_name || 'Unknown Building',
+      buildingType: report.building_type || 'unknown',
     };
-  }).filter(a => a.fci !== null);
+  });
 
   // Filter by building type
-  const filteredAssessments = selectedBuildingType === 'all' 
-    ? assessmentsWithFCI 
-    : assessmentsWithFCI.filter(a => a.buildingType === selectedBuildingType);
+  const filteredReports = selectedBuildingType === 'all' 
+    ? reportsWithProcessedData 
+    : reportsWithProcessedData.filter(r => r.buildingType === selectedBuildingType);
 
   // Calculate statistics
-  const totalBuildings = new Set(filteredAssessments.map(a => a.building_id)).size;
-  const averageFCI = filteredAssessments.length > 0
-    ? filteredAssessments.reduce((sum, a) => sum + (a.fci || 0), 0) / filteredAssessments.length
+  const totalBuildings = new Set(filteredReports.map(r => r.building_id)).size;
+  const averageFCI = filteredReports.length > 0
+    ? filteredReports.reduce((sum, r) => sum + (r.fci || 0), 0) / filteredReports.length
     : 0;
   
-  const totalRepairCost = filteredAssessments.reduce((sum, a) => sum + a.costs.total, 0);
-  const totalImmediateCost = filteredAssessments.reduce((sum, a) => sum + a.costs.immediate, 0);
+  const totalRepairCost = filteredReports.reduce((sum, r) => sum + r.costs.total, 0);
+  const totalImmediateCost = filteredReports.reduce((sum, r) => sum + r.costs.immediate, 0);
 
   // FCI distribution data
   const fciDistribution = [
     { 
       name: 'Good', 
-      value: filteredAssessments.filter(a => a.fci! <= 0.05).length,
+      value: filteredReports.filter(r => r.fci! <= 0.05).length,
       color: FCI_COLORS.good 
     },
     { 
       name: 'Fair', 
-      value: filteredAssessments.filter(a => a.fci! > 0.05 && a.fci! <= 0.10).length,
+      value: filteredReports.filter(r => r.fci! > 0.05 && r.fci! <= 0.10).length,
       color: FCI_COLORS.fair 
     },
     { 
       name: 'Poor', 
-      value: filteredAssessments.filter(a => a.fci! > 0.10 && a.fci! <= 0.30).length,
+      value: filteredReports.filter(r => r.fci! > 0.10 && r.fci! <= 0.30).length,
       color: FCI_COLORS.poor 
     },
     { 
       name: 'Critical', 
-      value: filteredAssessments.filter(a => a.fci! > 0.30).length,
+      value: filteredReports.filter(r => r.fci! > 0.30).length,
       color: FCI_COLORS.critical 
     },
   ];
@@ -210,28 +180,28 @@ export function ReportsDashboard() {
   const costBreakdown = [
     {
       name: 'Immediate',
-      value: filteredAssessments.reduce((sum, a) => sum + a.costs.immediate, 0),
+      value: filteredReports.reduce((sum, r) => sum + r.costs.immediate, 0),
       percentage: totalRepairCost > 0 ? (totalImmediateCost / totalRepairCost) * 100 : 0,
     },
     {
       name: 'Short-term',
-      value: filteredAssessments.reduce((sum, a) => sum + a.costs.shortTerm, 0),
+      value: filteredReports.reduce((sum, r) => sum + r.costs.shortTerm, 0),
       percentage: totalRepairCost > 0 
-        ? (filteredAssessments.reduce((sum, a) => sum + a.costs.shortTerm, 0) / totalRepairCost) * 100 
+        ? (filteredReports.reduce((sum, r) => sum + r.costs.shortTerm, 0) / totalRepairCost) * 100 
         : 0,
     },
     {
       name: 'Long-term',
-      value: filteredAssessments.reduce((sum, a) => sum + a.costs.longTerm, 0),
+      value: filteredReports.reduce((sum, r) => sum + r.costs.longTerm, 0),
       percentage: totalRepairCost > 0 
-        ? (filteredAssessments.reduce((sum, a) => sum + a.costs.longTerm, 0) / totalRepairCost) * 100 
+        ? (filteredReports.reduce((sum, r) => sum + r.costs.longTerm, 0) / totalRepairCost) * 100 
         : 0,
     },
   ];
 
-  // Recent assessments
-  const recentAssessments = [...filteredAssessments]
-    .sort((a, b) => new Date(b.completed_at || b.created_at).getTime() - new Date(a.completed_at || a.created_at).getTime())
+  // Recent reports
+  const recentReports = [...filteredReports]
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
     .slice(0, 5);
 
   // Building types
@@ -296,7 +266,7 @@ export function ReportsDashboard() {
             <BarChart3 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{filteredAssessments.length}</div>
+            <div className="text-2xl font-bold">{filteredReports.length}</div>
             <p className="text-xs text-muted-foreground">
               Across {totalBuildings} buildings
             </p>
@@ -436,9 +406,9 @@ export function ReportsDashboard() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Recent Assessments</CardTitle>
+              <CardTitle>Recent Reports</CardTitle>
               <CardDescription>
-                Latest completed facility condition assessments
+                Latest published facility condition reports
               </CardDescription>
             </div>
             <Button asChild variant="outline" size="sm">
@@ -462,54 +432,54 @@ export function ReportsDashboard() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {recentAssessments.length === 0 ? (
+              {recentReports.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center py-8">
                     <div className="text-muted-foreground">
-                      No completed assessments found
+                      No published reports found
                     </div>
                   </TableCell>
                 </TableRow>
               ) : (
-                recentAssessments.map((assessment) => (
-                  <TableRow key={assessment.id}>
+                recentReports.map((report) => (
+                  <TableRow key={report.id}>
                     <TableCell>
                       <Link 
-                        to={`/buildings/${assessment.building_id}`}
+                        to={`/buildings/${report.building_id}`}
                         className="font-medium hover:underline"
                       >
-                        {assessment.buildingName}
+                        {report.buildingName}
                       </Link>
                     </TableCell>
-                    <TableCell>{assessment.buildingType}</TableCell>
+                    <TableCell>{report.buildingType}</TableCell>
                     <TableCell>
-                      {new Date(assessment.completed_at || assessment.created_at).toLocaleDateString()}
+                      {new Date(report.assessment_date || report.created_at).toLocaleDateString()}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <span className={`font-medium ${getFciStatusColor(assessment.fci!)}`}>
-                          {assessment.fci!.toFixed(3)}
+                        <span className={`font-medium ${getFciStatusColor(report.fci!)}`}>
+                          {report.fci!.toFixed(3)}
                         </span>
                         <Badge
                           variant="outline"
                           className={cn(
-                            assessment.fci! <= 0.05 && "border-green-500 text-green-500",
-                            assessment.fci! > 0.05 && assessment.fci! <= 0.10 && "border-blue-500 text-blue-500",
-                            assessment.fci! > 0.10 && assessment.fci! <= 0.30 && "border-yellow-500 text-yellow-500",
-                            assessment.fci! > 0.30 && "border-red-500 text-red-500"
+                            report.fci! <= 0.05 && "border-green-500 text-green-500",
+                            report.fci! > 0.05 && report.fci! <= 0.10 && "border-blue-500 text-blue-500",
+                            report.fci! > 0.10 && report.fci! <= 0.30 && "border-yellow-500 text-yellow-500",
+                            report.fci! > 0.30 && "border-red-500 text-red-500"
                           )}
                         >
-                          {getFciLabel(assessment.fci!)}
+                          {getFciLabel(report.fci!)}
                         </Badge>
                       </div>
                     </TableCell>
                     <TableCell className="font-medium">
-                      ${assessment.costs.total.toLocaleString()}
+                      ${report.costs.total.toLocaleString()}
                     </TableCell>
                     <TableCell className="text-right">
                       <Button asChild size="sm" variant="ghost">
-                        <Link to={`/assessments/${assessment.id}`}>
-                          View Details
+                        <Link to={`/reports/${report.id}`}>
+                          View Report
                           <ChevronRight className="ml-2 h-4 w-4" />
                         </Link>
                       </Button>
@@ -536,29 +506,29 @@ export function ReportsDashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {filteredAssessments
-                .filter(a => a.fci! > 0.30)
+              {filteredReports
+                .filter(r => r.fci! > 0.30)
                 .sort((a, b) => b.fci! - a.fci!)
-                .map(assessment => (
-                  <div key={assessment.id} className="flex items-center justify-between p-3 bg-white rounded-lg border border-red-200">
+                .map(report => (
+                  <div key={report.id} className="flex items-center justify-between p-3 bg-white rounded-lg border border-red-200">
                     <div>
                       <Link 
-                        to={`/buildings/${assessment.building_id}`}
+                        to={`/buildings/${report.building_id}`}
                         className="font-medium hover:underline"
                       >
-                        {assessment.buildingName}
+                        {report.buildingName}
                       </Link>
                       <p className="text-sm text-muted-foreground">
-                        FCI: {assessment.fci!.toFixed(3)} • Immediate repairs: ${assessment.costs.immediate.toLocaleString()}
+                        FCI: {report.fci!.toFixed(3)} • Immediate repairs: ${report.costs.immediate.toLocaleString()}
                       </p>
                     </div>
                     <Button asChild size="sm" variant="destructive">
-                      <Link to={`/assessments/${assessment.id}`}>
-                        View Assessment
+                      <Link to={`/reports/${report.id}`}>
+                        View Report
                       </Link>
                     </Button>
                   </div>
-                ))}
+                ))
             </div>
           </CardContent>
         </Card>
