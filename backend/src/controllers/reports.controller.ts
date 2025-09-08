@@ -685,9 +685,9 @@ export const downloadAssessmentPDF = async (
     console.log('🔧 Loading report generator service...');
     let reportGeneratorService;
     try {
-      reportGeneratorService = require('../services/reportGenerator.service').default;
-      if (!reportGeneratorService || !reportGeneratorService.generateAssessmentReport) {
-        throw new Error('Report generator service not properly configured');
+      reportGeneratorService = require('../services/report-generator.service').default;
+      if (!reportGeneratorService || !reportGeneratorService.generatePDFReport) {
+        throw new Error('Enhanced report generator service not properly configured');
       }
     } catch (serviceError: any) {
       console.error('❌ Report generator service error:', serviceError);
@@ -700,7 +700,7 @@ export const downloadAssessmentPDF = async (
 
     // Generate the PDF
     console.log('📄 Generating PDF...');
-    const pdfBuffer = await reportGeneratorService.generateAssessmentReport(assessmentId);
+    const pdfBuffer = await reportGeneratorService.generatePDFReport(assessmentId);
     
     if (!pdfBuffer || pdfBuffer.length === 0) {
       console.error('❌ Empty PDF buffer generated');

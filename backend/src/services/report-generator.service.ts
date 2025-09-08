@@ -12,16 +12,51 @@ export interface ReportData {
 
 export class ReportGeneratorService {
   /**
-   * Generate PDF report for an assessment
+   * Generate PDF report for an assessment with enhanced data structure
    */
   static async generatePDFReport(assessmentId: string): Promise<Buffer> {
     try {
-      // Fetch assessment data
+      // Fetch comprehensive assessment data
       const assessmentQuery = `
-        SELECT a.*, b.*, u.name as assessor_name
+        SELECT 
+          a.id,
+          a.organization_id,
+          a.building_id,
+          a.type,
+          a.status,
+          a.scheduled_date,
+          a.start_date,
+          a.completed_at,
+          a.assigned_to_user_id,
+          a.weather_conditions,
+          a.temperature_f,
+          a.total_deficiency_cost,
+          a.priority_1_cost,
+          a.priority_2_cost,
+          a.priority_3_cost,
+          a.priority_4_cost,
+          a.fci_score,
+          a.overall_condition,
+          a.assessor_notes,
+          a.recommendations,
+          a.follow_up_required,
+          a.follow_up_date,
+          a.created_at,
+          a.updated_at,
+          a.created_by_user_id,
+          a.assessment_type,
+          a.building_name,
+          a.street_address,
+          a.city,
+          a.state,
+          a.building_type,
+          a.year_built,
+          a.square_footage,
+          u.name as assigned_to_name,
+          creator.name as created_by_name
         FROM assessments a
-        JOIN buildings b ON a.building_id = b.id
         LEFT JOIN users u ON a.assigned_to_user_id = u.id
+        LEFT JOIN users creator ON a.created_by_user_id = creator.id
         WHERE a.id = $1
       `;
       
@@ -31,6 +66,54 @@ export class ReportGeneratorService {
       }
       
       const data = assessmentResult.rows[0];
+      
+      // Calculate comprehensive FCI data
+      const totalRepairCost = parseFloat(data.total_deficiency_cost) || 0;
+      const immediateCost = parseFloat(data.priority_1_cost) || 0;
+      const shortTermCost = parseFloat(data.priority_2_cost) || 0;
+      const longTermCost = (parseFloat(data.priority_3_cost) || 0) + (parseFloat(data.priority_4_cost) || 0);
+      
+      // Calculate replacement cost (high-end executive office typical cost)
+      const costPerSqft = data.building_type?.toLowerCase().includes('executive') ? 200 : 150;
+      const replacementCost = (data.square_footage || 0) * costPerSqft;
+      const fciScore = replacementCost > 0 ? totalRepairCost / replacementCost : 0;
+      
+      // Build comprehensive report data structure
+      const reportData = {
+        assessment: {
+          id: assessmentId,
+          building_name: data.building_name,
+          building_type: data.building_type,
+          year_built: data.year_built,
+          square_footage: data.square_footage,
+          replacement_value: replacementCost,
+          status: data.status,
+          street_address: data.street_address,
+          city: data.city,
+          state: data.state,
+          completed_at: data.completed_at,
+          assessment_type: data.assessment_type
+        },
+        fci_results: {
+          fci_score: fciScore,
+          condition_rating: ReportGeneratorService.getFCIRating(fciScore),
+          total_repair_cost: totalRepairCost,
+          replacement_cost: replacementCost,
+          immediate_repair_cost: immediateCost,
+          short_term_repair_cost: shortTermCost,
+          long_term_repair_cost: longTermCost
+        },
+        assessment_summary: {
+          status: data.status,
+          type: data.assessment_type,
+          scheduled_date: data.scheduled_date,
+          completed_at: data.completed_at,
+          assessor: data.assigned_to_name || 'Admin User',
+          follow_up_required: data.follow_up_required
+        },
+        generated_at: new Date().toISOString(),
+        generated_by: 'System Administrator'
+      };
       
       // Create PDF document
       const doc = new PDFDocument({ margin: 50 });
@@ -42,91 +125,98 @@ export class ReportGeneratorService {
         doc.on('end', () => resolve(Buffer.concat(chunks)));
         doc.on('error', reject);
         
-        // Title page
-        doc.fontSize(24).text('FACILITY CONDITION ASSESSMENT REPORT', { align: 'center' });
-        doc.moveDown();
-        doc.fontSize(18).text(data.name, { align: 'center' });
+        // Title page with enhanced styling
+        doc.fontSize(24).text('🏢 BUILDING ASSESSMENT REPORT', { align: 'center' });
+        doc.moveDown(0.5);
+        doc.fontSize(14).text('Facility Condition Assessment & Capital Planning', { align: 'center' });
+        doc.moveDown(0.5);
+        doc.fontSize(18).text(reportData.assessment.building_name, { align: 'center' });
         doc.moveDown(2);
         
-        // Building information
-        doc.fontSize(14).text('BUILDING INFORMATION', { underline: true });
+        // Building information with enhanced data
+        doc.fontSize(14).text('🏢 BUILDING INFORMATION', { underline: true });
         doc.fontSize(12);
         doc.moveDown(0.5);
-        doc.text(`Building Name: ${data.name}`);
-        doc.text(`Type: ${data.type}`);
-        doc.text(`Address: ${data.street_address}, ${data.city}, ${data.state} ${data.zip_code}`);
-        doc.text(`Year Built: ${data.year_built}`);
-        doc.text(`Square Footage: ${data.square_footage?.toLocaleString()} sq ft`);
-        doc.text(`Construction Type: ${data.construction_type}`);
+        doc.text(`Building Name: ${reportData.assessment.building_name}`);
+        doc.text(`Type: ${reportData.assessment.building_type}`);
+        if (reportData.assessment.street_address) {
+          doc.text(`Address: ${reportData.assessment.street_address}, ${reportData.assessment.city}, ${reportData.assessment.state}`);
+        }
+        doc.text(`Year Built: ${reportData.assessment.year_built}`);
+        doc.text(`Square Footage: ${reportData.assessment.square_footage?.toLocaleString()} sq ft`);
+        doc.text(`Estimated Replacement Value: $${reportData.assessment.replacement_value?.toLocaleString()}`);
         doc.moveDown();
         
-        // Assessment information
-        doc.fontSize(14).text('ASSESSMENT DETAILS', { underline: true });
+        // Enhanced FCI Results section
+        doc.fontSize(14).text('📊 FACILITY CONDITION INDEX', { underline: true });
         doc.fontSize(12);
         doc.moveDown(0.5);
-        doc.text(`Assessment Type: ${data.type}`);
-        doc.text(`Status: ${data.status}`);
-        doc.text(`Assessor: ${data.assessor_name || 'Not assigned'}`);
-        doc.text(`Completed Date: ${data.completed_at ? new Date(data.completed_at).toLocaleDateString() : 'In progress'}`);
+        
+        doc.text(`FCI Score: ${(reportData.fci_results.fci_score * 100).toFixed(4)}%`);
+        doc.text(`Condition Rating: ${reportData.fci_results.condition_rating}`);
+        doc.text(`Total Repair Cost: $${reportData.fci_results.total_repair_cost.toLocaleString()}`);
+        doc.text(`Replacement Cost: $${reportData.fci_results.replacement_cost.toLocaleString()}`);
+        
+        // Add condition interpretation
+        const interpretation = ReportGeneratorService.getFCIInterpretation(reportData.fci_results.fci_score);
+        doc.moveDown(0.5);
+        doc.text(`Assessment: ${interpretation.description}`);
         doc.moveDown();
         
-        // FCI Results (if available in notes)
-        if (data.notes) {
-          const fciMatch = data.notes.match(/FCI Score: (\d+\.?\d*)/);
-          const totalCostMatch = data.notes.match(/Total Repair Cost: \$([0-9,]+)/);
-          const replacementMatch = data.notes.match(/Replacement Value: \$([0-9,]+)/);
-          
-          if (fciMatch) {
-            doc.fontSize(14).text('FACILITY CONDITION INDEX', { underline: true });
-            doc.fontSize(12);
-            doc.moveDown(0.5);
-            
-            const fci = parseFloat(fciMatch[1]);
-            const condition = fci <= 0.05 ? 'Good' : fci <= 0.10 ? 'Fair' : fci <= 0.30 ? 'Poor' : 'Critical';
-            
-            doc.text(`FCI Score: ${fci.toFixed(4)}`);
-            doc.text(`Condition Rating: ${condition}`);
-            
-            if (totalCostMatch) {
-              doc.text(`Total Repair Cost: $${totalCostMatch[1]}`);
-            }
-            if (replacementMatch) {
-              doc.text(`Replacement Value: $${replacementMatch[1]}`);
-            }
-            
-            doc.moveDown();
-            
-            // Cost breakdown
-            const immediateCostMatch = data.notes.match(/Immediate Repairs: \$([0-9,]+)/);
-            const shortTermMatch = data.notes.match(/Short-term \(1-3 years\): \$([0-9,]+)/);
-            const longTermMatch = data.notes.match(/Long-term \(3-5 years\): \$([0-9,]+)/);
-            
-            if (immediateCostMatch || shortTermMatch || longTermMatch) {
-              doc.fontSize(14).text('REPAIR COST BREAKDOWN', { underline: true });
-              doc.fontSize(12);
-              doc.moveDown(0.5);
-              
-              if (immediateCostMatch) doc.text(`Immediate Repairs: $${immediateCostMatch[1]}`);
-              if (shortTermMatch) doc.text(`Short-term (1-3 years): $${shortTermMatch[1]}`);
-              if (longTermMatch) doc.text(`Long-term (3-5 years): $${longTermMatch[1]}`);
-              
-              doc.moveDown();
-            }
-          }
+        // Enhanced cost breakdown
+        doc.fontSize(14).text('💰 REPAIR COST BREAKDOWN', { underline: true });
+        doc.fontSize(12);
+        doc.moveDown(0.5);
+        doc.text(`Immediate (0-1 year): $${reportData.fci_results.immediate_repair_cost.toLocaleString()}`);
+        doc.text(`Short-term (1-3 years): $${reportData.fci_results.short_term_repair_cost.toLocaleString()}`);
+        doc.text(`Long-term (3-10 years): $${reportData.fci_results.long_term_repair_cost.toLocaleString()}`);
+        doc.moveDown();
+        
+        // Special handling for excellent condition buildings
+        if (reportData.fci_results.fci_score === 0) {
+          doc.fontSize(14).text('🎉 EXCELLENT BUILDING CONDITION', { underline: true });
+          doc.fontSize(12);
+          doc.moveDown(0.5);
+          doc.text('This assessment found no significant deficiencies in the building.');
+          doc.text(`The FCI score of ${(reportData.fci_results.fci_score * 100).toFixed(4)}% indicates that`);
+          doc.text(`${reportData.assessment.building_name} is in excellent condition with minimal`);
+          doc.text('to no immediate repair needs. This represents outstanding building');
+          doc.text('maintenance and management.');
+          doc.moveDown();
         }
         
-        // Assessment notes
-        if (data.notes) {
-          doc.addPage();
-          doc.fontSize(14).text('ASSESSMENT NOTES', { underline: true });
-          doc.fontSize(10);
+        // Assessment summary
+        doc.fontSize(14).text('📈 ASSESSMENT SUMMARY', { underline: true });
+        doc.fontSize(12);
+        doc.moveDown(0.5);
+        doc.text(`Assessment Type: ${reportData.assessment.assessment_type}`);
+        doc.text(`Status: ${reportData.assessment.status}`);
+        doc.text(`Assessor: ${reportData.assessment_summary.assessor}`);
+        doc.text(`Completed: ${reportData.assessment.completed_at ? new Date(reportData.assessment.completed_at).toLocaleDateString() : 'In progress'}`);
+        doc.text(`Follow-up Required: ${reportData.assessment_summary.follow_up_required ? 'Yes' : 'No'}`);
+        doc.moveDown();
+        
+        // Building performance analysis for large buildings
+        if (reportData.assessment.square_footage && reportData.assessment.square_footage > 100000) {
+          doc.fontSize(14).text('🏆 BUILDING PERFORMANCE ANALYSIS', { underline: true });
+          doc.fontSize(12);
           doc.moveDown(0.5);
-          doc.text(data.notes);
+          doc.text(`${reportData.assessment.building_name} is a large-scale facility`);
+          doc.text(`(${reportData.assessment.square_footage?.toLocaleString()} sq ft) representing`);
+          doc.text(`significant asset value ($${reportData.assessment.replacement_value?.toLocaleString()}).`);
+          
+          const buildingAge = new Date().getFullYear() - (reportData.assessment.year_built || 2000);
+          doc.text(`At ${buildingAge} years old, the current condition demonstrates`);
+          doc.text('the effectiveness of maintenance and capital planning practices.');
+          doc.moveDown();
         }
         
         // Footer
         doc.fontSize(8);
-        doc.text(`Generated on ${new Date().toLocaleDateString()}`, 50, doc.page.height - 50, { align: 'center' });
+        doc.text(`Generated with Onyx Building Assessment System on ${new Date().toLocaleDateString()}`, 
+                 50, doc.page.height - 50, { align: 'center' });
+        doc.text(`Assessment ID: ${reportData.assessment.id}`, 
+                 50, doc.page.height - 40, { align: 'center' });
         
         doc.end();
       });
@@ -315,6 +405,43 @@ export class ReportGeneratorService {
     } catch (error) {
       console.error('Excel generation error:', error);
       throw error;
+    }
+  }
+
+  /**
+   * Helper method to get FCI rating based on score
+   */
+  private static getFCIRating(fciScore: number): string {
+    if (fciScore <= 0.05) return 'Excellent';
+    if (fciScore <= 0.10) return 'Good';  
+    if (fciScore <= 0.30) return 'Fair';
+    return 'Poor';
+  }
+
+  /**
+   * Helper method to get FCI interpretation with detailed description
+   */
+  private static getFCIInterpretation(fciScore: number) {
+    if (fciScore <= 0.05) {
+      return {
+        status: 'EXCELLENT',
+        description: 'Building is in excellent condition with minimal to no repair needs'
+      };
+    } else if (fciScore <= 0.10) {
+      return {
+        status: 'GOOD',
+        description: 'Building is in good condition with minor repairs needed'
+      };
+    } else if (fciScore <= 0.30) {
+      return {
+        status: 'FAIR',
+        description: 'Building requires moderate repairs and maintenance'
+      };
+    } else {
+      return {
+        status: 'POOR',
+        description: 'Building requires significant repairs or replacement consideration'
+      };
     }
   }
 }
