@@ -197,17 +197,30 @@ export function useAssessments() {
     try {
       const response = await assessmentsAPI.completeAssessment(assessmentId);
       if (response.data.success) {
-        toast.success('Assessment completed successfully with FCI calculation');
+        toast.success('Assessment completed successfully');
         await fetchAssessments(); // Refresh the assessments list
-        return {
-          assessment: response.data.data.assessment,
-          fci_results: response.data.data.fci_results
-        };
+        return response.data.data.assessment;
       } else {
         throw new Error('Failed to complete assessment');
       }
     } catch (err: any) {
       toast.error('Failed to complete assessment');
+      throw err;
+    }
+  };
+
+  const generateReport = async (assessmentId: string) => {
+    try {
+      const response = await assessmentsAPI.generateReport(assessmentId);
+      if (response.data.success) {
+        toast.success('Report generated successfully');
+        return response.data.data.report;
+      } else {
+        throw new Error('Failed to generate report');
+      }
+    } catch (err: any) {
+      console.error('Failed to generate report:', err);
+      toast.error(err.response?.data?.message || 'Failed to generate report');
       throw err;
     }
   };
@@ -226,6 +239,7 @@ export function useAssessments() {
     saveAssessmentElements,
     calculateFCI,
     completeAssessment,
+    generateReport,
   };
 }
 

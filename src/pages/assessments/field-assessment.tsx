@@ -4,7 +4,7 @@ import { ArrowLeft, ArrowRight, Building2, Info, Camera, Plus, X, Upload, FileTe
 import { useAssessments } from '@/hooks/use-assessments';
 import { useBuildings } from '@/hooks/use-buildings';
 import { useReports } from '@/hooks/use-reports';
-import { AssessmentCompletion } from '@/components/assessment-completion';
+import { AssessmentCelebration } from '@/components/assessment-celebration';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -86,7 +86,6 @@ export function FieldAssessmentPage() {
   
   const { updateAssessment, saveAssessmentElements, updateAssessmentElement, completeAssessment: completeAssessmentAPI } = useAssessments();
   const { getBuilding } = useBuildings();
-  const { createReport } = useReports();
   const [currentElementIndex, setCurrentElementIndex] = useState(0);
   const [assessmentData, setAssessmentData] = useState<any>(null);
   const [preAssessmentData, setPreAssessmentData] = useState<any>(null);
@@ -350,159 +349,77 @@ export function FieldAssessmentPage() {
       
       saveCurrentElement(data);
 
-    // Check if all elements are assessed
-    const allAssessed = elementAssessments.every(e => e.assessed);
-    if (!allAssessed) {
-      toast.error('Please assess all elements before completing');
-      return;
-    }
-
-    // Calculate total costs - sum of all element costs (which are sum of deficiency costs)
-    const totalRepairCost = elementAssessments.reduce((sum, e) => sum + (e.totalCost || 0), 0);
-    
-    // Calculate FCI
-    const replacementValue = preAssessmentData.replacementValue || 0;
-    const fci = replacementValue > 0 ? totalRepairCost / replacementValue : 0;
-
-    // Save complete assessment
-    const completeAssessment = {
-      ...assessmentData,
-      status: 'completed',
-      currentStep: 3,
-      fieldAssessmentData: {
-        elementAssessments,
-        totalRepairCost,
-        fci,
-        completedAt: new Date().toISOString(),
+      // Check if all elements are assessed
+      const allAssessed = elementAssessments.every(e => e.assessed);
+      if (!allAssessed) {
+        toast.error('Please assess all elements before completing');
+        return;
       }
-    };
 
-    localStorage.setItem('currentAssessment', JSON.stringify(completeAssessment));
-    localStorage.setItem(`assessment-${buildingId}`, JSON.stringify(completeAssessment));
-
-    // Save assessment elements with deficiencies to backend
-    if (assessmentId) {
-      try {
-        // Convert condition ratings to numeric values (1-5)
-        const conditionToRating = {
-          'new': 5,
-          'good': 4,
-          'fair': 3,
-          'poor': 2,
-          'critical': 1
-        };
-
-        // Prepare elements for backend with proper format
-        const elementsForBackend = elementAssessments
-          .filter(e => e.assessed)
-          .map(e => ({
-            element_id: e.id,
-            condition_rating: conditionToRating[e.condition as keyof typeof conditionToRating] || 3,
-            notes: e.notes || '',
-            photo_urls: e.photos || [],
-            deficiencies: (e.deficiencies || []).map((d: any) => ({
-              description: d.description,
-              cost: d.cost || 0,
-              category: d.category || '',
-              photos: d.photos || []
-            }))
-          }));
-
-        // Save all assessment elements with deficiencies
-        console.log('💾 Saving assessment elements:', { assessmentId, elementCount: elementsForBackend.length });
-        if (!assessmentId) {
-          console.error('❌ No assessment ID available for saving elements');
-          throw new Error('Assessment ID is required for saving elements');
+      // Save complete assessment locally
+      const completeAssessment = {
+        ...assessmentData,
+        status: 'completed',
+        currentStep: 3,
+        fieldAssessmentData: {
+          elementAssessments,
+          completedAt: new Date().toISOString(),
         }
-        
-        await saveAssessmentElements(assessmentId, elementsForBackend);
-        console.log('✅ Assessment elements saved successfully');
+      };
 
-        // Complete the assessment with FCI calculation
-        console.log('🎯 Attempting to complete assessment with ID:', assessmentId);
-        if (!assessmentId) {
-          console.error('❌ No assessment ID available for completion');
-          throw new Error('Assessment ID is required for completion');
-        }
-        
-        const completionResult = await completeAssessmentAPI(assessmentId);
-        console.log('✅ Assessment completion result:', completionResult);
-        
-        // Update local assessment data with the result
-        if (completionResult && completionResult.assessment) {
-          completeAssessment.fieldAssessmentData.fci = completionResult.fci_results?.fci || fci;
-          completeAssessment.fieldAssessmentData.totalRepairCost = completionResult.fci_results?.total_repair_cost || totalRepairCost;
+      localStorage.setItem('currentAssessment', JSON.stringify(completeAssessment));
+      localStorage.setItem(`assessment-${buildingId}`, JSON.stringify(completeAssessment));
+
+      // Save assessment elements with deficiencies to backend
+      if (assessmentId) {
+        try {
+          // Convert condition ratings to numeric values (1-5)
+          const conditionToRating = {
+            'new': 5,
+            'good': 4,
+            'fair': 3,
+            'poor': 2,
+            'critical': 1
+          };
+
+          // Prepare elements for backend with proper format
+          const elementsForBackend = elementAssessments
+            .filter(e => e.assessed)
+            .map(e => ({
+              element_id: e.elementId,
+              condition_rating: conditionToRating[e.condition as keyof typeof conditionToRating] || 3,
+              notes: e.notes || '',
+              photo_urls: e.photos || [],
+              deficiencies: (e.deficiencies || []).map((d: any) => ({
+                description: d.description,
+                cost: d.cost || 0,
+                category: d.category || '',
+                photos: d.photos || []
+              }))
+            }));
+
+          // Save all assessment elements
+          console.log('💾 Saving assessment elements:', { assessmentId, elementCount: elementsForBackend.length });
+          await saveAssessmentElements(assessmentId, elementsForBackend);
+          console.log('✅ Assessment elements saved successfully');
+
+          // Simple assessment completion (no FCI calculation)
+          console.log('🎯 Completing assessment with ID:', assessmentId);
+          await completeAssessmentAPI(assessmentId);
+          console.log('✅ Assessment completed successfully');
           
-          // Automatically create a report from the completed assessment
-          try {
-            // Ensure we have valid replacement value
-            const replacementValue = preAssessmentData?.replacementValue || 
-                                   preAssessmentData?.replacement_value || 
-                                   buildingData?.replacement_value || 
-                                   0;
-            
-            const reportData = {
-              assessment_id: assessmentId,
-              building_id: buildingId || '',
-              title: `Assessment Report - ${buildingData?.name || 'Building'}`,
-              description: `Facility condition assessment completed on ${new Date().toLocaleDateString()}`,
-              report_type: 'facility_condition' as const,
-              status: 'draft' as const,
-              assessment_date: new Date().toISOString(),
-              assessor_name: completionResult.assessment.assessor_name || preAssessmentData?.assessor_name || 'Unknown',
-              fci_score: completionResult.fci_results?.fci || fci,
-              total_repair_cost: completionResult.fci_results?.total_repair_cost || totalRepairCost,
-              replacement_value: replacementValue,
-              element_count: elementAssessments.filter(e => e.assessed).length,
-              deficiency_count: elementAssessments.reduce((sum, e) => sum + (e.deficiencies?.length || 0), 0),
-              executive_summary: `Assessment completed with FCI of ${(completionResult.fci_results?.fci || fci).toFixed(4)}. Total repair cost: $${(completionResult.fci_results?.total_repair_cost || totalRepairCost).toLocaleString()}.`,
-              systems_data: {
-                elements: elementAssessments
-              }
-            };
-            
-            console.log('📝 Creating report with data:', reportData);
-            await createReport(reportData);
-            console.log('✅ Report automatically created for completed assessment');
-            toast.success('Report generated successfully');
-          } catch (reportError: any) {
-            console.error('❌ Failed to auto-create report:', reportError);
-            toast.error(`Report generation failed: ${reportError.response?.data?.message || reportError.message || 'Unknown error'}`);
-            // Don't fail the assessment completion if report creation fails
-          }
+          toast.success('Assessment completed successfully!');
+        } catch (error: any) {
+          console.error('❌ Failed to complete assessment:', error);
+          toast.error('Failed to complete assessment');
+          return;
         }
-        
-        toast.success('Field assessment completed with all deficiency data saved!');
-      } catch (error: any) {
-        console.error('❌ Failed to complete assessment:', error);
-        
-        // Provide specific error messages
-        if (error.response?.status === 400) {
-          toast.error('Invalid assessment data - please check all fields are completed correctly');
-        } else if (error.response?.status === 404) {
-          toast.error('Assessment not found - it may have been deleted');
-        } else if (error.response?.status === 500) {
-          toast.error('Server error - please try again in a few minutes');
-        } else {
-          toast.warning('Assessment completed locally but failed to save complete data to database');
-        }
-        
-        // Log detailed error for debugging
-        console.error('Error details:', {
-          status: error.response?.status,
-          message: error.response?.data?.message,
-          assessmentId,
-          buildingId
-        });
       }
-    } else {
-      toast.success('Field assessment completed successfully!');
-    }
-    
-    // Show completion screen
-    setCompletedAssessment(completeAssessment);
-    setIsCompleted(true);
-    
+      
+      // Show completion screen with celebration
+      setCompletedAssessment(completeAssessment);
+      setIsCompleted(true);
+      
     } catch (error: any) {
       console.error('❌ Assessment completion failed:', error);
       if (error instanceof z.ZodError) {
@@ -557,14 +474,15 @@ export function FieldAssessmentPage() {
   };
 
   // Show completion screen if assessment is completed
-  if (isCompleted && completedAssessment) {
+  if (isCompleted && completedAssessment && assessmentId) {
     return (
       <div className="p-6 pb-16">
-        <AssessmentCompletion 
-          assessmentData={completedAssessment}
+        <AssessmentCelebration 
+          assessment={completedAssessment}
           buildingData={buildingData}
-          onGenerateReport={() => navigate(`/reports/new?assessmentId=${assessmentId}`)}
+          elementAssessments={elementAssessments}
           onViewDetails={() => navigate(`/assessments/${assessmentId}`)}
+          onEditAssessment={() => setIsCompleted(false)}
         />
       </div>
     );

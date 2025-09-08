@@ -233,6 +233,8 @@ export const assessmentsAPI = {
     api.get(`/assessments/${assessmentId}/calculate-fci`),
   completeAssessment: (assessmentId: string) => 
     api.post(`/assessments/${assessmentId}/complete`),
+  generateReport: (assessmentId: string) => 
+    api.post(`/assessments/${assessmentId}/generate-report`),
 };
 
 export const elementsAPI = {

@@ -842,14 +842,19 @@ export const completeAssessment = async (
       });
     }
 
-    // Complete assessment with FCI calculation
-    console.log('🧮 Starting assessment completion with FCI calculation...');
-    const user = (req as any).user;
-    const fciResults = await completeAssessmentWithFCI(id, user?.id);
-    console.log('✅ Assessment completion with FCI successful:', {
-      fci_score: fciResults.fci_score,
-      condition_rating: fciResults.condition_rating
-    });
+    // Simple assessment completion - just update status and timestamp
+    console.log('✅ Marking assessment as completed...');
+    
+    await pool.query(
+      `UPDATE assessments 
+       SET status = 'completed', 
+           completed_at = CURRENT_TIMESTAMP,
+           updated_at = CURRENT_TIMESTAMP
+       WHERE id = $1`,
+      [id]
+    );
+
+    console.log('✅ Assessment completed successfully:', id);
 
     // Get updated assessment
     const updatedAssessment = await pool.query(
@@ -863,10 +868,9 @@ export const completeAssessment = async (
 
     res.json({
       success: true,
-      message: 'Assessment completed successfully with FCI calculation',
+      message: 'Assessment completed successfully',
       data: {
-        assessment: updatedAssessment.rows[0],
-        fci_results: fciResults
+        assessment: updatedAssessment.rows[0]
       }
     });
   } catch (error: any) {
@@ -883,6 +887,114 @@ export const completeAssessment = async (
         error: error.message,
         details: error.stack 
       })
+    });
+  }
+};
+
+// Generate FCI report for completed assessment
+export const generateAssessmentReport = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { id } = req.params;
+    
+    console.log('📊 Generating report for assessment:', id);
+
+    // Validate UUID format
+    if (!id || typeof id !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)) {
+      console.error('❌ Invalid assessment ID format:', id);
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid assessment ID format'
+      });
+    }
+
+    // Check if assessment exists and is completed
+    const assessmentCheck = await pool.query(
+      'SELECT id, status, building_id FROM assessments WHERE id = $1',
+      [id]
+    );
+
+    if (assessmentCheck.rows.length === 0) {
+      console.error('❌ Assessment not found:', id);
+      return res.status(404).json({
+        success: false,
+        message: 'Assessment not found'
+      });
+    }
+
+    const assessment = assessmentCheck.rows[0];
+    console.log('ℹ️ Assessment status for report:', assessment.status);
+
+    if (assessment.status !== 'completed') {
+      console.log('⚠️ Assessment not completed yet:', id);
+      return res.status(400).json({
+        success: false,
+        message: 'Assessment must be completed before generating report'
+      });
+    }
+
+    // Calculate FCI and generate report
+    console.log('🧮 Calculating FCI for report generation...');
+    const user = (req as any).user;
+    const fciResults = await completeAssessmentWithFCI(id, user?.id);
+    
+    console.log('✅ FCI calculation and report generation successful:', {
+      fci_score: fciResults.fci_score,
+      condition_rating: fciResults.condition_rating
+    });
+
+    // Get assessment details with building info
+    const assessmentDetails = await pool.query(
+      `SELECT a.*, b.name as building_name, b.square_footage, b.cost_per_sqft, 
+              b.replacement_value, b.year_built, b.type as building_type,
+              u.name as assigned_to_name
+       FROM assessments a
+       LEFT JOIN buildings b ON a.building_id = b.id
+       LEFT JOIN users u ON a.assigned_to_user_id = u.id
+       WHERE a.id = $1`,
+      [id]
+    );
+
+    // Get assessment elements with details
+    const elementsDetails = await pool.query(
+      `SELECT ae.*, e.individual_element, e.major_group
+       FROM assessment_elements ae
+       JOIN elements e ON ae.element_id = e.id
+       WHERE ae.assessment_id = $1`,
+      [id]
+    );
+
+    const reportData = {
+      assessment: assessmentDetails.rows[0],
+      fci_results: fciResults,
+      elements: elementsDetails.rows,
+      generated_at: new Date().toISOString(),
+      generated_by: user?.name || 'System'
+    };
+
+    console.log('📋 Report data compiled successfully');
+
+    res.json({
+      success: true,
+      message: 'Report generated successfully',
+      data: {
+        report: reportData
+      }
+    });
+  } catch (error: any) {
+    console.error('❌ Report generation error:', {
+      message: error.message,
+      stack: error.stack,
+      assessmentId: req.params.id
+    });
+    
+    res.status(500).json({
+      success: false,
+      message: 'Failed to generate report. Please try again.',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };

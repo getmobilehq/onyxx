@@ -10,7 +10,8 @@ import {
   updateAssessmentElement,
   saveAssessmentElements,
   calculateFCI,
-  completeAssessment
+  completeAssessment,
+  generateAssessmentReport
 } from '../controllers/assessments.controller';
 
 const router = Router();
@@ -33,5 +34,8 @@ router.post('/:id/elements', saveAssessmentElements);
 // FCI calculations
 router.get('/:id/calculate-fci', calculateFCI);
 router.post('/:id/complete', completeAssessment);
+
+// Report generation
+router.post('/:id/generate-report', generateAssessmentReport);
 
 export default router;
