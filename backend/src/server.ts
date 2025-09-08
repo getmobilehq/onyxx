@@ -62,7 +62,38 @@ pool.connect((err, client, release) => {
 
 // Middleware
 app.use(helmet(securityHeaders)); // Enhanced security headers
+
+// Primary CORS configuration
 app.use(cors(corsOptions));
+
+// Fallback CORS headers for production (in case primary CORS fails)
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  const allowedOrigins = [
+    'https://onyxreport.com',
+    'https://www.onyxreport.com',
+    'http://localhost:5173',
+    'http://localhost:5174'
+  ];
+  
+  if (origin && allowedOrigins.includes(origin)) {
+    res.header('Access-Control-Allow-Origin', origin);
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS,PATCH');
+    res.header('Access-Control-Allow-Headers', 'Origin,X-Requested-With,Content-Type,Accept,Authorization');
+    res.header('Access-Control-Max-Age', '86400');
+    console.log(`🔧 Manual CORS headers set for origin: ${origin}`);
+  }
+  
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
+  
+  next();
+});
+
 app.use(express.json({ limit: '10mb' })); // Add size limit
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 

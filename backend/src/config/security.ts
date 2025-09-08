@@ -78,6 +78,12 @@ export const allowedOrigins = [
   'https://www.onyxreport.com',
 ];
 
+// Log CORS configuration on startup
+console.log(`🔧 CORS Configuration:`);
+console.log(`📝 CLIENT_URL from env: ${process.env.CLIENT_URL}`);
+console.log(`📝 NODE_ENV: ${process.env.NODE_ENV}`);
+console.log(`📝 All allowed origins:`, allowedOrigins);
+
 // Remove HTTP versions in production
 if (process.env.NODE_ENV === 'production') {
   // Only allow HTTPS in production
@@ -94,10 +100,15 @@ export const corsOptions = {
     // Allow requests with no origin (mobile apps, Postman, etc.)
     if (!origin) return callback(null, true);
     
+    console.log(`🔍 CORS check for origin: ${origin}`);
+    console.log(`📝 Allowed origins:`, allowedOrigins);
+    
     if (allowedOrigins.includes(origin)) {
+      console.log(`✅ CORS allowed for origin: ${origin}`);
       callback(null, true);
     } else {
-      console.error(`CORS blocked origin: ${origin}`);
+      console.error(`❌ CORS blocked origin: ${origin}`);
+      console.error(`📋 Available origins:`, allowedOrigins);
       callback(new Error('Not allowed by CORS'));
     }
   },
@@ -105,7 +116,15 @@ export const corsOptions = {
   optionsSuccessStatus: 200,
   maxAge: 86400, // 24 hours
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+  allowedHeaders: [
+    'Content-Type', 
+    'Authorization', 
+    'X-Requested-With', 
+    'Accept', 
+    'Origin',
+    'Access-Control-Request-Method',
+    'Access-Control-Request-Headers'
+  ],
   exposedHeaders: ['Content-Length', 'X-Request-Id'],
 };
 
