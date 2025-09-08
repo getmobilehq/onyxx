@@ -47,7 +47,7 @@ export const securityHeaders = {
       scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"], // Will tighten this later
       imgSrc: ["'self'", "data:", "https:", "blob:"],
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
-      connectSrc: ["'self'", "https://onyx-backend-f7vh.onrender.com"],
+      connectSrc: ["'self'", "https://manage.onyxreport.com"],
       frameSrc: ["'none'"],
       objectSrc: ["'none'"],
       upgradeInsecureRequests: [],
@@ -76,6 +76,7 @@ export const allowedOrigins = [
   'https://onyx-frontend.onrender.com',
   'https://onyxreport.com',
   'https://www.onyxreport.com',
+  'https://manage.onyxreport.com', // New backend domain
 ];
 
 // Log CORS configuration on startup
