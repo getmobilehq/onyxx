@@ -529,7 +529,7 @@ export function ReportsDashboard() {
                     </Button>
                   </div>
                 ))
-            </div> 
+            }</div>
           </CardContent>
         </Card>
       )}
