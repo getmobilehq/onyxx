@@ -7,7 +7,7 @@ echo "========================================="
 
 # Step 1: Login to get token
 echo "1. Logging in..."
-TOKEN=$(curl -s -X POST "https://onyx-backend-f7vh.onrender.com/api/auth/login" \
+TOKEN=$(curl -s -X POST "https://manage.onyxreport.com/api/auth/login" \
   -H "Content-Type: application/json" \
   -d '{"email": "admin@onyx.com", "password": "password123"}' | \
   grep -o '"accessToken":"[^"]*' | cut -d'"' -f4)
@@ -21,7 +21,7 @@ echo "✅ Login successful"
 
 # Step 2: Get completed assessments
 echo "2. Getting completed assessments..."
-ASSESSMENT_ID=$(curl -s -X GET "https://onyx-backend-f7vh.onrender.com/api/assessments?status=completed" \
+ASSESSMENT_ID=$(curl -s -X GET "https://manage.onyxreport.com/api/assessments?status=completed" \
   -H "Authorization: Bearer $TOKEN" | \
   grep -o '"id":"[^"]*' | head -1 | cut -d'"' -f4)
 
@@ -34,7 +34,7 @@ echo "✅ Found assessment: $ASSESSMENT_ID"
 
 # Step 3: Generate report
 echo "3. Generating report..."
-RESPONSE=$(curl -s -X POST "https://onyx-backend-f7vh.onrender.com/api/reports/generate/$ASSESSMENT_ID" \
+RESPONSE=$(curl -s -X POST "https://manage.onyxreport.com/api/reports/generate/$ASSESSMENT_ID" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json")
 

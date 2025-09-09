@@ -59,7 +59,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Deployment**: ✅ LIVE
 - Frontend: https://onyxreport.com (Render static site)
-- Backend: https://onyx-backend-f7vh.onrender.com (Render web service)
+- Backend: https://manage.onyxreport.com (Render web service)
 - Database: Render PostgreSQL
 - CI/CD: GitHub Actions → Render auto-deploy
 
@@ -117,7 +117,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Sample data populated for testing
 
 **API Configuration**:
-- Production API: https://onyx-backend-f7vh.onrender.com/api
+- Production API: https://manage.onyxreport.com/api
 - Local Development: http://localhost:5001/api
 - Auto-fallback configured in frontend
 - CORS configured for www.onyxreport.com domain
@@ -244,7 +244,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Production URLs**:
 - 🌐 Frontend: https://onyxreport.com (Render)
-- 🔗 Backend: https://onyx-backend-f7vh.onrender.com (Render)
+- 🔗 Backend: https://manage.onyxreport.com (Render)
 - 📊 Database: Render PostgreSQL (Multi-tenant ready)
 
 **Ready for MVP User Testing** 🚀

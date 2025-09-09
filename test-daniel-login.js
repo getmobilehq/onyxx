@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 async function testDanielLogin() {
-  const API_URL = 'https://onyx-backend-f7vh.onrender.com/api';
+  const API_URL = 'https://manage.onyxreport.com/api';
   
   console.log('🔍 Testing login for Daniel Jumbo...');
   

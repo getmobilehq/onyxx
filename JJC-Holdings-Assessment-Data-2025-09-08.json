@@ -1,0 +1,36 @@
+{
+  "assessment": {
+    "id": "da5031dc-9e28-490f-82fe-a426a96d7396",
+    "building_name": "JJC Holdings",
+    "building_type": "High-end Executive Office",
+    "year_built": 2000,
+    "square_footage": 500000,
+    "replacement_value": 100000000,
+    "status": "completed",
+    "street_address": "1450 Davies Drive",
+    "city": "Durham",
+    "state": "NC",
+    "completed_at": "2025-09-08T16:40:14.442Z",
+    "assessment_type": "field_assessment"
+  },
+  "fci_results": {
+    "fci_score": 0,
+    "condition_rating": "Excellent",
+    "total_repair_cost": 0,
+    "replacement_cost": 100000000,
+    "immediate_repair_cost": 0,
+    "short_term_repair_cost": 0,
+    "long_term_repair_cost": 0
+  },
+  "elements": [],
+  "assessment_summary": {
+    "status": "completed",
+    "type": "field_assessment",
+    "scheduled_date": "2025-09-08T00:00:00.000Z",
+    "completed_at": "2025-09-08T16:40:14.442Z",
+    "assessor": "Admin User",
+    "follow_up_required": false
+  },
+  "generated_at": "2025-09-08T17:10:29.098Z",
+  "generated_by": "System Administrator"
+}

@@ -20,7 +20,7 @@ if [ $? -eq 0 ]; then
     echo "   Email: admin@onyx.com"
     echo "   Password: password123"
     echo ""
-    echo "🔗 Backend URL: https://onyx-backend-f7vh.onrender.com"
+    echo "🔗 Backend URL: https://manage.onyxreport.com"
 else
     echo ""
     echo "❌ Migration failed. Please check the error messages above."

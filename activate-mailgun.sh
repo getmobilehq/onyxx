@@ -92,7 +92,7 @@ test_email_service() {
     echo "3. Testing email service..."
     
     # Check if backend is running
-    if curl -s -f "${BACKEND_URL:-https://onyx-backend-f7vh.onrender.com}/api/health" > /dev/null; then
+    if curl -s -f "${BACKEND_URL:-https://manage.onyxreport.com}/api/health" > /dev/null; then
         print_status "Backend service is running"
     else
         print_warning "Backend service not accessible, skipping email tests"
@@ -101,11 +101,11 @@ test_email_service() {
     
     # Test email health endpoint (would need admin token)
     print_info "Email service health check available at:"
-    echo "   GET ${BACKEND_URL:-https://onyx-backend-f7vh.onrender.com}/api/email/health"
+    echo "   GET ${BACKEND_URL:-https://manage.onyxreport.com}/api/email/health"
     
     print_info "Email test endpoints available at:"
-    echo "   POST ${BACKEND_URL:-https://onyx-backend-f7vh.onrender.com}/api/email/test"
-    echo "   POST ${BACKEND_URL:-https://onyx-backend-f7vh.onrender.com}/api/email/test-report"
+    echo "   POST ${BACKEND_URL:-https://manage.onyxreport.com}/api/email/test"
+    echo "   POST ${BACKEND_URL:-https://manage.onyxreport.com}/api/email/test-report"
 }
 
 # Deploy changes to production

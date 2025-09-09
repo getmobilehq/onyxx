@@ -30,7 +30,7 @@ echo "3. Running security verification..."
 
 # Check if security endpoints are accessible
 echo "Checking security endpoints..."
-curl -s -o /dev/null -w "%{http_code}" https://onyx-backend-f7vh.onrender.com/api/health
+curl -s -o /dev/null -w "%{http_code}" https://manage.onyxreport.com/api/health
 if [ $? -eq 0 ]; then
     echo "✅ Backend health check passed"
 else

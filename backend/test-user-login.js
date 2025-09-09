@@ -1,6 +1,6 @@
 const axios = require('axios');
 
-const API_URL = 'https://onyx-backend-f7vh.onrender.com/api';
+const API_URL = 'https://manage.onyxreport.com/api';
 
 async function testLogin() {
   console.log('Testing login for joseph@univelcity.com...\n');

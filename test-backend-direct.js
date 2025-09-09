@@ -1,7 +1,7 @@
 // Test backend health and individual endpoints
 import axios from 'axios';
 
-const API_URL = 'https://onyx-backend-f7vh.onrender.com/api';
+const API_URL = 'https://manage.onyxreport.com/api';
 
 async function testBackend() {
   console.log('🔍 Testing backend endpoints...');
