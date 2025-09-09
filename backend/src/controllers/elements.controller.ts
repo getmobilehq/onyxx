@@ -164,11 +164,13 @@ export const seedElements = async (
     for (const element of elements) {
       // Extract code from individual_element (e.g., "A1010" from "A1010 - Standard Foundations")
       const code = element.individual_element.split(' - ')[0];
+      // Use individual_element as the name field
+      const name = element.individual_element;
       
       await pool.query(
-        `INSERT INTO elements (code, major_group, group_element, individual_element) 
-         VALUES ($1, $2, $3, $4)`,
-        [code, element.major_group, element.group_element, element.individual_element]
+        `INSERT INTO elements (code, name, major_group, group_element, individual_element) 
+         VALUES ($1, $2, $3, $4, $5)`,
+        [code, name, element.major_group, element.group_element, element.individual_element]
       );
     }
 
