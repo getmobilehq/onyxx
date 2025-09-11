@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { 
   ArrowDown,
   ArrowUp,
@@ -96,6 +96,9 @@ const getFciColor = (fci: number) => {
 };
 
 export function ReportsDashboard() {
+  const [searchParams] = useSearchParams();
+  const buildingId = searchParams.get('buildingId');
+  
   const { reports, fetchReports, loading } = useReports();
   const { buildings } = useBuildings();
   const [selectedTimeRange, setSelectedTimeRange] = useState('30d');
@@ -104,14 +107,20 @@ export function ReportsDashboard() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        await fetchReports({ status: 'published' });
+        // If buildingId is provided, fetch reports for that specific building
+        if (buildingId) {
+          console.log('🏢 Loading reports for building ID:', buildingId);
+          await fetchReports({ building_id: buildingId, status: 'published' });
+        } else {
+          await fetchReports({ status: 'published' });
+        }
       } catch (error) {
         console.error('Failed to load reports:', error);
         toast.error('Failed to load reports data');
       }
     };
     loadData();
-  }, []);
+  }, [buildingId]);
 
   // Process reports data - reports already contain structured FCI and cost data
   const validReports = reports.filter(report => 
@@ -211,6 +220,44 @@ export function ReportsDashboard() {
     return (
       <div className="flex items-center justify-center h-96">
         <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
+  // Show empty state if no reports found and buildingId is specified
+  if (buildingId && reports.length === 0) {
+    return (
+      <div className="space-y-6 p-6">
+        <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight">Reports Dashboard</h2>
+            <p className="text-muted-foreground">
+              Building-specific reports
+            </p>
+          </div>
+        </div>
+        
+        <Card className="text-center py-12">
+          <CardContent className="space-y-4">
+            <FileText className="h-16 w-16 text-muted-foreground mx-auto" />
+            <h3 className="text-lg font-semibold">No Reports Generated Yet</h3>
+            <p className="text-muted-foreground max-w-md mx-auto">
+              No reports have been generated for this building yet. Complete an assessment to generate your first report.
+            </p>
+            <div className="flex gap-3 justify-center mt-6">
+              <Button asChild>
+                <Link to={`/assessments/new?buildingId=${buildingId}`}>
+                  Create Assessment
+                </Link>
+              </Button>
+              <Button variant="outline" asChild>
+                <Link to={`/buildings/${buildingId}`}>
+                  View Building Details
+                </Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
