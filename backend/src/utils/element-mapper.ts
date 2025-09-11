@@ -126,10 +126,14 @@ export async function processElementDataForAssessment(elementData: any): Promise
     
     if (!uuidRegex.test(processedElement.element_id)) {
       // It's a code, convert to UUID
+      console.log(`🔍 Converting element code to UUID: ${processedElement.element_id}`);
       const uuid = await mapElementCodeToUuid(processedElement.element_id);
       if (!uuid) {
-        throw new Error(`Invalid element identifier: ${processedElement.element_id}`);
+        console.warn(`⚠️ Element identifier not found in database: ${processedElement.element_id}`);
+        // Return null to indicate this element should be skipped
+        return null;
       }
+      console.log(`✅ Converted element code ${processedElement.element_id} to UUID: ${uuid}`);
       processedElement.element_id = uuid;
     }
   }

@@ -666,6 +666,12 @@ export const saveAssessmentElements = async (
         // Process element data to handle code-to-UUID mapping
         const element = await processElementDataForAssessment(rawElement);
         console.log('Processed element:', element);
+        
+        // Skip if element processing returned null (invalid element identifier)
+        if (!element) {
+          console.warn('Skipping element with invalid identifier:', rawElement.element_id);
+          continue;
+        }
 
         // Upsert assessment element
         const elementResult = await pool.query(
