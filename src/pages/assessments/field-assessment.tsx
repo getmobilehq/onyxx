@@ -384,15 +384,15 @@ export function FieldAssessmentPage() {
 
           // Prepare elements for backend with proper format
           const elementsForBackend = elementAssessments
-            .filter(e => e.assessed)
+            .filter(e => e.assessed && e.condition) // Ensure condition is present
             .map(e => ({
               element_id: e.elementId,
-              condition_rating: conditionToRating[e.condition as keyof typeof conditionToRating] || 3,
+              condition_rating: e.condition, // Send as string, not number
               notes: e.notes || '',
               photo_urls: e.photos || [],
               deficiencies: (e.deficiencies || []).map((d: any) => ({
                 description: d.description,
-                cost: d.cost || 0,
+                cost: Number(d.cost) || 0,
                 category: d.category || '',
                 photos: d.photos || []
               }))

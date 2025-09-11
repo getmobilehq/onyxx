@@ -547,9 +547,11 @@ export function PreAssessmentPage() {
                       </FormControl>
                       <SelectContent>
                         <SelectItem value="Annual">Annual Assessment</SelectItem>
-                        <SelectItem value="Initial">Initial Assessment</SelectItem>
-                        <SelectItem value="Follow-up">Follow-up Assessment</SelectItem>
-                        <SelectItem value="Partial">Partial Assessment</SelectItem>
+                        <SelectItem value="Condition">Condition Assessment</SelectItem>
+                        <SelectItem value="Compliance">Compliance Assessment</SelectItem>
+                        <SelectItem value="Insurance">Insurance Assessment</SelectItem>
+                        <SelectItem value="Due Diligence">Due Diligence Assessment</SelectItem>
+                        <SelectItem value="Capital Planning">Capital Planning Assessment</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />

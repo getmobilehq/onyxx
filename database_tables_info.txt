@@ -1,0 +1,16 @@
+                                               List of relations
+ Schema |          Name           | Type  |   Owner   | Persistence | Access method |    Size    | Description 
+--------+-------------------------+-------+-----------+-------------+---------------+------------+-------------
+ public | assessment_deficiencies | table | realjumbo | permanent   | heap          | 8192 bytes | 
+ public | assessment_elements     | table | realjumbo | permanent   | heap          | 8192 bytes | 
+ public | assessments             | table | realjumbo | permanent   | heap          | 16 kB      | 
+ public | audit_logs              | table | realjumbo | permanent   | heap          | 8192 bytes | 
+ public | buildings               | table | realjumbo | permanent   | heap          | 48 kB      | 
+ public | elements                | table | realjumbo | permanent   | heap          | 48 kB      | 
+ public | organizations           | table | realjumbo | permanent   | heap          | 16 kB      | 
+ public | pre_assessments         | table | realjumbo | permanent   | heap          | 48 kB      | 
+ public | reports                 | table | realjumbo | permanent   | heap          | 8192 bytes | 
+ public | tokens                  | table | realjumbo | permanent   | heap          | 16 kB      | 
+ public | users                   | table | realjumbo | permanent   | heap          | 16 kB      | 
+(11 rows)
+
