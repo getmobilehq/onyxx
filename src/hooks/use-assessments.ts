@@ -154,7 +154,7 @@ export function useAssessments() {
     assessmentId: string,
     elements: Array<{
       element_id: string;
-      condition_rating: number;
+      condition_rating: string; // Backend expects strings like 'new', 'good', 'fair', 'poor', 'critical'
       notes?: string;
       photo_urls?: string[];
       deficiencies?: Array<{

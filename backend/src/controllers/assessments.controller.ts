@@ -20,6 +20,13 @@ export const createAssessment = async (
     } = req.body;
 
     const user = (req as any).user;
+    
+    console.log('🎯 Creating assessment with data:', {
+      building_id,
+      type,
+      user_id: user?.id,
+      organization_id: user?.organization_id
+    });
 
     // Validate required fields
     if (!building_id || !type) {
@@ -66,6 +73,13 @@ export const createAssessment = async (
         user.id
       ]
     );
+
+    console.log('✅ Assessment inserted into database:', {
+      id: result.rows[0].id,
+      building_id: result.rows[0].building_id,
+      type: result.rows[0].type,
+      status: result.rows[0].status
+    });
 
     res.status(201).json({
       success: true,
@@ -585,14 +599,43 @@ export const saveAssessmentElements = async (
   try {
     const { id } = req.params;
     const { elements } = req.body;
+    const user = (req as any).user;
 
-    // Check if assessment exists
+    console.log('🔍 Looking for assessment with ID:', id);
+    console.log('👤 User context:', { user_id: user?.id, organization_id: user?.organization_id });
+    
+    // Validate UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(id)) {
+      console.error('❌ Invalid UUID format for assessment ID:', id);
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid assessment ID format'
+      });
+    }
+    
+    // Check if assessment exists and belongs to user's organization
     const assessmentCheck = await pool.query(
-      'SELECT id FROM assessments WHERE id = $1',
-      [id]
+      'SELECT id, building_id, status, organization_id FROM assessments WHERE id = $1 AND organization_id = $2',
+      [id, user?.organization_id]
     );
 
+    console.log('📊 Assessment query result:', {
+      found: assessmentCheck.rows.length > 0,
+      assessment: assessmentCheck.rows[0] || null
+    });
+
     if (assessmentCheck.rows.length === 0) {
+      console.error('❌ Assessment not found in database or access denied:', id);
+      
+      // Check if assessment exists but belongs to different org
+      const globalCheck = await pool.query('SELECT id, organization_id FROM assessments WHERE id = $1', [id]);
+      if (globalCheck.rows.length > 0) {
+        console.error('⚠️ Assessment exists but belongs to different organization:', globalCheck.rows[0]);
+      } else {
+        console.error('⚠️ Assessment does not exist at all in database');
+      }
+      
       return res.status(404).json({
         success: false,
         message: 'Assessment not found'
