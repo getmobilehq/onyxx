@@ -502,6 +502,17 @@ export const generateReportFromAssessment = async (
   try {
     const { assessmentId } = req.params;
     const user = (req as any).user;
+    
+    console.log('📊 generateReportFromAssessment called with:', { assessmentId, userId: user?.id });
+
+    // Validate assessmentId format
+    if (!assessmentId || typeof assessmentId !== 'string') {
+      console.error('❌ Invalid assessmentId format:', assessmentId);
+      return res.status(400).json({
+        success: false,
+        message: 'Assessment ID is required'
+      });
+    }
 
     // Check if assessment exists and is completed
     const assessmentResult = await pool.query(

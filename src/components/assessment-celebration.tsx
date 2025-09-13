@@ -78,14 +78,20 @@ export function AssessmentCelebration({
   }, []);
 
   const handleGenerateReport = async () => {
+    console.log('🔍 handleGenerateReport - assessment:', assessment);
+    console.log('🔍 assessment.id:', assessment?.id);
+    
     if (!assessment?.id) {
+      console.error('❌ Assessment ID is missing:', assessment);
       toast.error('Assessment ID is required to generate report');
       return;
     }
 
     setIsGeneratingReport(true);
     try {
+      console.log('📊 Generating report for assessment ID:', assessment.id);
       const report = await generateReport(assessment.id);
+      console.log('✅ Report generated successfully:', report);
       setGeneratedReport(report);
       
       // Small celebration for successful report generation

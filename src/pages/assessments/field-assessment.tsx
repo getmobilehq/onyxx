@@ -359,6 +359,7 @@ export function FieldAssessmentPage() {
       // Save complete assessment locally
       const completeAssessment = {
         ...assessmentData,
+        id: assessmentId, // Ensure assessment ID is included for report generation
         status: 'completed',
         currentStep: 3,
         fieldAssessmentData: {
