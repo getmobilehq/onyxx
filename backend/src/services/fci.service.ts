@@ -336,7 +336,7 @@ export const saveFCIReport = async (
         status,
         report_type,
         created_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $6, $7, $8, $9, $10, 'draft', 'facility_condition', CURRENT_TIMESTAMP)
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, CURRENT_TIMESTAMP)
       RETURNING id
     `;
     
@@ -346,11 +346,14 @@ export const saveFCIReport = async (
       `FCI Assessment Report - ${new Date().toLocaleDateString()}`, // title
       userId || null, // created_by_user_id
       fciResults.total_repair_cost,
-      fciResults.replacement_cost, // This goes to both replacement_value and replacement_cost
+      fciResults.replacement_cost, // replacement_value
+      fciResults.replacement_cost, // replacement_cost
       fciResults.fci_score,
       fciResults.immediate_repair_cost,
       fciResults.short_term_repair_cost,
-      fciResults.long_term_repair_cost
+      fciResults.long_term_repair_cost,
+      'draft', // status
+      'facility_condition' // report_type
     ]);
     
     return result.rows[0].id;

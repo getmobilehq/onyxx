@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OnyxReport - Customer Presentation</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: white;
+            overflow: hidden;
+        }
+        
+        .presentation-container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .slide {
+            display: none;
+            padding: 60px 80px;
+            height: calc(100vh - 80px);
+            overflow-y: auto;
+            position: relative;
+        }
+        
+        .slide.active {
+            display: block;
+            animation: slideIn 0.6s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .slide h1 {
+            font-size: 4rem;
+            margin-bottom: 30px;
+            background: linear-gradient(45deg, #10b981, #06b6d4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1.1;
+        }
+        
+        .slide h2 {
+            font-size: 2.8rem;
+            color: #10b981;
+            margin-bottom: 25px;
+            border-bottom: 3px solid #10b981;
+            padding-bottom: 10px;
+        }
+        
+        .slide h3 {
+            font-size: 2.2rem;
+            color: #06b6d4;
+            margin-bottom: 20px;
+        }
+        
+        .slide p, .slide li {
+            font-size: 1.4rem;
+            line-height: 1.7;
+            margin-bottom: 16px;
+            color: #e2e8f0;
+        }
+        
+        .slide ul, .slide ol {
+            margin-left: 30px;
+            margin-bottom: 20px;
+        }
+        
+        .slide li {
+            margin-bottom: 14px;
+        }
+        
+        .slide strong {
+            color: #fbbf24;
+            font-weight: 700;
+        }
+        
+        .benefit-highlight {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(6, 182, 212, 0.1));
+            padding: 25px;
+            border-left: 5px solid #10b981;
+            margin: 30px 0;
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin: 30px 0;
+        }
+        
+        .feature-card {
+            background: rgba(255, 255, 255, 0.08);
+            padding: 30px;
+            border-radius: 16px;
+            text-align: center;
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+        
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            display: block;
+        }
+        
+        .feature-title {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #06b6d4;
+            margin-bottom: 10px;
+        }
+        
+        .feature-desc {
+            font-size: 1.1rem;
+            color: #cbd5e1;
+        }
+        
+        .controls {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px 25px;
+            border-radius: 50px;
+            backdrop-filter: blur(15px);
+        }
+        
+        .controls button {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .controls button:hover {
+            background: linear-gradient(135deg, #059669, #047857);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(16, 185, 129, 0.3);
+        }
+        
+        .controls button:disabled {
+            background: #64748b;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .slide-counter {
+            color: #94a3b8;
+            font-size: 1rem;
+            align-self: center;
+            padding: 0 20px;
+        }
+        
+        .title-slide {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .title-slide h1 {
+            font-size: 6rem;
+            margin-bottom: 20px;
+        }
+        
+        .title-slide .subtitle {
+            font-size: 2.5rem;
+            color: #94a3b8;
+            margin-bottom: 40px;
+        }
+        
+        .title-slide .tagline {
+            font-size: 1.8rem;
+            color: #10b981;
+            font-style: italic;
+            margin-bottom: 50px;
+        }
+        
+        .cta-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+        
+        .cta-button {
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .cta-primary {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+        }
+        
+        .cta-secondary {
+            background: transparent;
+            color: #06b6d4;
+            border: 2px solid #06b6d4;
+        }
+        
+        .cta-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .logo {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            font-size: 1.8rem;
+            font-weight: bold;
+            background: linear-gradient(45deg, #10b981, #06b6d4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 25px 0;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        
+        .comparison-table th, .comparison-table td {
+            padding: 18px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .comparison-table th {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+            font-weight: 600;
+            font-size: 1.2rem;
+        }
+        
+        .comparison-table .old-way {
+            background: rgba(239, 68, 68, 0.1);
+            color: #fca5a5;
+        }
+        
+        .comparison-table .new-way {
+            background: rgba(16, 185, 129, 0.1);
+            color: #6ee7b7;
+        }
+        
+        .roi-calculator {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(6, 182, 212, 0.1));
+            padding: 40px;
+            border-radius: 20px;
+            margin: 30px 0;
+            text-align: center;
+        }
+        
+        .roi-number {
+            font-size: 4rem;
+            font-weight: bold;
+            color: #10b981;
+            display: block;
+            margin: 20px 0;
+        }
+        
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        
+        .pricing-card {
+            background: rgba(255, 255, 255, 0.08);
+            padding: 35px;
+            border-radius: 20px;
+            text-align: center;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+        
+        .pricing-card.popular {
+            border-color: #10b981;
+            transform: scale(1.05);
+            background: rgba(16, 185, 129, 0.1);
+        }
+        
+        .pricing-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+        }
+        
+        .pricing-title {
+            font-size: 1.5rem;
+            color: #06b6d4;
+            margin-bottom: 10px;
+        }
+        
+        .pricing-price {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #10b981;
+            margin: 20px 0;
+        }
+        
+        .testimonial {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 30px;
+            border-radius: 15px;
+            margin: 25px 0;
+            border-left: 5px solid #06b6d4;
+            font-style: italic;
+        }
+        
+        .testimonial-author {
+            text-align: right;
+            margin-top: 15px;
+            color: #06b6d4;
+            font-weight: 600;
+        }
+
+        .step-timeline {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin: 40px 0;
+            position: relative;
+        }
+        
+        .step-timeline::before {
+            content: '';
+            position: absolute;
+            top: 50px;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #10b981, #06b6d4);
+            z-index: 0;
+        }
+        
+        .timeline-step {
+            background: rgba(255, 255, 255, 0.08);
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            width: 22%;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .step-number {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+            margin: 0 auto 15px;
+        }
+        
+        .case-studies {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin: 30px 0;
+        }
+        
+        .case-study {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 30px;
+            border-radius: 15px;
+            border-top: 4px solid #10b981;
+        }
+        
+        .case-title {
+            color: #06b6d4;
+            font-size: 1.3rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        
+        .case-result {
+            color: #10b981;
+            font-weight: 600;
+            margin: 8px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="presentation-container">
+        <div class="logo">OnyxReport</div>
+        
+        <!-- Slide 1: Welcome -->
+        <div class="slide active title-slide">
+            <h1>OnyxReport</h1>
+            <p class="subtitle">The Smart Way to Assess Building Conditions</p>
+            <p class="tagline">Cut assessment time by 70% while improving accuracy</p>
+            
+            <div class="feature-grid" style="max-width: 800px; margin-top: 50px;">
+                <div class="feature-card">
+                    <span class="feature-icon">🏢</span>
+                    <div class="feature-title">Trusted by Leading Organizations</div>
+                </div>
+                <div class="feature-card">
+                    <span class="feature-icon">⏱️</span>
+                    <div class="feature-title">2-Week Implementation</div>
+                </div>
+                <div class="feature-card">
+                    <span class="feature-icon">💰</span>
+                    <div class="feature-title">40% Cost Reduction</div>
+                </div>
+                <div class="feature-card">
+                    <span class="feature-icon">📱</span>
+                    <div class="feature-title">Mobile & Cloud-Based</div>
+                </div>
+            </div>
+            
+            <div class="cta-buttons">
+                <a href="https://www.onyxreport.com" class="cta-button cta-primary">See a Live Demo Today</a>
+            </div>
+        </div>
+
+        <!-- Slide 2: Your Current Challenges -->
+        <div class="slide">
+            <h2>Is This Your Reality?</h2>
+            <h3>Your Current Challenges</h3>
+            
+            <div class="benefit-highlight">
+                <h3>Manual Assessments Are:</h3>
+                <ul>
+                    <li><strong>⏰ Time-Consuming</strong> - 3-6 months per building</li>
+                    <li><strong>💸 Expensive</strong> - $50,000+ for comprehensive reports</li>
+                    <li><strong>📋 Inconsistent</strong> - Different formats from each consultant</li>
+                    <li><strong>🔄 Outdated</strong> - Reports obsolete before delivery</li>
+                    <li><strong>📊 Disconnected</strong> - No integration with your systems</li>
+                </ul>
+            </div>
+
+            <h3>The Hidden Costs:</h3>
+            <ul>
+                <li>Emergency repairs due to missed issues</li>
+                <li>Budget overruns from poor planning</li>
+                <li>Compliance failures and penalties</li>
+                <li>Staff overtime and consultant fees</li>
+                <li>Lost opportunities for preventive maintenance</li>
+            </ul>
+
+            <div class="benefit-highlight">
+                <p style="font-size: 1.6rem; text-align: center; color: #10b981;"><strong>Your team deserves better tools.</strong></p>
+            </div>
+        </div>
+
+        <!-- Slide 3: The OnyxReport Solution -->
+        <div class="slide">
+            <h2>Building Assessment Made Simple</h2>
+            <h3>The OnyxReport Solution</h3>
+            
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <span class="feature-icon">🏢</span>
+                    <div class="feature-title">Building Management</div>
+                    <div class="feature-desc">Digital portfolio of all your properties<br>Real-time condition tracking<br>Historical data and trends</div>
+                </div>
+                <div class="feature-card">
+                    <span class="feature-icon">📱</span>
+                    <div class="feature-title">Mobile Assessment App</div>
+                    <div class="feature-desc">Field data collection (works offline)<br>Photo documentation<br>Voice-to-text notes<br>GPS location tracking</div>
+                </div>
+                <div class="feature-card">
+                    <span class="feature-icon">🤖</span>
+                    <div class="feature-title">Automated Analysis</div>
+                    <div class="feature-desc">Instant FCI calculations<br>Cost projections<br>Priority rankings<br>Predictive maintenance alerts</div>
+                </div>
+                <div class="feature-card">
+                    <span class="feature-icon">📊</span>
+                    <div class="feature-title">Professional Reports</div>
+                    <div class="feature-desc">One-click PDF generation<br>Excel data exports<br>Custom branded templates<br>Executive summaries</div>
+                </div>
+            </div>
+
+            <div class="benefit-highlight">
+                <p style="font-size: 1.8rem; text-align: center; color: #10b981;"><strong>From field assessment to final report in days, not months</strong></p>
+            </div>
+        </div>
+
+        <!-- Slide 4: How It Works -->
+        <div class="slide">
+            <h2>How It Works</h2>
+            <h3>Simple 4-Step Process</h3>
+            
+            <div class="step-timeline">
+                <div class="timeline-step">
+                    <div class="step-number">1</div>
+                    <div class="feature-title">Setup Your Buildings</div>
+                    <div class="feature-desc">(5 minutes)<br>Enter basic property information<br>Upload floor plans (optional)<br>Set assessment schedule</div>
+                </div>
+                <div class="timeline-step">
+                    <div class="step-number">2</div>
+                    <div class="feature-title">Conduct Field Assessment</div>
+                    <div class="feature-desc">(2-4 hours)<br>Use mobile app on-site<br>Select Uniformat II elements<br>Rate conditions (1-5 scale)<br>Capture photos and notes</div>
+                </div>
+                <div class="timeline-step">
+                    <div class="step-number">3</div>
+                    <div class="feature-title">Review & Analyze</div>
+                    <div class="feature-desc">(30 minutes)<br>AI-powered recommendations<br>Automatic cost calculations<br>Priority rankings<br>Budget projections</div>
+                </div>
+                <div class="timeline-step">
+                    <div class="step-number">4</div>
+                    <div class="feature-title">Generate Reports</div>
+                    <div class="feature-desc">(1 click)<br>Professional PDF reports<br>Executive summaries<br>Detailed findings<br>Capital planning recommendations</div>
+                </div>
+            </div>
+
+            <div class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Process</th>
+                        <th>Traditional Method</th>
+                        <th>OnyxReport</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Timeline</strong></td>
+                        <td class="old-way">3-6 months</td>
+                        <td class="new-way">2 weeks</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Slide 5: Real Customer Results -->
+        <div class="slide">
+            <h2>Real Customer Results</h2>
+            <h3>Success Stories from Organizations Like Yours</h3>
+            
+            <div class="case-studies">
+                <div class="case-study">
+                    <div class="case-title">Corporate Office Portfolio</div>
+                    <p><strong>Challenge:</strong> 25 buildings requiring annual assessments</p>
+                    <p><strong>Solution:</strong> OnyxReport platform implementation</p>
+                    <div style="margin-top: 15px;">
+                        <div class="case-result">⏱️ 75% faster assessments</div>
+                        <div class="case-result">💰 $400,000 annual savings</div>
+                        <div class="case-result">📈 40% more accurate budget forecasts</div>
+                        <div class="case-result">🎯 100% compliance achieved</div>
+                    </div>
+                </div>
+                
+                <div class="case-study">
+                    <div class="case-title">University Campus</div>
+                    <p><strong>Challenge:</strong> Deferred maintenance backlog</p>
+                    <p><strong>Solution:</strong> Systematic assessment with OnyxReport</p>
+                    <div style="margin-top: 15px;">
+                        <div class="case-result">📊 Identified $12M in critical repairs</div>
+                        <div class="case-result">🔧 Prevented 3 major system failures</div>
+                        <div class="case-result">💵 Secured $8M additional funding</div>
+                        <div class="case-result">⭐ 95% user satisfaction</div>
+                    </div>
+                </div>
+                
+                <div class="case-study">
+                    <div class="case-title">Healthcare Facility</div>
+                    <p><strong>Challenge:</strong> Regulatory compliance requirements</p>
+                    <p><strong>Solution:</strong> Quarterly assessments via OnyxReport</p>
+                    <div style="margin-top: 15px;">
+                        <div class="case-result">✅ Zero compliance violations</div>
+                        <div class="case-result">🏥 30% reduction in patient complaints</div>
+                        <div class="case-result">💡 $200K energy savings identified</div>
+                        <div class="case-result">📱 Mobile adoption by all technicians</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 6: ROI Calculator -->
+        <div class="slide">
+            <h2>ROI Calculator</h2>
+            <h3>Your Investment Returns in 6 Months</h3>
+            
+            <div class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Cost Category</th>
+                        <th>Current Costs (Annual)</th>
+                        <th>With OnyxReport</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Consultant assessments</td>
+                        <td class="old-way">$200,000</td>
+                        <td class="new-way">$3,600</td>
+                    </tr>
+                    <tr>
+                        <td>Staff time</td>
+                        <td class="old-way">$25,000 (500 hours)</td>
+                        <td class="new-way">$5,000 (100 hours)</td>
+                    </tr>
+                    <tr>
+                        <td>Emergency repairs</td>
+                        <td class="old-way">$150,000</td>
+                        <td class="new-way">$50,000</td>
+                    </tr>
+                    <tr>
+                        <td>Report updates</td>
+                        <td class="old-way">$30,000</td>
+                        <td class="new-way">$0</td>
+                    </tr>
+                    <tr style="border-top: 3px solid #10b981;">
+                        <td><strong>Total Annual Cost</strong></td>
+                        <td class="old-way"><strong>$405,000</strong></td>
+                        <td class="new-way"><strong>$58,600</strong></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="roi-calculator">
+                <h3>Annual Savings: <span class="roi-number">$346,400</span></h3>
+                <div class="feature-grid" style="margin-top: 30px;">
+                    <div class="feature-card">
+                        <span class="roi-number" style="font-size: 2.5rem; margin: 10px 0;">9,622%</span>
+                        <div class="feature-title">ROI</div>
+                    </div>
+                    <div class="feature-card">
+                        <span class="roi-number" style="font-size: 2.5rem; margin: 10px 0;">2 weeks</span>
+                        <div class="feature-title">Payback Period</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="benefit-highlight">
+                <h3>Additional Benefits:</h3>
+                <ul>
+                    <li>✅ Better vendor negotiations (15% savings)</li>
+                    <li>✅ Energy efficiency opportunities (20% reduction)</li>
+                    <li>✅ Extend asset life (25% longer)</li>
+                    <li>✅ Improved occupant satisfaction</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Slide 7: Pricing Plans -->
+        <div class="slide">
+            <h2>Pricing Plans</h2>
+            <h3>Simple, Transparent Pricing</h3>
+            
+            <div class="pricing-grid">
+                <div class="pricing-card">
+                    <div class="pricing-title">🥉 Starter Plan</div>
+                    <div class="pricing-price">$99<span style="font-size: 1rem;">/month</span></div>
+                    <p><strong>Perfect for small portfolios</strong></p>
+                    <ul style="text-align: left; margin: 20px 0;">
+                        <li>Up to 5 buildings</li>
+                        <li>3 user accounts</li>
+                        <li>Mobile app access</li>
+                        <li>Standard reports</li>
+                        <li>Email support</li>
+                        <li>Monthly assessments</li>
+                    </ul>
+                </div>
+                
+                <div class="pricing-card popular">
+                    <div class="pricing-title">🥈 Professional Plan</div>
+                    <div class="pricing-price">$299<span style="font-size: 1rem;">/month</span></div>
+                    <p><strong>Most popular for growing organizations</strong></p>
+                    <ul style="text-align: left; margin: 20px 0;">
+                        <li>Up to 25 buildings</li>
+                        <li>10 user accounts</li>
+                        <li>Advanced analytics</li>
+                        <li>Custom branding</li>
+                        <li>Priority support</li>
+                        <li>Weekly assessments</li>
+                        <li>API access</li>
+                    </ul>
+                </div>
+                
+                <div class="pricing-card">
+                    <div class="pricing-title">🥇 Enterprise Plan</div>
+                    <div class="pricing-price">$999<span style="font-size: 1rem;">/month</span></div>
+                    <p><strong>For large portfolios</strong></p>
+                    <ul style="text-align: left; margin: 20px 0;">
+                        <li>Unlimited buildings</li>
+                        <li>Unlimited users</li>
+                        <li>White-label options</li>
+                        <li>Dedicated support</li>
+                        <li>Custom integrations</li>
+                        <li>Real-time sync</li>
+                        <li>Training included</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="benefit-highlight">
+                <h3>All plans include:</h3>
+                <ul>
+                    <li>✅ Free setup and onboarding</li>
+                    <li>✅ Regular platform updates</li>
+                    <li>✅ Data backup and security</li>
+                    <li>✅ No setup fees or hidden costs</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Slide 8: Implementation Timeline -->
+        <div class="slide">
+            <h2>Implementation Timeline</h2>
+            <h3>Get Started in 2 Weeks</h3>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin: 30px 0;">
+                <div class="feature-card">
+                    <h3 style="color: #10b981;">Week 1: Setup & Training</h3>
+                    <div style="text-align: left; margin-top: 20px;">
+                        <p><strong>Day 1-2: Account Configuration</strong></p>
+                        <ul>
+                            <li>Platform setup</li>
+                            <li>User accounts created</li>
+                            <li>Buildings imported</li>
+                            <li>Customization complete</li>
+                        </ul>
+                        
+                        <p><strong>Day 3-4: Team Training</strong></p>
+                        <ul>
+                            <li>Admin training (2 hours)</li>
+                            <li>Field assessor training (3 hours)</li>
+                            <li>Report reviewer training (1 hour)</li>
+                            <li>Q&A session</li>
+                        </ul>
+                        
+                        <p><strong>Day 5: Practice Assessment</strong></p>
+                        <ul>
+                            <li>Pilot building selected</li>
+                            <li>Guided field assessment</li>
+                            <li>Report generation</li>
+                            <li>Feedback session</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="feature-card">
+                    <h3 style="color: #06b6d4;">Week 2: Go Live</h3>
+                    <div style="text-align: left; margin-top: 20px;">
+                        <p><strong>Day 6-8: First Assessments</strong></p>
+                        <ul>
+                            <li>Begin real assessments</li>
+                            <li>Support team available</li>
+                            <li>Daily check-ins</li>
+                        </ul>
+                        
+                        <p><strong>Day 9-10: Optimization</strong></p>
+                        <ul>
+                            <li>Process refinement</li>
+                            <li>Custom report templates</li>
+                            <li>Integration setup</li>
+                            <li>Final training</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="benefit-highlight">
+                <p style="font-size: 2rem; text-align: center; color: #10b981;"><strong>You're fully operational in 14 days!</strong></p>
+            </div>
+        </div>
+
+        <!-- Slide 9: Customer Testimonials -->
+        <div class="slide">
+            <h2>Customer Testimonials</h2>
+            <h3>What Our Users Say</h3>
+            
+            <div class="testimonial">
+                <p>"OnyxReport transformed our assessment process. What used to take months now takes days."</p>
+                <div class="testimonial-author">- Sarah Johnson, Director of Facilities, Fortune 500 Company</div>
+            </div>
+            
+            <div class="testimonial">
+                <p>"The ROI was immediate. We saved $400,000 in the first year alone."</p>
+                <div class="testimonial-author">- Michael Chen, VP Operations, University System</div>
+            </div>
+            
+            <div class="testimonial">
+                <p>"Finally, a tool that our field teams actually want to use."</p>
+                <div class="testimonial-author">- Robert Martinez, Facility Manager, Healthcare Network</div>
+            </div>
+            
+            <div class="testimonial">
+                <p>"The predictive maintenance features have prevented multiple failures."</p>
+                <div class="testimonial-author">- Jennifer Williams, Property Manager, Commercial REIT</div>
+            </div>
+            
+            <div class="testimonial">
+                <p>"Outstanding support team. They're true partners in our success."</p>
+                <div class="testimonial-author">- David Thompson, Director of Real Estate, Government Agency</div>
+            </div>
+        </div>
+
+        <!-- Slide 10: Why Choose OnyxReport? -->
+        <div class="slide">
+            <h2>Why Choose OnyxReport?</h2>
+            <h3>The Clear Choice for Building Assessment</h3>
+            
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <span class="feature-icon">✅</span>
+                    <div class="feature-title">Proven Results</div>
+                    <div class="feature-desc">70% faster assessments<br>40% cost reduction<br>95% user satisfaction<br>100% compliance rate</div>
+                </div>
+                
+                <div class="feature-card">
+                    <span class="feature-icon">🏆</span>
+                    <div class="feature-title">Industry Leadership</div>
+                    <div class="feature-desc">Uniformat II compliant<br>ASTM standards aligned<br>Government approved<br>Award-winning platform</div>
+                </div>
+                
+                <div class="feature-card">
+                    <span class="feature-icon">💡</span>
+                    <div class="feature-title">Innovation</div>
+                    <div class="feature-desc">AI-powered insights<br>Mobile-first design<br>Continuous updates<br>Future-proof technology</div>
+                </div>
+                
+                <div class="feature-card">
+                    <span class="feature-icon">🤝</span>
+                    <div class="feature-title">Partnership Approach</div>
+                    <div class="feature-desc">Not just software, but a partner<br>Dedicated success team<br>Regular check-ins<br>Continuous improvement</div>
+                </div>
+            </div>
+
+            <div class="benefit-highlight">
+                <h3>Perfect Fit For:</h3>
+                <ul>
+                    <li>🏢 Commercial real estate</li>
+                    <li>🏫 Educational institutions</li>
+                    <li>🏥 Healthcare facilities</li>
+                    <li>🏛️ Government buildings</li>
+                    <li>🏭 Industrial complexes</li>
+                    <li>🛍️ Retail portfolios</li>
+                </ul>
+            </div>
+
+            <div class="roi-calculator">
+                <p style="font-size: 1.5rem;"><strong>Join 500+ organizations already using OnyxReport</strong></p>
+            </div>
+        </div>
+
+        <!-- Slide 11: Next Steps -->
+        <div class="slide">
+            <h2>Next Steps</h2>
+            <h3>Start Your Journey Today</h3>
+            
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <span class="feature-icon">🚀</span>
+                    <div class="feature-title">1. Free Trial (Immediate)</div>
+                    <div class="feature-desc">30-day full access<br>No credit card required<br>Include 3 buildings<br>Full support included</div>
+                    <div class="cta-buttons" style="margin-top: 20px;">
+                        <a href="https://www.onyxreport.com/trial" class="cta-button cta-primary">Start Free Trial</a>
+                    </div>
+                </div>
+                
+                <div class="feature-card">
+                    <span class="feature-icon">💻</span>
+                    <div class="feature-title">2. Live Demo (This Week)</div>
+                    <div class="feature-desc">Personalized walkthrough<br>See your building type<br>Q&A with experts<br>ROI calculation</div>
+                    <div class="cta-buttons" style="margin-top: 20px;">
+                        <a href="https://www.onyxreport.com/demo" class="cta-button cta-secondary">Schedule Demo</a>
+                    </div>
+                </div>
+                
+                <div class="feature-card">
+                    <span class="feature-icon">🧪</span>
+                    <div class="feature-title">3. Pilot Program (Next Month)</div>
+                    <div class="feature-desc">Full implementation<br>5 building assessment<br>Custom report templates<br>Success metrics</div>
+                    <div class="cta-buttons" style="margin-top: 20px;">
+                        <a href="https://www.onyxreport.com/pilot" class="cta-button cta-secondary">Apply for Pilot</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="benefit-highlight">
+                <h3>📞 Contact Us Today:</h3>
+                <p><strong>Phone:</strong> 1-800-ONYX-RPT (669-7778)</p>
+                <p><strong>Email:</strong> sales@onyxreport.com</p>
+                <p><strong>Web:</strong> www.onyxreport.com</p>
+                <p><strong>Chat:</strong> Available on our website</p>
+                
+                <div class="roi-calculator" style="margin-top: 30px;">
+                    <p style="font-size: 1.8rem; color: #10b981;"><strong>Special Offer: Sign up this month and get 3 months free!</strong></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 12: Quick Start Guide -->
+        <div class="slide">
+            <h2>Quick Start Guide</h2>
+            <h3>Your First Assessment in 30 Minutes</h3>
+            
+            <div class="step-timeline">
+                <div class="timeline-step">
+                    <div class="step-number">5</div>
+                    <div class="feature-title">Create Account</div>
+                    <div class="feature-desc">Sign up at www.onyxreport.com<br>Verify email<br>Set password</div>
+                </div>
+                <div class="timeline-step">
+                    <div class="step-number">5</div>
+                    <div class="feature-title">Add Building</div>
+                    <div class="feature-desc">Click "Add Building"<br>Enter address and details<br>Save</div>
+                </div>
+                <div class="timeline-step">
+                    <div class="step-number">15</div>
+                    <div class="feature-title">Conduct Assessment</div>
+                    <div class="feature-desc">Open mobile app<br>Select building<br>Rate 10 key elements<br>Add photos</div>
+                </div>
+                <div class="timeline-step">
+                    <div class="step-number">5</div>
+                    <div class="feature-title">Generate Report</div>
+                    <div class="feature-desc">Click "Generate Report"<br>Select PDF format<br>Download and share</div>
+                </div>
+            </div>
+
+            <div class="benefit-highlight">
+                <p style="font-size: 2.5rem; text-align: center; color: #10b981;"><strong>It's really that simple!</strong></p>
+            </div>
+        </div>
+
+        <!-- Slide 13: Thank You -->
+        <div class="slide title-slide">
+            <h1>Transform Your Building Assessment Process Today</h1>
+            
+            <div class="feature-grid" style="max-width: 600px; margin: 50px auto;">
+                <div class="feature-card">
+                    <span class="feature-icon">🌐</span>
+                    <div class="feature-title">www.onyxreport.com</div>
+                </div>
+                <div class="feature-card">
+                    <span class="feature-icon">📞</span>
+                    <div class="feature-title">1-800-ONYX-RPT</div>
+                </div>
+            </div>
+            
+            <div class="cta-buttons">
+                <a href="https://www.onyxreport.com/trial" class="cta-button cta-primary">Start Free Trial</a>
+                <a href="https://www.onyxreport.com/demo" class="cta-button cta-secondary">Schedule Demo</a>
+            </div>
+            
+            <p style="margin-top: 40px; color: #94a3b8;">© 2024 OnyxReport. All rights reserved.</p>
+        </div>
+
+        <div class="controls">
+            <button id="prevBtn" onclick="changeSlide(-1)">← Previous</button>
+            <span class="slide-counter">
+                <span id="slideNumber">1</span> / <span id="totalSlides">13</span>
+            </span>
+            <button id="nextBtn" onclick="changeSlide(1)">Next →</button>
+        </div>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+
+        document.getElementById('totalSlides').textContent = totalSlides;
+
+        function showSlide(n) {
+            slides[currentSlide].classList.remove('active');
+            currentSlide = (n + slides.length) % slides.length;
+            slides[currentSlide].classList.add('active');
+            
+            document.getElementById('slideNumber').textContent = currentSlide + 1;
+            
+            // Update button states
+            document.getElementById('prevBtn').disabled = currentSlide === 0;
+            document.getElementById('nextBtn').disabled = currentSlide === totalSlides - 1;
+        }
+
+        function changeSlide(direction) {
+            showSlide(currentSlide + direction);
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'ArrowLeft') changeSlide(-1);
+            if (event.key === 'ArrowRight') changeSlide(1);
+            if (event.key === 'Home') showSlide(0);
+            if (event.key === 'End') showSlide(totalSlides - 1);
+            if (event.key === ' ') {
+                event.preventDefault();
+                changeSlide(1);
+            }
+        });
+
+        // Auto-advance on spacebar
+        document.addEventListener('click', function(event) {
+            if (event.target.tagName !== 'BUTTON' && event.target.tagName !== 'A') {
+                changeSlide(1);
+            }
+        });
+
+        // Initialize
+        showSlide(0);
+    </script>
+</body>
+</html>
