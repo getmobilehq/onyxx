@@ -78,7 +78,18 @@ export const calculateAssessmentFCI = async (assessmentId: string): Promise<FCIC
 
     // Get assessment elements with condition ratings
     const elementsQuery = `
-      SELECT ae.*, e.major_group, e.group_element, e.individual_element
+      SELECT 
+        ae.*,
+        COALESCE(ae.repair_cost, ae.total_repair_cost, 0) as repair_cost,
+        COALESCE(ae.priority_level, 
+          CASE 
+            WHEN ae.priority = 'critical' OR ae.priority = '1' THEN 1
+            WHEN ae.priority = 'high' OR ae.priority = '2' THEN 2
+            WHEN ae.priority = 'medium' OR ae.priority = '3' THEN 3
+            WHEN ae.priority = 'low' OR ae.priority = '4' THEN 4
+            ELSE 3
+          END, 3) as priority_level,
+        e.major_group, e.group_element, e.individual_element
       FROM assessment_elements ae
       JOIN elements e ON ae.element_id = e.id
       WHERE ae.assessment_id = $1 AND ae.condition_rating IS NOT NULL
@@ -170,12 +181,16 @@ const calculateDetailedFCI = (building: BuildingInfo, elements: any[]): FCICalcu
   let longTermCost = 0;
   
   const elementsBreakdown: ElementAssessment[] = elements.map(element => {
-    // Calculate repair cost based on condition rating
-    const repairCost = calculateElementRepairCost(element, building);
+    // Use existing repair cost if available, otherwise calculate
+    const repairCost = element.repair_cost > 0 
+      ? parseFloat(element.repair_cost)
+      : calculateElementRepairCost(element, building);
     totalRepairCost += repairCost;
     
-    // Distribute costs based on condition severity
-    const costs = distributeRepairCosts(repairCost, element.condition_rating);
+    // Distribute costs based on priority level or condition severity
+    const priorityLevel = element.priority_level || 
+      (element.condition_rating >= 4 ? 1 : element.condition_rating === 3 ? 2 : 3);
+    const costs = distributeRepairCostsByPriority(repairCost, priorityLevel);
     immediateCost += costs.immediate;
     shortTermCost += costs.shortTerm;
     longTermCost += costs.longTerm;
@@ -184,7 +199,7 @@ const calculateDetailedFCI = (building: BuildingInfo, elements: any[]): FCICalcu
       element_id: element.element_id,
       condition_rating: element.condition_rating,
       repair_cost: repairCost,
-      replacement_cost: calculateElementReplacementCost(element, building),
+      replacement_cost: element.replacement_cost || calculateElementReplacementCost(element, building),
       useful_life: element.useful_life,
       age: element.age,
       quantity: element.quantity,
@@ -298,6 +313,26 @@ const getElementCostPercentage = (majorGroup: string): number => {
   };
   
   return percentages[majorGroup] || 0.15;
+};
+
+/**
+ * Distribute repair costs based on priority level
+ */
+const distributeRepairCostsByPriority = (totalCost: number, priorityLevel: number) => {
+  const distributions = {
+    1: { immediate: 0.9, shortTerm: 0.1, longTerm: 0.0 },  // Critical/Priority 1
+    2: { immediate: 0.4, shortTerm: 0.4, longTerm: 0.2 },  // High/Priority 2
+    3: { immediate: 0.2, shortTerm: 0.4, longTerm: 0.4 },  // Medium/Priority 3
+    4: { immediate: 0.1, shortTerm: 0.3, longTerm: 0.6 }   // Low/Priority 4
+  };
+  
+  const dist = distributions[priorityLevel as keyof typeof distributions] || distributions[3];
+  
+  return {
+    immediate: totalCost * dist.immediate,
+    shortTerm: totalCost * dist.shortTerm,
+    longTerm: totalCost * dist.longTerm
+  };
 };
 
 /**
