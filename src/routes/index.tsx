@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
+import type { ReactNode } from 'react';
 import { useAuth } from '@/context/auth-context';
 
 // Layouts
@@ -56,14 +57,14 @@ export const AppRoutes = () => {
     return <LoadingScreen message="Initializing application..." />;
   }
 
-  // Protected route wrapper
-  const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+  // Basic authentication wrapper
+  const RequireAuth = ({ children }: { children: ReactNode }) => {
     if (!user) return <Navigate to="/login" replace />;
     return <>{children}</>;
   };
 
   // Auth route wrapper (redirects to dashboard if already logged in)
-  const AuthRoute = ({ children }: { children: React.ReactNode }) => {
+  const AuthRoute = ({ children }: { children: ReactNode }) => {
     if (user) return <Navigate to="/dashboard" replace />;
     return <>{children}</>;
   };
@@ -100,12 +101,12 @@ export const AppRoutes = () => {
       </Route>
 
       {/* Dashboard Routes */}
-      <Route 
-        path="/" 
+      <Route
+        path="/"
         element={
-          <ProtectedRoute>
+          <RequireAuth>
             <DashboardLayout />
-          </ProtectedRoute>
+          </RequireAuth>
         }
       >
         <Route path="dashboard" element={<DashboardPage />} />
