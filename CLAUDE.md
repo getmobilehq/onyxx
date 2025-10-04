@@ -2,23 +2,39 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Last Updated: September 4, 2025
+## Last Updated: October 3, 2025
 
 ## Development Commands
 
 ### Frontend
 - `npm run dev` - Start development server with Vite (port 5173)
-- `npm run build` - TypeScript compilation + Vite production build  
+- `npm run build` - TypeScript compilation + Vite production build
 - `npm run lint` - ESLint code linting
 - `npm run preview` - Preview production build locally
 - `npm test` - Run Vitest tests
 - `npm run test:ui` - Run tests with UI
 - `npm run test:coverage` - Generate test coverage report
+- `npm run test:watch` - Run tests in watch mode
 
 ### Backend
-- `cd backend && npm run dev` - Start backend development server on port 5001
+- `cd backend && npm install` - Install backend dependencies
+- `cd backend && npm run dev` - Start backend development server with Nodemon (port 5001, proxied at 5002)
 - `cd backend && npm run build` - Compile TypeScript backend
 - `cd backend && npm start` - Start production backend server
+- `cd backend && npm test` - Run Jest unit tests
+- `cd backend && npm run test:watch` - Run tests in watch mode
+- `cd backend && npm run test:coverage` - Generate test coverage report
+- `cd backend && npm run test:ci` - Run tests in CI mode
+
+### Database & Migrations
+- `cd backend && npm run migrate` - Run database migrations using custom migrate.ts
+- `cd backend && npm run migrate:status` - Check migration status
+- `cd backend && npm run migrate:up` - Run pending migrations
+- `cd backend && npm run migrate:rollback` - Rollback last migration
+- `cd backend && npm run migrate:history` - Show migration history
+- `cd backend && npm run migrate:dry-run` - Test migrations without applying
+- `cd backend && npm run validate:check` - Run data integrity validation
+- `cd backend && npm run validate:fix` - Fix data integrity issues
 
 ## Project Architecture
 
@@ -66,9 +82,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Core Application Structure
 
 - **Context-based State Management**: Authentication (`auth-context.tsx`) and organization (`org-context.tsx`) contexts provide global state
-- **Multi-tenant Architecture**: Organization-scoped data access with role-based permissions (admin, manager, assessor)
+- **Multi-tenant Architecture**: Organization-scoped data access with role-based permissions (admin, manager, assessor). All database queries must filter by `org_id` to ensure tenant isolation
 - **Layout System**: Separate layouts for authentication (`auth-layout.tsx`) and dashboard (`dashboard-layout.tsx`) views
 - **ShadCN UI Components**: Comprehensive component library in `src/components/ui/` following Radix UI patterns
+- **Backend Architecture**: Express app defined in `backend/src/app.ts`, server entry in `backend/src/server.ts`. Routes are modular and located in `backend/src/routes/`, controllers in `backend/src/controllers/`, services in `backend/src/services/`
+- **Middleware Stack**: Authentication (`auth.middleware.ts`), error handling (`error.middleware.ts`), security (`security.middleware.ts`), file upload (`upload.middleware.ts`)
+- **Database Layer**: PostgreSQL connection via `backend/src/config/database.ts`. Custom migration system in `backend/src/database/migrate.ts`
 
 ### Implemented Features
 
@@ -122,12 +141,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Auto-fallback configured in frontend
 - CORS configured for www.onyxreport.com domain
 
-### Import Patterns
+### Import Patterns & Path Aliases
 
-- Use `@/` path alias for `src/` directory imports
-- UI components imported from `@/components/ui/`
-- Utilities from `@/lib/utils`
-- Context providers from `@/context/`
+- Use `@/` path alias for `src/` directory imports (configured in tsconfig.json and vite.config.ts)
+- UI components: `@/components/ui/` (ShadCN components)
+- Feature components: `@/components/` (assessment-workflow, uniformat-selector, etc.)
+- Page components: `@/pages/` (dashboard, buildings, assessments, analytics)
+- Utilities: `@/lib/utils`
+- Context providers: `@/context/` (auth-context.tsx, org-context.tsx)
+- Services: `@/services/` (API integration)
+- Backend uses `@/` alias mapped to `backend/src/` in Jest config
 
 ### Technology Stack
 
@@ -137,6 +160,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Routing**: React Router DOM v6
 - **Charts**: Recharts for data visualization
 - **UI**: ShadCN components built on Radix UI primitives
+- **Testing**: Vitest + React Testing Library for frontend, Jest + Supertest for backend
+- **Error Tracking**: Sentry for production monitoring
+- **Backend**: Node.js + Express.js + TypeScript
+- **Database**: PostgreSQL with Knex query builder
+- **ORM/Query Builder**: Knex.js for migrations and queries
+- **File Storage**: Cloudinary for image management
+- **Email**: Mailgun for transactional emails
+- **Authentication**: JWT tokens with bcrypt password hashing
 
 ### Recent Fixes and Improvements
 
@@ -166,8 +197,23 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - ✅ CORS configuration for multi-domain support
 - ✅ Fixed TypeScript compilation issues and type safety improvements
 
-### Testing Status
+### Testing Status & Configuration
 
+- **Frontend Tests**: Vitest configured with jsdom environment, setup in `vitest.config.ts`
+  - Test files: `*.test.ts` or `*.test.tsx` alongside source files
+  - Setup file: `src/test/setup.ts`
+  - Coverage excludes: `node_modules/`, `src/test/`, config files, `src/components/ui/**`
+  - Run: `npm test`, `npm run test:ui`, `npm run test:coverage`
+
+- **Backend Tests**: Jest with ts-jest preset, configured in `backend/jest.config.js`
+  - Test files: `**/__tests__/**/*.ts`, `**/*.spec.ts`, `**/*.test.ts`
+  - Root directories: `backend/src`, `backend/tests`
+  - Setup file: `backend/tests/setup.ts`
+  - Coverage excludes: `*.d.ts`, `server.ts`, `config/**`
+  - Timeout: 30 seconds
+  - Run: `cd backend && npm test`
+
+- **Test Coverage**: ~30% overall, focus on critical paths (auth, assessments, buildings)
 - **Manual Testing**: ✅ Extensive end-to-end testing completed
 - **Authentication Flow**: ✅ Login/logout/token refresh working
 - **Assessment Workflow**: ✅ Complete pre-assessment → field assessment → completion workflow tested
@@ -235,7 +281,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Mobile: 85%
 - Documentation: 60%
 
-**Latest Deployment**: September 4, 2025
+**Latest Deployment**: October 3, 2025
 - ✅ Removed token requirement for simplified MVP signup
 - ✅ Enhanced building cost management system
 - ✅ Fixed all critical assessment workflow bugs
@@ -249,7 +295,36 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Ready for MVP User Testing** 🚀
 
-### Key Changes in Latest Release (Sep 4, 2025)
+### Development Environment Setup
+
+**First-time Setup:**
+```bash
+# Clone and install frontend
+npm install
+
+# Install backend dependencies
+cd backend && npm install
+
+# Configure environment variables
+cp backend/.env.example backend/.env
+# Edit backend/.env with your DATABASE_URL, JWT_SECRET, CLOUDINARY credentials, etc.
+
+# Run database migrations
+cd backend && npm run migrate:up
+
+# Start development servers (in separate terminals)
+npm run dev                    # Frontend on port 5173
+cd backend && npm run dev      # Backend on port 5001
+```
+
+**Important Environment Variables:**
+- `DATABASE_URL`: PostgreSQL connection string
+- `JWT_SECRET`: Secret for JWT token signing
+- `CLOUDINARY_*`: Image upload credentials
+- `MAILGUN_*`: Email service credentials
+- `SENTRY_DSN`: Error tracking (optional)
+
+### Key Changes in Latest Release (Oct 3, 2025)
 
 **1. Simplified User Registration**
 - Frontend: Updated register form to collect organization name instead of token
