@@ -20,13 +20,23 @@ export const createAssessment = async (
     } = req.body;
 
     const user = (req as any).user;
-    
+
     console.log('🎯 Creating assessment with data:', {
       building_id,
       type,
       user_id: user?.id,
-      organization_id: user?.organization_id
+      organization_id: user?.organization_id,
+      full_user_object: user
     });
+
+    // Validate user has organization
+    if (!user || !user.organization_id) {
+      console.error('❌ User missing organization_id:', user);
+      return res.status(400).json({
+        success: false,
+        message: 'User must be associated with an organization to create assessments'
+      });
+    }
 
     // Validate required fields
     if (!building_id || !type) {
