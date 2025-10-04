@@ -31,12 +31,12 @@ export const getAllBuildings = async (
              b.state, b.city, b.zip_code, b.street_address, b.image_url, b.status, b.created_at, b.updated_at,
              b.cost_per_sqft, b.replacement_value,
              (
-               SELECT a.fci_score 
-               FROM assessments a 
-               WHERE a.building_id = b.id 
-                 AND a.status = 'completed' 
+               SELECT a.fci_score
+               FROM assessments a
+               WHERE a.building_id = b.id
+                 AND a.status = 'completed'
                  AND a.fci_score IS NOT NULL
-               ORDER BY a.completed_at DESC 
+               ORDER BY a.completion_date DESC
                LIMIT 1
              ) as latest_fci_score
       FROM buildings b
@@ -47,7 +47,7 @@ export const getAllBuildings = async (
     // Add filters
     if (type) {
       params.push(type);
-      query += ` AND type = $${params.length}`;
+      query += ` AND building_type = $${params.length}`;
     }
 
     if (status) {
