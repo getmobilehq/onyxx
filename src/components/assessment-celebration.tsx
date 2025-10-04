@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useAssessments } from '@/hooks/use-assessments';
 import { toast } from 'sonner';
+import { generateComprehensiveFCIReport } from '@/services/comprehensive-report-generator';
 
 interface AssessmentCelebrationProps {
   assessment: any;
@@ -349,7 +350,43 @@ export function AssessmentCelebration({
             
             {/* Action Buttons */}
             <div className="flex gap-2">
-              <Button onClick={() => window.print()}>
+              <Button onClick={() => {
+                if (generatedReport && buildingData) {
+                  try {
+                    generateComprehensiveFCIReport({
+                      assessment: {
+                        id: assessment.id,
+                        building_name: buildingData.name,
+                        assessment_type: assessment.assessment_type || 'FCI Assessment',
+                        assessment_date: assessment.assessment_date || assessment.created_at,
+                        completion_date: assessment.completion_date || new Date().toISOString(),
+                        assessor_name: assessment.assessor_name || 'Unknown'
+                      },
+                      fci_results: generatedReport.fci_results,
+                      elements: generatedReport.elements || elementAssessments || [],
+                      building: {
+                        name: buildingData.name,
+                        type: buildingData.type || buildingData.building_type,
+                        address: buildingData.address || buildingData.street_address,
+                        city: buildingData.city,
+                        state: buildingData.state,
+                        zip_code: buildingData.zip_code,
+                        year_built: buildingData.year_built,
+                        square_footage: buildingData.square_footage,
+                        replacement_value: generatedReport.fci_results?.replacement_cost || buildingData.replacement_value
+                      },
+                      generated_at: new Date().toISOString(),
+                      generated_by: 'Assessment Team'
+                    }, `FCI-Report-${buildingData.name.replace(/\s+/g, '-')}-${new Date().toLocaleDateString().replace(/\//g, '-')}.pdf`);
+                    toast.success('Comprehensive PDF report downloaded successfully');
+                  } catch (error) {
+                    console.error('Failed to generate PDF:', error);
+                    toast.error('Failed to generate PDF report');
+                  }
+                } else {
+                  toast.error('Report data is not available. Please generate the report first.');
+                }
+              }}>
                 Export PDF
               </Button>
               <Button variant="outline" onClick={() => navigate('/reports')}>
