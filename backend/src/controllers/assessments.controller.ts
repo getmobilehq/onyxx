@@ -1012,8 +1012,8 @@ export const generateAssessmentReport = async (
 
     // Get assessment details with building info
     const assessmentDetails = await pool.query(
-      `SELECT a.*, b.name as building_name, b.square_footage, b.cost_per_sqft, 
-              b.replacement_value, b.year_built, b.type as building_type,
+      `SELECT a.*, b.name as building_name, b.size as square_footage, b.cost_per_sqft,
+              b.replacement_value, b.year_built, b.building_type,
               u.name as assigned_to_name
        FROM assessments a
        LEFT JOIN buildings b ON a.building_id = b.id
