@@ -24,7 +24,8 @@
     "migrate:dry-run": "npm run migrate up --dry-run",
     "validate:data": "npx tsx src/validation/data-integrity.ts",
     "validate:check": "npm run validate:data check",
-    "validate:fix": "npm run validate:data fix"
+    "validate:fix": "npm run validate:data fix",
+    "fix:orphaned-users": "npx tsx scripts/fix-orphaned-users.ts"
   },
   "keywords": [
     "express",
