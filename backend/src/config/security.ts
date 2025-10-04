@@ -76,7 +76,8 @@ export const allowedOrigins = [
   'https://onyx-frontend.onrender.com',
   'https://onyxreport.com',
   'https://www.onyxreport.com',
-  'https://manage.onyxreport.com', // New backend domain
+  'https://manage.onyxreport.com',
+  'https://onyx-backend-f7vh.onrender.com', // Actual Render backend URL
 ];
 
 // Log CORS configuration on startup

@@ -42,6 +42,7 @@ app.use((req, res, next) => {
     'https://onyxreport.com',
     'https://www.onyxreport.com',
     'https://manage.onyxreport.com',
+    'https://onyx-backend-f7vh.onrender.com',
     'http://localhost:5173',
     'http://localhost:5174'
   ];
