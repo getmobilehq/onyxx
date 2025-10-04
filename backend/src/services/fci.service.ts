@@ -42,7 +42,7 @@ export const calculateAssessmentFCI = async (assessmentId: string): Promise<FCIC
     
     // Get assessment and building information
     const assessmentQuery = `
-      SELECT a.*, b.size as square_footage, b.cost_per_sqft, b.year_built, b.building_type
+      SELECT a.*, b.square_footage, b.cost_per_sqft, b.year_built, b.type as building_type
       FROM assessments a
       JOIN buildings b ON a.building_id = b.id
       WHERE a.id = $1
@@ -424,9 +424,9 @@ export const completeAssessmentWithFCI = async (assessmentId: string, userId?: s
     
     // Update assessment status and notes
     const updateQuery = `
-      UPDATE assessments 
-      SET status = 'completed', 
-          completed_at = CURRENT_TIMESTAMP,
+      UPDATE assessments
+      SET status = 'completed',
+          completion_date = CURRENT_TIMESTAMP,
           notes = $2
       WHERE id = $1
     `;
