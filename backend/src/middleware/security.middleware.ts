@@ -196,13 +196,19 @@ export const detectSuspiciousBehavior = (
   res: Response,
   next: NextFunction
 ) => {
+  // Skip security checks for health check endpoints
+  const isHealthCheck = req.path === '/health' || req.path === '/api/health';
+  if (isHealthCheck) {
+    return next();
+  }
+
   const suspiciousIndicators = [];
-  
+
   // Check for missing or suspicious headers
   if (!req.get('user-agent')) {
     suspiciousIndicators.push('Missing User-Agent');
   }
-  
+
   if (!req.get('accept-language')) {
     suspiciousIndicators.push('Missing Accept-Language');
   }
