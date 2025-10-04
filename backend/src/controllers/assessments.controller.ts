@@ -233,15 +233,15 @@ export const getAssessmentById = async (
         b.street_address as street_address,
         b.city,
         b.state,
-        b.type as building_type,
+        b.building_type,
         b.year_built,
-        b.square_footage,
+        b.size as square_footage,
         u1.name as assigned_to_name,
         u2.name as created_by_name
       FROM assessments a
       LEFT JOIN buildings b ON a.building_id = b.id
       LEFT JOIN users u1 ON a.assigned_to_user_id = u1.id
-      LEFT JOIN users u2 ON a.created_by_user_id = u2.id
+      LEFT JOIN users u2 ON a.created_by = u2.id
       WHERE a.id = $1 AND a.organization_id = $2`,
       [id, user.organization_id]
     );

@@ -27,7 +27,7 @@ export const getAllBuildings = async (
     }
     
     let query = `
-      SELECT b.id, b.name, b.type, b.construction_type, b.year_built, b.square_footage,
+      SELECT b.id, b.name, b.building_type, b.year_built, b.size as square_footage,
              b.state, b.city, b.zip_code, b.street_address, b.image_url, b.status, b.created_at, b.updated_at,
              b.cost_per_sqft, b.replacement_value,
              (
@@ -87,8 +87,8 @@ export const getBuildingById = async (
     const user = (req as any).user;
 
     const result = await pool.query(
-      `SELECT id, name, type, construction_type, year_built, square_footage,
-              state, city, zip_code, street_address, 
+      `SELECT id, name, building_type, year_built, size as square_footage,
+              state, city, zip_code, street_address,
               image_url, status, created_by_user_id, created_at, updated_at,
               cost_per_sqft, replacement_value
        FROM buildings
@@ -132,7 +132,7 @@ export const createBuilding = async (
     const {
       name,
       type,
-      construction_type,
+      building_type,
       year_built,
       square_footage,
       size, // Accept both size and square_footage for backward compatibility
@@ -144,9 +144,11 @@ export const createBuilding = async (
       replacement_value: requestReplacementValue, // Accept replacement_value from frontend
       image_url
     } = req.body;
-    
-    // Use square_footage if provided, otherwise use size
-    const finalSquareFootage = square_footage || size;
+
+    // Use building_type if provided, otherwise fallback to type, then default
+    const finalBuildingType = building_type || type || 'office-single';
+    // Use size if provided, otherwise use square_footage
+    const finalSize = size || square_footage;
 
     // Clean and decode the image URL to fix HTML entity encoding issues
     const cleanImageUrl = cleanCloudinaryUrl(image_url);
@@ -170,21 +172,21 @@ export const createBuilding = async (
 
     // Get cost_per_sqft from request or use default
     const cost_per_sqft = requestCostPerSqft || 200;
-    // Use requestReplacementValue if provided, otherwise calculate from square footage
-    const replacement_value = requestReplacementValue || 
-                             (finalSquareFootage ? finalSquareFootage * cost_per_sqft : null);
+    // Use requestReplacementValue if provided, otherwise calculate from size
+    const replacement_value = requestReplacementValue ||
+                             (finalSize ? finalSize * cost_per_sqft : null);
 
     const result = await pool.query(
       `INSERT INTO buildings (
-        organization_id, name, type, construction_type, year_built, square_footage,
-        state, city, zip_code, street_address, 
+        organization_id, name, building_type, year_built, size,
+        state, city, zip_code, street_address,
         image_url, created_by_user_id, status, cost_per_sqft, replacement_value
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
-      RETURNING id, name, type, construction_type, year_built, square_footage,
-                state, city, zip_code, street_address, 
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+      RETURNING id, name, building_type, year_built, size as square_footage,
+                state, city, zip_code, street_address,
                 image_url, status, created_at, cost_per_sqft, replacement_value`,
       [
-        user.organization_id, name, type, construction_type, year_built, finalSquareFootage,
+        user.organization_id, name, finalBuildingType, year_built, finalSize,
         state, city, zip_code, street_address,
         cleanImageUrl, user.id, 'active', cost_per_sqft, replacement_value
       ]
@@ -250,14 +252,16 @@ export const updateBuilding = async (
     let paramCount = 1;
 
     const allowedFields = [
-      'name', 'building_type', 'construction_type', 'year_built', 'square_footage',
+      'name', 'building_type', 'year_built', 'size', 'square_footage',
       'state', 'city', 'zip_code', 'address',
       'image_url', 'status', 'cost_per_sqft'
     ];
 
     allowedFields.forEach(field => {
       if (updateFields[field] !== undefined) {
-        const dbField = field === 'street_address' ? 'street_address' : field;
+        // Map square_footage to size for backward compatibility
+        let dbField = field === 'street_address' ? 'street_address' :
+                     field === 'square_footage' ? 'size' : field;
         let fieldValue = updateFields[field];
         
         // Clean image_url if it's being updated
@@ -283,19 +287,21 @@ export const updateBuilding = async (
     }
 
     // Check if we need to recalculate replacement_value
-    if (updateFields.square_footage !== undefined || updateFields.cost_per_sqft !== undefined) {
+    if (updateFields.square_footage !== undefined || updateFields.size !== undefined || updateFields.cost_per_sqft !== undefined) {
       // Get current building data to calculate replacement value
       const currentBuilding = await pool.query(
-        'SELECT square_footage, cost_per_sqft FROM buildings WHERE id = $1',
+        'SELECT size, cost_per_sqft FROM buildings WHERE id = $1',
         [id]
       );
-      
+
       if (currentBuilding.rows.length > 0) {
         const current = currentBuilding.rows[0];
-        const newSquareFootage = updateFields.square_footage !== undefined ? updateFields.square_footage : current.square_footage;
+        const newSize = updateFields.size !== undefined ? updateFields.size :
+                       updateFields.square_footage !== undefined ? updateFields.square_footage :
+                       current.size;
         const newCostPerSqft = updateFields.cost_per_sqft !== undefined ? updateFields.cost_per_sqft : (current.cost_per_sqft || 200);
-        const newReplacementValue = newSquareFootage ? newSquareFootage * newCostPerSqft : null;
-        
+        const newReplacementValue = newSize ? newSize * newCostPerSqft : null;
+
         updates.push(`replacement_value = $${paramCount}`);
         values.push(newReplacementValue);
         paramCount++;
@@ -307,11 +313,11 @@ export const updateBuilding = async (
     values.push(id);
 
     const result = await pool.query(
-      `UPDATE buildings 
+      `UPDATE buildings
        SET ${updates.join(', ')}
        WHERE id = $${paramCount}
-       RETURNING id, name, type, construction_type, year_built, square_footage,
-                 state, city, zip_code, street_address, 
+       RETURNING id, name, building_type, year_built, size as square_footage,
+                 state, city, zip_code, street_address,
                  image_url, status, updated_at, cost_per_sqft, replacement_value`,
       values
     );

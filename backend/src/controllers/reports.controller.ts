@@ -137,9 +137,9 @@ export const getAllReports = async (
         b.street_address as street_address,
         b.city,
         b.state,
-        b.type as building_type,
+        b.building_type,
         u.name as created_by_name,
-        a.type
+        a.assessment_type
       FROM reports r
       LEFT JOIN buildings b ON r.building_id = b.id
       LEFT JOIN users u ON r.generated_by = u.id
@@ -249,13 +249,13 @@ export const getReportById = async (
         b.street_address as street_address,
         b.city,
         b.state,
-        b.type as building_type,
+        b.building_type,
         b.year_built,
-        b.square_footage,
+        b.size as square_footage,
         u.name as created_by_name,
-        a.type,
-        a.start_date as assessment_started,
-        a.completed_at as assessment_completed
+        a.assessment_type,
+        a.assessment_date as assessment_started,
+        a.completion_date as assessment_completed
       FROM reports r
       LEFT JOIN buildings b ON r.building_id = b.id
       LEFT JOIN users u ON r.generated_by = u.id
@@ -516,7 +516,7 @@ export const generateReportFromAssessment = async (
 
     // Check if assessment exists and is completed
     const assessmentResult = await pool.query(
-      `SELECT a.*, b.name as building_name, b.id as building_id, b.square_footage, b.type as building_type
+      `SELECT a.*, b.name as building_name, b.id as building_id, b.size as square_footage, b.building_type
        FROM assessments a
        JOIN buildings b ON a.building_id = b.id
        WHERE a.id = $1`,
