@@ -69,13 +69,14 @@ export const createAssessment = async (
 
     const result = await pool.query(
       `INSERT INTO assessments (
-        organization_id, building_id, type, status, scheduled_date, 
-        assigned_to_user_id, created_by_user_id, created_at, updated_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW()) 
+        organization_id, building_id, name, assessment_type, status, assessment_date,
+        assigned_to_user_id, created_by, created_at, updated_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
       RETURNING *`,
       [
         user.organization_id,
         building_id,
+        description || `${type} Assessment`,
         type,
         'pending',
         scheduled_date || null,
@@ -87,7 +88,7 @@ export const createAssessment = async (
     console.log('✅ Assessment inserted into database:', {
       id: result.rows[0].id,
       building_id: result.rows[0].building_id,
-      type: result.rows[0].type,
+      assessment_type: result.rows[0].assessment_type,
       status: result.rows[0].status
     });
 
