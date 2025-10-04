@@ -275,9 +275,9 @@ export const getAllPreAssessments = async (
     }
 
     let query = `
-      SELECT pa.*, 
+      SELECT pa.*,
              b.name as building_name,
-             b.building_type as building_type_name,
+             b.type as building_type_name,
              u.name as created_by_name
       FROM pre_assessments pa
       LEFT JOIN buildings b ON pa.building_id = b.id AND b.organization_id = $1

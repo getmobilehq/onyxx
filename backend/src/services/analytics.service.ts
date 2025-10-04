@@ -65,10 +65,10 @@ export class AnalyticsService {
             END as fci_trend
           FROM assessment_data
         )
-        SELECT 
+        SELECT
           b.id,
           b.name,
-          b.building_type as type,
+          b.type,
           b.year_built,
           EXTRACT(YEAR FROM CURRENT_DATE) - COALESCE(b.year_built, EXTRACT(YEAR FROM CURRENT_DATE) - 30) as age,
           b.square_footage,

@@ -126,16 +126,16 @@ export const getAllAssessments = async (
     }
 
     let query = `
-      SELECT 
+      SELECT
         a.*,
         b.name as building_name,
-        b.street_address as street_address,
+        b.address as street_address,
         b.city,
         b.state,
         u2.name as created_by_name
       FROM assessments a
       LEFT JOIN buildings b ON a.building_id = b.id
-      LEFT JOIN users u2 ON a.created_by_user_id = u2.id
+      LEFT JOIN users u2 ON a.created_by = u2.id
       WHERE a.organization_id = $1
     `;
     const params: any[] = [user.organization_id];
@@ -227,15 +227,15 @@ export const getAssessmentById = async (
     const user = (req as any).user;
 
     const result = await pool.query(
-      `SELECT 
+      `SELECT
         a.*,
         b.name as building_name,
-        b.street_address as street_address,
+        b.address as street_address,
         b.city,
         b.state,
-        b.building_type,
+        b.type as building_type,
         b.year_built,
-        b.size as square_footage,
+        b.square_footage,
         u1.name as assigned_to_name,
         u2.name as created_by_name
       FROM assessments a
