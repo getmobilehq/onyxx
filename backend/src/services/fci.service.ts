@@ -363,7 +363,6 @@ export const saveFCIReport = async (
         created_by_user_id,
         total_repair_cost,
         replacement_value,
-        replacement_cost,
         fci_score,
         immediate_repair_cost,
         short_term_repair_cost,
@@ -371,18 +370,17 @@ export const saveFCIReport = async (
         status,
         report_type,
         created_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, CURRENT_TIMESTAMP)
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, CURRENT_TIMESTAMP)
       RETURNING id
     `;
-    
+
     const result = await pool.query(insertQuery, [
       buildingId,
       assessmentId,
       `FCI Assessment Report - ${new Date().toLocaleDateString()}`, // title
       userId || null, // created_by_user_id
       fciResults.total_repair_cost,
-      fciResults.replacement_cost, // replacement_value
-      fciResults.replacement_cost, // replacement_cost
+      fciResults.replacement_cost, // replacement_value (production has this, not replacement_cost)
       fciResults.fci_score,
       fciResults.immediate_repair_cost,
       fciResults.short_term_repair_cost,
