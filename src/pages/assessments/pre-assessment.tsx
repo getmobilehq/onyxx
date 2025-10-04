@@ -226,10 +226,16 @@ export function PreAssessmentPage() {
   // Update form when building data is loaded
   useEffect(() => {
     if (buildingData) {
-      form.setValue('buildingSize', buildingData.size);
+      // Ensure building size is a number (API might return string)
+      const buildingSize = typeof buildingData.size === 'string'
+        ? parseFloat(buildingData.size)
+        : buildingData.size;
+
+      form.setValue('buildingSize', buildingSize);
+
       // Use building's replacement value if available, otherwise calculate based on type
-      const replacementValue = buildingData.replacement_value || 
-        (buildingData.size * (buildingTypeCosts[buildingData.type] || 300));
+      const replacementValue = buildingData.replacement_value ||
+        (buildingSize * (buildingTypeCosts[buildingData.type] || 300));
       form.setValue('replacementValue', replacementValue);
     }
   }, [buildingData]); // Removed form from dependencies
