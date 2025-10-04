@@ -78,18 +78,20 @@ export const calculateAssessmentFCI = async (assessmentId: string): Promise<FCIC
 
     // Get assessment elements with condition ratings
     const elementsQuery = `
-      SELECT 
+      SELECT
         ae.*,
         COALESCE(ae.repair_cost, ae.total_repair_cost, 0) as repair_cost,
-        COALESCE(ae.priority_level, 
-          CASE 
+        COALESCE(ae.priority_level,
+          CASE
             WHEN ae.priority = 'critical' OR ae.priority = '1' THEN 1
             WHEN ae.priority = 'high' OR ae.priority = '2' THEN 2
             WHEN ae.priority = 'medium' OR ae.priority = '3' THEN 3
             WHEN ae.priority = 'low' OR ae.priority = '4' THEN 4
             ELSE 3
           END, 3) as priority_level,
-        e.major_group, e.group_element, e.individual_element
+        e.category as major_group,
+        e.code as group_element,
+        e.name as individual_element
       FROM assessment_elements ae
       JOIN elements e ON ae.element_id = e.id
       WHERE ae.assessment_id = $1 AND ae.condition_rating IS NOT NULL

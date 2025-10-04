@@ -1025,7 +1025,7 @@ export const generateAssessmentReport = async (
 
     // Get assessment elements with details
     const elementsDetails = await pool.query(
-      `SELECT ae.*, e.individual_element, e.major_group
+      `SELECT ae.*, e.name as individual_element, e.category as major_group
        FROM assessment_elements ae
        JOIN elements e ON ae.element_id = e.id
        WHERE ae.assessment_id = $1`,
