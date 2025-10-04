@@ -3,19 +3,32 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider, useAuth } from './auth-context';
-import api from '@/services/api';
+import { authAPI } from '@/services/api';
 
-// Mock the API module
+// Mock the API module used by the auth context
 vi.mock('@/services/api', () => ({
-  default: {
-    post: vi.fn(),
-    get: vi.fn(),
-    defaults: {
-      headers: {
-        common: {},
-      },
-    },
-  },
+  authAPI: {
+    login: vi.fn(),
+    logout: vi.fn(),
+    register: vi.fn(),
+    getMe: vi.fn(),
+  }
+}));
+
+// Mock Sentry helpers to avoid side effects during tests
+vi.mock('@/config/sentry', () => ({
+  setUserContext: vi.fn(),
+  clearUserContext: vi.fn(),
+  trackUserAction: vi.fn(),
+}));
+
+// Mock toast notifications to keep console noise down
+vi.mock('sonner', () => ({
+  toast: {
+    success: vi.fn(),
+    error: vi.fn(),
+    info: vi.fn(),
+  }
 }));
 
 // Mock localStorage
@@ -35,9 +48,9 @@ function TestComponent() {
     <div>
       <div data-testid="auth-status">{isAuthenticated ? 'Authenticated' : 'Not Authenticated'}</div>
       <div data-testid="user-email">{user?.email || 'No user'}</div>
-      <button onClick={() => login('test@example.com', 'password')}>Login</button>
+      <button onClick={() => login('test@example.com', 'password').catch(() => undefined)}>Login</button>
       <button onClick={() => logout()}>Logout</button>
-      <button onClick={() => register('Test User', 'test@example.com', 'password', 'ONX-TEST-1234')}>
+      <button onClick={() => register('Test User', 'test@example.com', 'password', 'ONX-TEST-1234').catch(() => undefined)}>
         Register
       </button>
     </div>
@@ -45,10 +58,12 @@ function TestComponent() {
 }
 
 describe('AuthContext', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    localStorageMock.getItem.mockReturnValue(null);
-  });
+beforeEach(() => {
+  vi.clearAllMocks();
+  localStorageMock.getItem.mockReturnValue(null);
+  vi.mocked(authAPI.getMe).mockResolvedValue({ data: { success: false } } as any);
+  vi.mocked(authAPI.logout).mockResolvedValue({} as any);
+});
 
   it('provides authentication context to children', () => {
     render(
@@ -83,7 +98,7 @@ describe('AuthContext', () => {
       },
     };
 
-    vi.mocked(api.post).mockResolvedValueOnce(mockResponse);
+    vi.mocked(authAPI.login).mockResolvedValueOnce(mockResponse as any);
 
     render(
       <BrowserRouter>
@@ -106,7 +121,7 @@ describe('AuthContext', () => {
   });
 
   it('handles failed login', async () => {
-    vi.mocked(api.post).mockRejectedValueOnce({
+    vi.mocked(authAPI.login).mockRejectedValueOnce({
       response: {
         data: {
           message: 'Invalid credentials',
@@ -152,7 +167,7 @@ describe('AuthContext', () => {
       },
     };
 
-    vi.mocked(api.post).mockResolvedValueOnce(mockResponse);
+    vi.mocked(authAPI.login).mockResolvedValueOnce(mockResponse as any);
 
     render(
       <BrowserRouter>
@@ -200,7 +215,7 @@ describe('AuthContext', () => {
       },
     };
 
-    vi.mocked(api.post).mockResolvedValueOnce(mockResponse);
+    vi.mocked(authAPI.register).mockResolvedValueOnce(mockResponse as any);
 
     render(
       <BrowserRouter>
@@ -214,11 +229,12 @@ describe('AuthContext', () => {
     await userEvent.click(registerButton);
 
     await waitFor(() => {
-      expect(api.post).toHaveBeenCalledWith('/auth/register', {
+      expect(authAPI.register).toHaveBeenCalledWith({
         name: 'Test User',
         email: 'test@example.com',
         password: 'password',
-        token_code: 'ONX-TEST-1234',
+        organization_name: 'ONX-TEST-1234',
+        role: 'admin',
       });
       expect(screen.getByTestId('auth-status')).toHaveTextContent('Authenticated');
     });
@@ -227,14 +243,22 @@ describe('AuthContext', () => {
   it('loads user from localStorage on mount', async () => {
     localStorageMock.getItem.mockImplementation((key) => {
       if (key === 'accessToken') return 'stored-token';
-      if (key === 'user') return JSON.stringify({
-        id: '1',
-        email: 'stored@example.com',
-        name: 'Stored User',
-        role: 'admin',
-      });
       return null;
     });
+
+    vi.mocked(authAPI.getMe).mockResolvedValueOnce({
+      data: {
+        success: true,
+        data: {
+          user: {
+            id: '1',
+            email: 'stored@example.com',
+            name: 'Stored User',
+            role: 'admin',
+          },
+        },
+      },
+    } as any);
 
     render(
       <BrowserRouter>

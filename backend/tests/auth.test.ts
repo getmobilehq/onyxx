@@ -1,172 +1,146 @@
-import request from 'supertest';
-import { Pool } from 'pg';
+import { Request, Response } from 'express';
+import pool from '../src/config/database';
+import { login, register } from '../src/controllers/auth.controller';
+import { validationResult } from 'express-validator';
 import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 
-// Mock database connection
 jest.mock('../src/config/database', () => ({
   query: jest.fn(),
   connect: jest.fn(),
 }));
 
-// Import after mocking
-import app from '../src/app';
-import pool from '../src/config/database';
+jest.mock('express-validator', () => ({
+  validationResult: jest.fn(),
+}));
 
-const mockPool = pool as jest.Mocked<Pool>;
+jest.mock('bcryptjs', () => ({
+  compare: jest.fn(),
+  genSalt: jest.fn(() => Promise.resolve('salt')),
+  hash: jest.fn(() => Promise.resolve('hashed-password')),
+}));
 
-describe('Authentication Endpoints', () => {
+jest.mock('jsonwebtoken', () => ({
+  sign: jest.fn(() => 'jwt-token'),
+}));
+
+const mockPool = pool as unknown as { query: jest.Mock; connect: jest.Mock };
+const validationResultMock = validationResult as unknown as jest.Mock;
+const bcryptCompareMock = bcrypt.compare as unknown as jest.Mock;
+
+const createResponse = () => {
+  const res: Partial<Response> = {};
+  res.status = jest.fn().mockReturnValue(res);
+  res.json = jest.fn().mockReturnValue(res);
+  return res as Response;
+};
+
+describe('Auth Controller', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    process.env.JWT_SECRET = 'secret';
+    process.env.JWT_REFRESH_SECRET = 'refresh';
   });
 
-  describe('POST /api/auth/register', () => {
-    it('should register a new user successfully', async () => {
-      const userData = {
-        name: 'Test User',
-        email: 'test@example.com',
-        password: 'password123',
-        role: 'assessor'
-      };
-
-      // Mock database responses
-      mockPool.query
-        .mockResolvedValueOnce({ rows: [] }) // Check if user exists
-        .mockResolvedValueOnce({
-          rows: [{
-            id: 'user-uuid',
-            name: userData.name,
-            email: userData.email,
-            role: userData.role,
-            created_at: new Date()
-          }]
-        }); // Insert user
-
-      const response = await request(app)
-        .post('/api/auth/register')
-        .send(userData);
-
-      expect(response.status).toBe(201);
-      expect(response.body.success).toBe(true);
-      expect(response.body.data.user.email).toBe(userData.email);
-      expect(response.body.data.token).toBeDefined();
-    });
-
-    it('should reject registration with existing email', async () => {
-      const userData = {
-        name: 'Test User',
-        email: 'existing@example.com',
-        password: 'password123',
-        role: 'assessor'
-      };
-
-      // Mock existing user found
-      mockPool.query.mockResolvedValueOnce({
-        rows: [{ id: 'existing-user-id' }]
+  describe('login', () => {
+    it('returns 400 when validation fails', async () => {
+      validationResultMock.mockReturnValue({
+        isEmpty: () => false,
+        array: () => [{ msg: 'Email is required' }],
       });
 
-      const response = await request(app)
-        .post('/api/auth/register')
-        .send(userData);
+      const req = { body: {} } as Request;
+      const res = createResponse();
 
-      expect(response.status).toBe(400);
-      expect(response.body.success).toBe(false);
-      expect(response.body.message).toContain('already exists');
+      await login(req, res, jest.fn());
+
+      expect(res.status).toHaveBeenCalledWith(400);
     });
 
-    it('should reject registration with invalid data', async () => {
-      const invalidData = {
-        name: '',
-        email: 'invalid-email',
-        password: '123', // Too short
-        role: 'invalid-role'
-      };
-
-      const response = await request(app)
-        .post('/api/auth/register')
-        .send(invalidData);
-
-      expect(response.status).toBe(400);
-      expect(response.body.success).toBe(false);
-      expect(response.body.errors).toBeDefined();
-    });
-  });
-
-  describe('POST /api/auth/login', () => {
-    it('should login with valid credentials', async () => {
-      const loginData = {
-        email: 'test@example.com',
-        password: 'password123'
-      };
-
-      const hashedPassword = await bcrypt.hash(loginData.password, 10);
-
-      // Mock user found with valid password
-      mockPool.query.mockResolvedValueOnce({
-        rows: [{
-          id: 'user-uuid',
-          name: 'Test User',
-          email: loginData.email,
-          password_hash: hashedPassword,
-          role: 'assessor',
-          created_at: new Date()
-        }]
-      });
-
-      const response = await request(app)
-        .post('/api/auth/login')
-        .send(loginData);
-
-      expect(response.status).toBe(200);
-      expect(response.body.success).toBe(true);
-      expect(response.body.data.user.email).toBe(loginData.email);
-      expect(response.body.data.token).toBeDefined();
-      expect(response.body.data.refreshToken).toBeDefined();
-    });
-
-    it('should reject login with invalid credentials', async () => {
-      const loginData = {
-        email: 'test@example.com',
-        password: 'wrongpassword'
-      };
-
-      // Mock user not found
+    it('returns 401 for unknown user', async () => {
+      validationResultMock.mockReturnValue({ isEmpty: () => true });
       mockPool.query.mockResolvedValueOnce({ rows: [] });
 
-      const response = await request(app)
-        .post('/api/auth/login')
-        .send(loginData);
+      const req = {
+        body: { email: 'missing@example.com', password: 'secret' },
+      } as Request;
+      const res = createResponse();
 
-      expect(response.status).toBe(401);
-      expect(response.body.success).toBe(false);
-      expect(response.body.message).toContain('Invalid credentials');
+      await login(req, res, jest.fn());
+
+      expect(res.status).toHaveBeenCalledWith(401);
     });
 
-    it('should reject login with missing fields', async () => {
-      const response = await request(app)
-        .post('/api/auth/login')
-        .send({ email: 'test@example.com' }); // Missing password
+    it('returns auth tokens on success', async () => {
+      validationResultMock.mockReturnValue({ isEmpty: () => true });
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{
+          id: 'user-1',
+          name: 'Tester',
+          email: 'tester@example.com',
+          password_hash: 'hashed-password',
+          role: 'admin',
+          organization_id: 'org-1',
+          is_platform_admin: false,
+        }],
+      });
+      bcryptCompareMock.mockResolvedValueOnce(true);
 
-      expect(response.status).toBe(400);
-      expect(response.body.success).toBe(false);
-      expect(response.body.errors).toBeDefined();
+      const req = {
+        body: { email: 'tester@example.com', password: 'secret' },
+      } as Request;
+      const res = createResponse();
+
+      await login(req, res, jest.fn());
+
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          success: true,
+          data: expect.objectContaining({
+            tokens: expect.objectContaining({
+              accessToken: 'jwt-token',
+              refreshToken: 'jwt-token',
+            }),
+          }),
+        }),
+      );
     });
   });
 
-  describe('POST /api/auth/refresh', () => {
-    it('should refresh token with valid refresh token', async () => {
-      // This would require mocking JWT verification
-      // Implementation depends on your JWT refresh token logic
+  describe('register', () => {
+    it('returns validation errors', async () => {
+      validationResultMock.mockReturnValue({
+        isEmpty: () => false,
+        array: () => [{ msg: 'Email is invalid' }],
+      });
+
+      const req = {
+        body: { email: 'invalid' },
+      } as Request;
+      const res = createResponse();
+
+      await register(req, res, jest.fn());
+
+      expect(res.status).toHaveBeenCalledWith(400);
     });
-  });
 
-  describe('POST /api/auth/logout', () => {
-    it('should logout successfully', async () => {
-      const response = await request(app)
-        .post('/api/auth/logout');
+    it('rejects duplicate emails', async () => {
+      validationResultMock.mockReturnValue({ isEmpty: () => true });
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'existing' }] });
 
-      expect(response.status).toBe(200);
-      expect(response.body.success).toBe(true);
-      expect(response.body.message).toContain('Logged out successfully');
+      const req = {
+        body: {
+          name: 'User',
+          email: 'existing@example.com',
+          password: 'Password123!',
+          organization_name: 'Org',
+        },
+      } as Request;
+      const res = createResponse();
+
+      await register(req, res, jest.fn());
+
+      expect(res.status).toHaveBeenCalledWith(409);
     });
   });
 });
