@@ -42,7 +42,7 @@ export const calculateAssessmentFCI = async (assessmentId: string): Promise<FCIC
     
     // Get assessment and building information
     const assessmentQuery = `
-      SELECT a.*, b.square_footage, b.cost_per_sqft, b.year_built, b.building_type as building_type
+      SELECT a.*, b.size as square_footage, b.cost_per_sqft, b.year_built, b.building_type
       FROM assessments a
       JOIN buildings b ON a.building_id = b.id
       WHERE a.id = $1
