@@ -313,25 +313,26 @@ export const updateAssessment = async (
     }
 
     if (scheduled_date !== undefined) {
-      updates.push(`scheduled_date = $${paramCount}`);
+      updates.push(`assessment_date = $${paramCount}`);
       params.push(scheduled_date);
       paramCount++;
     }
 
     if (assigned_to !== undefined) {
-      updates.push(`assigned_to = $${paramCount}`);
+      updates.push(`assigned_to_user_id = $${paramCount}`);
       params.push(assigned_to);
       paramCount++;
     }
 
-    if (started_at !== undefined) {
-      updates.push(`started_at = $${paramCount}`);
-      params.push(started_at);
-      paramCount++;
-    }
+    // started_at column does not exist in production - skip this field
+    // if (started_at !== undefined) {
+    //   updates.push(`started_at = $${paramCount}`);
+    //   params.push(started_at);
+    //   paramCount++;
+    // }
 
     if (completed_at !== undefined) {
-      updates.push(`completed_at = $${paramCount}`);
+      updates.push(`completion_date = $${paramCount}`);
       params.push(completed_at);
       paramCount++;
     }
@@ -877,7 +878,7 @@ export const completeAssessment = async (
         `SELECT a.*, b.name as building_name, u.name as assigned_to_name
          FROM assessments a
          LEFT JOIN buildings b ON a.building_id = b.id
-         LEFT JOIN users u ON a.assigned_to = u.id
+         LEFT JOIN users u ON a.assigned_to_user_id = u.id
          WHERE a.id = $1`,
         [id]
       );
@@ -910,9 +911,9 @@ export const completeAssessment = async (
     console.log('✅ Marking assessment as completed...');
     
     await pool.query(
-      `UPDATE assessments 
-       SET status = 'completed', 
-           completed_at = CURRENT_TIMESTAMP,
+      `UPDATE assessments
+       SET status = 'completed',
+           completion_date = CURRENT_TIMESTAMP,
            updated_at = CURRENT_TIMESTAMP
        WHERE id = $1`,
       [id]
