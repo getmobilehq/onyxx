@@ -11,6 +11,12 @@ A production-grade SaaS application for building condition assessment and facili
 
 ---
 
+## 🤝 Contributor Guide
+
+New to the codebase? Start with [`AGENTS.md`](AGENTS.md) for a concise rundown of structure, tooling, testing, and security expectations.
+
+---
+
 ## 🧱 Tech Stack
 
 ### Frontend
