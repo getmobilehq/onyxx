@@ -1,12 +1,13 @@
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
 
-// Proper type declaration for jspdf-autotable
-declare module 'jspdf' {
-  interface jsPDF {
-    autoTable: (options: any) => jsPDF;
-    lastAutoTable?: any;
-  }
+// Import autoTable and extend jsPDF
+// @ts-ignore - jspdf-autotable doesn't have proper types
+import autoTable from 'jspdf-autotable';
+
+// Type declaration for jspdf with autoTable
+interface jsPDFWithAutoTable extends jsPDF {
+  autoTable: (options: any) => jsPDF;
+  lastAutoTable?: any;
 }
 
 interface ComprehensiveReportData {
@@ -19,7 +20,7 @@ interface ComprehensiveReportData {
 }
 
 export class ComprehensiveFCIReportGenerator {
-  private doc: jsPDF;
+  private doc: jsPDFWithAutoTable;
   private pageHeight: number;
   private pageWidth: number;
   private currentY: number;
@@ -34,7 +35,12 @@ export class ComprehensiveFCIReportGenerator {
       orientation: 'portrait',
       unit: 'mm',
       format: 'a4'
-    });
+    }) as jsPDFWithAutoTable;
+
+    // Ensure autoTable is available
+    if (!this.doc.autoTable && typeof autoTable === 'function') {
+      this.doc.autoTable = autoTable;
+    }
 
     this.pageHeight = this.doc.internal.pageSize.height;
     this.pageWidth = this.doc.internal.pageSize.width;
