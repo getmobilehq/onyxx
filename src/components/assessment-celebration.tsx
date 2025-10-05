@@ -349,56 +349,60 @@ export function AssessmentCelebration({
             </div>
             
             {/* Action Buttons */}
-            <div className="flex gap-2">
-              <Button onClick={() => {
-                if (generatedReport && buildingData) {
-                  try {
-                    // Prepare the assessment data matching backend structure
-                    const assessmentData = {
-                      id: assessment.id,
-                      building_name: buildingData.name,
-                      building_type: buildingData.type || buildingData.building_type,
-                      assessment_type: assessment.assessment_type || 'pre_assessment',
-                      assessment_date: assessment.assessment_date || assessment.created_at,
-                      completion_date: assessment.completion_date || new Date().toISOString(),
-                      assigned_to_name: assessment.assigned_to_name || 'Assessment Team',
-                      year_built: buildingData.year_built,
-                      square_footage: buildingData.square_footage,
-                      cost_per_sqft: buildingData.cost_per_sqft,
-                      replacement_value: buildingData.replacement_value,
-                      city: buildingData.city,
-                      state: buildingData.state,
-                      address: buildingData.address || buildingData.street_address
-                    };
-
-                    generateComprehensiveFCIReport({
-                      assessment: assessmentData,
-                      fci_results: generatedReport.fci_results,
-                      elements: generatedReport.elements || [],
-                      building: {
-                        name: buildingData.name,
-                        type: buildingData.type || buildingData.building_type,
-                        address: buildingData.address || buildingData.street_address,
-                        city: buildingData.city,
-                        state: buildingData.state,
-                        zip_code: buildingData.zip_code,
+            <div className="flex gap-2 flex-wrap">
+              <Button
+                onClick={() => {
+                  if (generatedReport && buildingData) {
+                    try {
+                      // Prepare the assessment data matching backend structure
+                      const assessmentData = {
+                        id: assessment.id,
+                        building_name: buildingData.name,
+                        building_type: buildingData.type || buildingData.building_type,
+                        assessment_type: assessment.assessment_type || 'pre_assessment',
+                        assessment_date: assessment.assessment_date || assessment.created_at,
+                        completion_date: assessment.completion_date || new Date().toISOString(),
+                        assigned_to_name: assessment.assigned_to_name || 'Assessment Team',
                         year_built: buildingData.year_built,
                         square_footage: buildingData.square_footage,
-                        cost_per_sqft: buildingData.cost_per_sqft
-                      },
-                      generated_at: new Date().toISOString(),
-                      generated_by: assessment.assigned_to_name || 'Assessment Team'
-                    }, `FCI-Report-${buildingData.name.replace(/\s+/g, '-')}-${new Date().toLocaleDateString().replace(/\//g, '-')}.pdf`);
-                    toast.success('Comprehensive PDF report downloaded successfully');
-                  } catch (error) {
-                    console.error('Failed to generate PDF:', error);
-                    toast.error('Failed to generate PDF report');
+                        cost_per_sqft: buildingData.cost_per_sqft,
+                        replacement_value: buildingData.replacement_value,
+                        city: buildingData.city,
+                        state: buildingData.state,
+                        address: buildingData.address || buildingData.street_address
+                      };
+
+                      generateComprehensiveFCIReport({
+                        assessment: assessmentData,
+                        fci_results: generatedReport.fci_results,
+                        elements: generatedReport.elements || [],
+                        building: {
+                          name: buildingData.name,
+                          type: buildingData.type || buildingData.building_type,
+                          address: buildingData.address || buildingData.street_address,
+                          city: buildingData.city,
+                          state: buildingData.state,
+                          zip_code: buildingData.zip_code,
+                          year_built: buildingData.year_built,
+                          square_footage: buildingData.square_footage,
+                          cost_per_sqft: buildingData.cost_per_sqft
+                        },
+                        generated_at: new Date().toISOString(),
+                        generated_by: assessment.assigned_to_name || 'Assessment Team'
+                      }, `FCI-Report-${buildingData.name.replace(/\s+/g, '-')}-${new Date().toLocaleDateString().replace(/\//g, '-')}.pdf`);
+                      toast.success('Comprehensive PDF report downloaded successfully');
+                    } catch (error) {
+                      console.error('Failed to generate PDF:', error);
+                      toast.error('Failed to generate PDF report');
+                    }
+                  } else {
+                    toast.error('Report data is not available. Please generate the report first.');
                   }
-                } else {
-                  toast.error('Report data is not available. Please generate the report first.');
-                }
-              }}>
-                Export PDF
+                }}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                <FileText className="h-4 w-4 mr-2" />
+                Download Report
               </Button>
               <Button variant="outline" onClick={() => navigate('/reports')}>
                 View All Reports
