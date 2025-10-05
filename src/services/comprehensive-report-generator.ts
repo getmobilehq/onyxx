@@ -1,10 +1,11 @@
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
-import { UserOptions } from 'jspdf-autotable';
 
+// Proper type declaration for jspdf-autotable
 declare module 'jspdf' {
   interface jsPDF {
-    autoTable: (options: UserOptions) => jsPDF;
+    autoTable: (options: any) => jsPDF;
+    lastAutoTable?: any;
   }
 }
 
@@ -34,6 +35,7 @@ export class ComprehensiveFCIReportGenerator {
       unit: 'mm',
       format: 'a4'
     });
+
     this.pageHeight = this.doc.internal.pageSize.height;
     this.pageWidth = this.doc.internal.pageSize.width;
     this.currentY = 20;
