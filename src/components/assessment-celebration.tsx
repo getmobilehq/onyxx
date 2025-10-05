@@ -353,17 +353,28 @@ export function AssessmentCelebration({
               <Button onClick={() => {
                 if (generatedReport && buildingData) {
                   try {
+                    // Prepare the assessment data matching backend structure
+                    const assessmentData = {
+                      id: assessment.id,
+                      building_name: buildingData.name,
+                      building_type: buildingData.type || buildingData.building_type,
+                      assessment_type: assessment.assessment_type || 'pre_assessment',
+                      assessment_date: assessment.assessment_date || assessment.created_at,
+                      completion_date: assessment.completion_date || new Date().toISOString(),
+                      assigned_to_name: assessment.assigned_to_name || 'Assessment Team',
+                      year_built: buildingData.year_built,
+                      square_footage: buildingData.square_footage,
+                      cost_per_sqft: buildingData.cost_per_sqft,
+                      replacement_value: buildingData.replacement_value,
+                      city: buildingData.city,
+                      state: buildingData.state,
+                      address: buildingData.address || buildingData.street_address
+                    };
+
                     generateComprehensiveFCIReport({
-                      assessment: {
-                        id: assessment.id,
-                        building_name: buildingData.name,
-                        assessment_type: assessment.assessment_type || 'FCI Assessment',
-                        assessment_date: assessment.assessment_date || assessment.created_at,
-                        completion_date: assessment.completion_date || new Date().toISOString(),
-                        assessor_name: assessment.assessor_name || 'Unknown'
-                      },
+                      assessment: assessmentData,
                       fci_results: generatedReport.fci_results,
-                      elements: generatedReport.elements || elementAssessments || [],
+                      elements: generatedReport.elements || [],
                       building: {
                         name: buildingData.name,
                         type: buildingData.type || buildingData.building_type,
@@ -373,10 +384,10 @@ export function AssessmentCelebration({
                         zip_code: buildingData.zip_code,
                         year_built: buildingData.year_built,
                         square_footage: buildingData.square_footage,
-                        replacement_value: generatedReport.fci_results?.replacement_cost || buildingData.replacement_value
+                        cost_per_sqft: buildingData.cost_per_sqft
                       },
                       generated_at: new Date().toISOString(),
-                      generated_by: 'Assessment Team'
+                      generated_by: assessment.assigned_to_name || 'Assessment Team'
                     }, `FCI-Report-${buildingData.name.replace(/\s+/g, '-')}-${new Date().toLocaleDateString().replace(/\//g, '-')}.pdf`);
                     toast.success('Comprehensive PDF report downloaded successfully');
                   } catch (error) {

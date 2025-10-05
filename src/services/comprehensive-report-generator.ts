@@ -195,17 +195,23 @@ export class ComprehensiveFCIReportGenerator {
     this.addSectionHeader('2. BUILDING INFORMATION');
     this.currentY += 5;
 
+    // Build address from available data
+    const address = data.building?.address || data.assessment.address || 'N/A';
+    const city = data.building?.city || data.assessment.city || 'N/A';
+    const state = data.building?.state || data.assessment.state || 'N/A';
+
     const buildingInfo = [
       ['Building Name', data.assessment.building_name || 'N/A'],
-      ['Address', data.assessment.street_address || 'N/A'],
-      ['City, State', `${data.assessment.city || 'N/A'}, ${data.assessment.state || 'N/A'}`],
-      ['Building Type', data.assessment.building_type || 'N/A'],
-      ['Year Built', data.assessment.year_built?.toString() || 'N/A'],
-      ['Square Footage', this.formatNumber(data.assessment.square_footage) + ' sq ft'],
-      ['Cost per Sq Ft', this.formatCurrency(data.assessment.cost_per_sqft)],
-      ['Replacement Value', this.formatCurrency(data.assessment.replacement_value)],
+      ['Address', address],
+      ['City, State', `${city}, ${state}`],
+      ['Building Type', data.assessment.building_type || data.building?.type || 'N/A'],
+      ['Year Built', data.assessment.year_built?.toString() || data.building?.year_built?.toString() || 'N/A'],
+      ['Square Footage', this.formatNumber(data.assessment.square_footage || data.building?.square_footage) + ' sq ft'],
+      ['Cost per Sq Ft', this.formatCurrency(data.assessment.cost_per_sqft || data.building?.cost_per_sqft)],
+      ['Replacement Value', this.formatCurrency(data.fci_results.replacement_cost || data.assessment.replacement_value)],
       ['Assessment Type', data.assessment.assessment_type?.replace('_', ' ').toUpperCase() || 'N/A'],
       ['Assessment Date', new Date(data.assessment.assessment_date || data.generated_at).toLocaleDateString()],
+      ['Completion Date', new Date(data.assessment.completion_date || data.generated_at).toLocaleDateString()],
       ['Assessor', data.assessment.assigned_to_name || data.generated_by]
     ];
 
@@ -494,9 +500,35 @@ export class ComprehensiveFCIReportGenerator {
   private generateExecutiveSummary(data: ComprehensiveReportData): string {
     const fciScore = data.fci_results.fci_score || 0;
     const condition = data.fci_results.condition_rating || 'Unknown';
-    const buildingAge = new Date().getFullYear() - (data.assessment.year_built || 2000);
+    const buildingAge = new Date().getFullYear() - (data.assessment.year_built || data.building?.year_built || 2000);
+    const city = data.building?.city || data.assessment.city || 'the area';
+    const buildingType = data.assessment.building_type || data.building?.type || 'building';
 
-    return `This comprehensive facility condition assessment was conducted for ${data.assessment.building_name || 'the facility'}, a ${buildingAge}-year-old ${data.assessment.building_type || 'building'} located in ${data.assessment.city || 'the area'}. The assessment revealed an FCI score of ${fciScore.toFixed(3)}, indicating a ${condition.toLowerCase()} condition rating. The total estimated repair cost of ${this.formatCurrency(data.fci_results.total_repair_cost)} represents ${(fciScore * 100).toFixed(1)}% of the building's replacement value of ${this.formatCurrency(data.fci_results.replacement_cost)}. Immediate attention is required for ${this.formatCurrency(data.fci_results.immediate_repair_cost)} in critical repairs, with additional investments of ${this.formatCurrency(data.fci_results.short_term_repair_cost)} needed within 1-3 years to prevent further deterioration.`;
+    let summary = `This comprehensive facility condition assessment was conducted for ${data.assessment.building_name || 'the facility'}, a ${buildingAge}-year-old ${buildingType} located in ${city}. `;
+
+    summary += `The assessment revealed an FCI score of ${fciScore.toFixed(3)}, indicating a ${condition.toLowerCase()} condition rating. `;
+
+    summary += `The total estimated repair cost of ${this.formatCurrency(data.fci_results.total_repair_cost)} represents ${(fciScore * 100).toFixed(1)}% of the building's replacement value of ${this.formatCurrency(data.fci_results.replacement_cost)}. `;
+
+    if (data.fci_results.immediate_repair_cost > 0) {
+      summary += `Immediate attention is required for ${this.formatCurrency(data.fci_results.immediate_repair_cost)} in critical repairs. `;
+    }
+
+    if (data.fci_results.short_term_repair_cost > 0) {
+      summary += `Additional investments of ${this.formatCurrency(data.fci_results.short_term_repair_cost)} are needed within 1-3 years to prevent further deterioration. `;
+    }
+
+    if (fciScore >= 0.5) {
+      summary += `Given the critical condition rating, consideration should be given to major renovation or potential replacement of the facility.`;
+    } else if (fciScore >= 0.3) {
+      summary += `The facility requires significant investment to address deferred maintenance and restore it to acceptable condition.`;
+    } else if (fciScore >= 0.1) {
+      summary += `With proper maintenance planning and timely repairs, the facility can be maintained in serviceable condition.`;
+    } else {
+      summary += `The facility is in good overall condition with manageable maintenance requirements.`;
+    }
+
+    return summary;
   }
 
   private generateRecommendations(data: ComprehensiveReportData): Array<{title: string, description: string, priority: string, timeline: string, cost: number}> {
