@@ -36,6 +36,7 @@ if (process.env.NODE_ENV === 'production') {
 app.use(helmet(securityHeaders));
 app.use(cors(corsOptions));
 
+// Enhanced CORS middleware with explicit header setting
 app.use((req, res, next) => {
   const origin = req.headers.origin;
   const allowedOrigins = [
@@ -47,16 +48,22 @@ app.use((req, res, next) => {
     'http://localhost:5174'
   ];
 
+  console.log(`🔍 Incoming request from origin: ${origin}, Method: ${req.method}`);
+
   if (origin && allowedOrigins.includes(origin)) {
     res.header('Access-Control-Allow-Origin', origin);
     res.header('Access-Control-Allow-Credentials', 'true');
     res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS,PATCH');
-    res.header('Access-Control-Allow-Headers', 'Origin,X-Requested-With,Content-Type,Accept,Authorization');
+    res.header('Access-Control-Allow-Headers', 'Origin,X-Requested-With,Content-Type,Accept,Authorization,Access-Control-Request-Method,Access-Control-Request-Headers');
     res.header('Access-Control-Max-Age', '86400');
-    console.log(`🔧 Manual CORS headers set for origin: ${origin}`);
+    console.log(`✅ CORS headers set for allowed origin: ${origin}`);
+  } else if (origin) {
+    console.log(`❌ Origin not in allowed list: ${origin}`);
   }
 
+  // Handle preflight requests
   if (req.method === 'OPTIONS') {
+    console.log(`✈️ Handling OPTIONS preflight request from: ${origin}`);
     res.status(200).end();
     return;
   }
