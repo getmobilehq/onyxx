@@ -37,9 +37,13 @@ export class ComprehensiveFCIReportGenerator {
       format: 'a4'
     }) as jsPDFWithAutoTable;
 
-    // Ensure autoTable is available
-    if (!this.doc.autoTable && typeof autoTable === 'function') {
-      this.doc.autoTable = autoTable;
+    // Initialize autoTable plugin - must be done for proper functionality
+    if (typeof autoTable === 'function') {
+      // Bind autoTable to the doc instance
+      (this.doc as any).autoTable = (options: any) => {
+        autoTable(this.doc, options);
+        return this.doc;
+      };
     }
 
     this.pageHeight = this.doc.internal.pageSize.height;
