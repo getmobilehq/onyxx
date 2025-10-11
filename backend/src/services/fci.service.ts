@@ -401,27 +401,60 @@ export const saveFCIReport = async (
 /**
  * Update assessment with FCI calculation and mark as completed
  */
+/**
+ * Generate FCI report for an already completed assessment
+ * This function does NOT update the assessment status
+ */
+export const generateFCIReportOnly = async (assessmentId: string, userId?: string): Promise<FCICalculationResult> => {
+  try {
+    console.log('📊 Generating FCI report for completed assessment:', assessmentId);
+
+    // Calculate FCI
+    const fciResults = await calculateAssessmentFCI(assessmentId);
+    console.log('✅ FCI calculated:', { fci_score: fciResults.fci_score, condition_rating: fciResults.condition_rating });
+
+    // Get building ID
+    const assessmentQuery = 'SELECT building_id FROM assessments WHERE id = $1';
+    const assessmentResult = await pool.query(assessmentQuery, [assessmentId]);
+
+    if (assessmentResult.rows.length === 0) {
+      throw new Error('Assessment not found');
+    }
+
+    const buildingId = assessmentResult.rows[0].building_id;
+
+    // Save FCI report
+    await saveFCIReport(assessmentId, buildingId, fciResults, userId);
+    console.log('✅ FCI report saved to database');
+
+    return fciResults;
+  } catch (error) {
+    console.error('❌ Error generating FCI report:', error);
+    throw error;
+  }
+};
+
 export const completeAssessmentWithFCI = async (assessmentId: string, userId?: string): Promise<FCICalculationResult> => {
   try {
     // Calculate FCI
     const fciResults = await calculateAssessmentFCI(assessmentId);
-    
+
     // Get building ID
     const assessmentQuery = 'SELECT building_id FROM assessments WHERE id = $1';
     const assessmentResult = await pool.query(assessmentQuery, [assessmentId]);
-    
+
     if (assessmentResult.rows.length === 0) {
       throw new Error('Assessment not found');
     }
-    
+
     const buildingId = assessmentResult.rows[0].building_id;
-    
+
     // Save FCI report
     await saveFCIReport(assessmentId, buildingId, fciResults, userId);
-    
+
     // Create detailed notes with FCI information
     const detailedNotes = generateFCINotes(fciResults);
-    
+
     // Update assessment status and notes
     const updateQuery = `
       UPDATE assessments
@@ -430,9 +463,9 @@ export const completeAssessmentWithFCI = async (assessmentId: string, userId?: s
           notes = $2
       WHERE id = $1
     `;
-    
+
     await pool.query(updateQuery, [assessmentId, detailedNotes]);
-    
+
     return fciResults;
   } catch (error) {
     console.error('Error completing assessment with FCI:', error);
@@ -479,5 +512,6 @@ Generated on: ${new Date().toLocaleString()}
 export default {
   calculateAssessmentFCI,
   completeAssessmentWithFCI,
+  generateFCIReportOnly,
   saveFCIReport
 };

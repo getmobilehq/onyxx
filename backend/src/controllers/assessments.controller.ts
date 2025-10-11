@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import pool from '../config/database';
-import { calculateAssessmentFCI, completeAssessmentWithFCI } from '../services/fci.service';
+import { calculateAssessmentFCI, completeAssessmentWithFCI, generateFCIReportOnly } from '../services/fci.service';
 import { mapFrontendToDbCategory } from '../utils/category-mapper';
 import { processElementDataForAssessment } from '../utils/element-mapper';
 
@@ -1001,10 +1001,10 @@ export const generateAssessmentReport = async (
       });
     }
 
-    // Calculate FCI and generate report
+    // Calculate FCI and generate report (without updating assessment status)
     console.log('🧮 Calculating FCI for report generation...');
     const user = (req as any).user;
-    const fciResults = await completeAssessmentWithFCI(id, user?.id);
+    const fciResults = await generateFCIReportOnly(id, user?.id);
     
     console.log('✅ FCI calculation and report generation successful:', {
       fci_score: fciResults.fci_score,
