@@ -130,29 +130,29 @@ export const register = async (
       await client.query('COMMIT');
       client.release();
 
-    // Generate tokens
-    const tokens = generateTokens({
-      id: user.id,
-      email: user.email,
-      role: user.role,
-      name: user.name,
-      organization_id: user.organization_id,
-      is_platform_admin: user.is_platform_admin,
-    });
+      // Generate tokens
+      const tokens = generateTokens({
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        name: user.name,
+        organization_id: user.organization_id,
+        is_platform_admin: user.is_platform_admin,
+      });
 
       res.status(201).json({
         success: true,
         message: 'User registered successfully with organization!',
-        organization: organization.name,
-      data: {
-        user: {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role,
-          organization_id: user.organization_id, // Should be null
-        },
-        tokens,
+        data: {
+          user: {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            role: user.role,
+            organization_id: user.organization_id,
+            organization_name: organization.name,
+          },
+          tokens,
         },
       });
     } catch (innerError) {
