@@ -410,37 +410,43 @@ export class ReportGeneratorService {
 
   /**
    * Helper method to get FCI rating based on score
+   * STANDARDIZED FCI RATING THRESHOLDS (Industry Standard):
+   * - Good: 0.00-0.05 (0-5%)
+   * - Fair: 0.05-0.10 (5-10%)
+   * - Poor: 0.10-0.30 (10-30%)
+   * - Critical: >0.30 (>30%)
    */
   private static getFCIRating(fciScore: number): string {
-    if (fciScore <= 0.05) return 'Excellent';
-    if (fciScore <= 0.10) return 'Good';  
-    if (fciScore <= 0.30) return 'Fair';
-    return 'Poor';
+    if (fciScore <= 0.05) return 'Good';
+    if (fciScore <= 0.10) return 'Fair';
+    if (fciScore <= 0.30) return 'Poor';
+    return 'Critical';
   }
 
   /**
    * Helper method to get FCI interpretation with detailed description
+   * STANDARDIZED FCI RATING THRESHOLDS (Industry Standard)
    */
   private static getFCIInterpretation(fciScore: number) {
     if (fciScore <= 0.05) {
       return {
-        status: 'EXCELLENT',
-        description: 'Building is in excellent condition with minimal to no repair needs'
+        status: 'GOOD',
+        description: 'Building is in good condition with minimal repair needs'
       };
     } else if (fciScore <= 0.10) {
       return {
-        status: 'GOOD',
-        description: 'Building is in good condition with minor repairs needed'
+        status: 'FAIR',
+        description: 'Building is in fair condition with routine maintenance required'
       };
     } else if (fciScore <= 0.30) {
       return {
-        status: 'FAIR',
-        description: 'Building requires moderate repairs and maintenance'
+        status: 'POOR',
+        description: 'Building is in poor condition and requires significant repairs'
       };
     } else {
       return {
-        status: 'POOR',
-        description: 'Building requires significant repairs or replacement consideration'
+        status: 'CRITICAL',
+        description: 'Building is in critical condition. Major renovation or replacement required'
       };
     }
   }

@@ -339,6 +339,11 @@ const distributeRepairCostsByPriority = (totalCost: number, priorityLevel: numbe
 
 /**
  * Get FCI condition rating based on score
+ * STANDARDIZED FCI RATING THRESHOLDS (Industry Standard):
+ * - Good: 0.00-0.05 (0-5%) - Excellent condition
+ * - Fair: 0.05-0.10 (5-10%) - Adequate condition
+ * - Poor: 0.10-0.30 (10-30%) - Significant repairs needed
+ * - Critical: >0.30 (>30%) - Major renovation or replacement required
  */
 const getFCIRating = (fci: number): 'Good' | 'Fair' | 'Poor' | 'Critical' => {
   if (fci <= 0.05) return 'Good';
@@ -496,11 +501,11 @@ FCI CALCULATION:
 FCI = Total Repair Cost ÷ Replacement Value
 FCI = $${fciResults.total_repair_cost.toLocaleString()} ÷ $${fciResults.replacement_cost.toLocaleString()} = ${fciResults.fci_score.toFixed(4)}
 
-CONDITION RATING SCALE:
-- Good (0.00-0.05): Well-maintained, minimal repairs needed
-- Fair (0.06-0.10): Adequate condition, routine maintenance required
-- Poor (0.11-0.30): Deteriorating condition, significant repairs needed
-- Critical (0.31+): Major repairs or replacement required
+CONDITION RATING SCALE (Industry Standard):
+- Good (0.00-0.05 / 0-5%): Well-maintained, minimal repairs needed
+- Fair (0.05-0.10 / 5-10%): Adequate condition, routine maintenance required
+- Poor (0.10-0.30 / 10-30%): Deteriorating condition, significant repairs needed
+- Critical (0.30+ / 30%+): Major repairs or replacement required
 
 Assessment completed automatically with FCI calculation.
 Generated on: ${new Date().toLocaleString()}

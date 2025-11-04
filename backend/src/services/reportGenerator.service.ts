@@ -2,6 +2,9 @@ import PDFDocument from 'pdfkit';
 import { format } from 'date-fns';
 import QRCode from 'qrcode';
 import pool from '../config/database';
+import aiReportService from './ai-report.service';
+import https from 'https';
+import http from 'http';
 
 interface AssessmentReportData {
   assessment: any;
@@ -10,6 +13,8 @@ interface AssessmentReportData {
   organization: any;
   fci: number;
   totalDeficiencyCost: number;
+  aiSummary?: string;
+  aiRecommendations?: { immediate: string[]; shortTerm: string[]; longTerm: string[] };
 }
 
 interface DeficiencyCategory {
@@ -100,7 +105,21 @@ class ReportGeneratorService {
       const organization = orgResult.rows[0];
 
       const elementsQuery = `
-        SELECT ae.*, e.name, e.major_group, e.group_element as minor_group
+        SELECT ae.*,
+               e.name,
+               e.major_group,
+               e.group_element as minor_group,
+               COALESCE(
+                 (SELECT json_agg(json_build_object(
+                   'id', ad.id,
+                   'description', ad.description,
+                   'cost', ad.cost,
+                   'category', ad.category,
+                   'photos', ad.photos
+                 ))
+                 FROM assessment_deficiencies ad
+                 WHERE ad.assessment_element_id = ae.id), '[]'::json
+               ) as deficiencies
         FROM assessment_elements ae
         JOIN elements e ON ae.element_id = e.id
         WHERE ae.assessment_id = $1
@@ -110,12 +129,60 @@ class ReportGeneratorService {
       const elements = elementsResult.rows;
 
       const totalDeficiencyCost = elements.reduce((sum, el) => {
-        const deficiencies = el.deficiencies || [];
-        return sum + deficiencies.reduce((defSum: number, def: any) => defSum + (def.cost || 0), 0);
+        const deficiencies = Array.isArray(el.deficiencies) ? el.deficiencies : [];
+        return sum + deficiencies.reduce((defSum: number, def: any) => defSum + (parseFloat(def.cost) || 0), 0);
       }, 0);
 
-      const replacementValue = building.replacement_value || 1000000;
+      const replacementValue = building.replacement_value || (building.square_footage * (building.cost_per_sqft || 200)) || 1000000;
       const fci = totalDeficiencyCost / replacementValue;
+
+      // Group deficiencies by category for AI recommendations
+      const deficiencyCategories = this.groupDeficienciesByCategory(elements);
+
+      // Generate AI-enhanced content if enabled
+      let aiSummary: string | undefined;
+      let aiRecommendations: { immediate: string[]; shortTerm: string[]; longTerm: string[] } | undefined;
+
+      if (aiReportService.isEnabled()) {
+        console.log('🤖 Generating AI-enhanced report content...');
+        try {
+          [aiSummary, aiRecommendations] = await Promise.all([
+            aiReportService.generateExecutiveSummary(
+              {
+                name: building.name,
+                type: building.type,
+                year_built: building.year_built,
+                square_footage: building.square_footage
+              },
+              {
+                fci,
+                totalDeficiencyCost,
+                replacementValue,
+                elements,
+                deficiencyCategories
+              }
+            ),
+            aiReportService.generateRecommendations(
+              {
+                name: building.name,
+                type: building.type,
+                year_built: building.year_built,
+                square_footage: building.square_footage
+              },
+              {
+                fci,
+                totalDeficiencyCost,
+                replacementValue,
+                elements,
+                deficiencyCategories
+              }
+            )
+          ]);
+          console.log('✅ AI content generated successfully');
+        } catch (error) {
+          console.error('⚠️ AI content generation failed, using fallback:', error);
+        }
+      }
 
       return {
         assessment,
@@ -123,7 +190,9 @@ class ReportGeneratorService {
         elements,
         organization,
         fci,
-        totalDeficiencyCost
+        totalDeficiencyCost,
+        aiSummary,
+        aiRecommendations
       };
     } finally {
       client.release();
@@ -145,7 +214,23 @@ class ReportGeneratorService {
 
     this.doc.fontSize(16)
       .text(`${data.building.street_address}, ${data.building.city}, ${data.building.state}`, { align: 'center' })
-      .moveDown(3);
+      .moveDown(2);
+
+    // Add building image if available
+    if (data.building.image_url) {
+      try {
+        const imageBuffer = await this.downloadImage(data.building.image_url);
+        const imageWidth = 300;
+        const imageX = (this.doc.page.width - imageWidth) / 2;
+        this.doc.image(imageBuffer, imageX, this.doc.y, { width: imageWidth, fit: [imageWidth, 200] });
+        this.doc.moveDown(2);
+      } catch (error) {
+        console.error('⚠️ Failed to load building image:', error);
+        // Continue without image
+      }
+    }
+
+    this.doc.moveDown();
 
     const qrData = `onyx://assessment/${data.assessment.id}`;
     const qrCode = await QRCode.toDataURL(qrData, { width: 150 });
@@ -172,11 +257,16 @@ class ReportGeneratorService {
 
     const fciScore = (data.fci * 100).toFixed(2);
     const fciStatus = this.getFCIStatus(data.fci);
-    
+
+    // Use AI-generated summary if available, otherwise use standard summary
+    const summaryText = data.aiSummary ||
+      `This report presents the findings of the facility condition assessment conducted for ${data.building.name}. ` +
+      `The assessment evaluated ${data.elements.length} building elements and identified deficiencies requiring attention. ` +
+      `The facility has an FCI score of ${fciScore}%, indicating ${fciStatus.label.toLowerCase()} condition.`;
+
     this.doc.fontSize(12)
       .fillColor('#000000')
-      .text(`This report presents the findings of the facility condition assessment conducted for ${data.building.name}. `)
-      .text(`The assessment evaluated the condition of building systems and identified deficiencies requiring attention.`)
+      .text(summaryText, { align: 'justify', lineGap: 4 })
       .moveDown();
 
     this.addKeyMetric('Facility Condition Index (FCI)', `${fciScore}%`, fciStatus.color);
@@ -327,61 +417,100 @@ class ReportGeneratorService {
   private async addRecommendations(data: AssessmentReportData) {
     this.addSectionHeader('RECOMMENDATIONS');
 
-    const categories = this.groupDeficienciesByCategory(data.elements);
-    
-    this.doc.fontSize(14)
-      .fillColor(this.primaryColor)
-      .text('Immediate Actions (0-1 Year)', { underline: true })
-      .moveDown(0.5);
+    // Use AI-generated recommendations if available
+    if (data.aiRecommendations) {
+      this.doc.fontSize(14)
+        .fillColor(this.primaryColor)
+        .text('Immediate Actions (0-1 Year)', { underline: true })
+        .moveDown(0.5);
 
-    const immediate = categories.find(c => c.name === 'Life Safety & Code Compliance');
-    if (immediate && immediate.items.length > 0) {
-      immediate.items.forEach((item: any) => {
+      data.aiRecommendations.immediate.forEach((rec: string) => {
         this.doc.fontSize(11)
           .fillColor('#000000')
-          .text(`• ${item.description} - $${item.cost.toLocaleString()}`);
+          .text(`• ${rec}`);
+      });
+
+      this.doc.moveDown()
+        .fontSize(14)
+        .fillColor(this.primaryColor)
+        .text('Short-Term Actions (1-3 Years)', { underline: true })
+        .moveDown(0.5);
+
+      data.aiRecommendations.shortTerm.forEach((rec: string) => {
+        this.doc.fontSize(11)
+          .fillColor('#000000')
+          .text(`• ${rec}`);
+      });
+
+      this.doc.moveDown()
+        .fontSize(14)
+        .fillColor(this.primaryColor)
+        .text('Long-Term Planning (3-5 Years)', { underline: true })
+        .moveDown(0.5);
+
+      data.aiRecommendations.longTerm.forEach((rec: string) => {
+        this.doc.fontSize(11)
+          .fillColor('#000000')
+          .text(`• ${rec}`);
       });
     } else {
-      this.doc.fontSize(11)
-        .fillColor(this.secondaryColor)
-        .text('• No immediate life safety concerns identified');
+      // Fallback to standard recommendations
+      const categories = this.groupDeficienciesByCategory(data.elements);
+
+      this.doc.fontSize(14)
+        .fillColor(this.primaryColor)
+        .text('Immediate Actions (0-1 Year)', { underline: true })
+        .moveDown(0.5);
+
+      const immediate = categories.find(c => c.name === 'Life Safety & Code Compliance');
+      if (immediate && immediate.items.length > 0) {
+        immediate.items.forEach((item: any) => {
+          this.doc.fontSize(11)
+            .fillColor('#000000')
+            .text(`• ${item.description} - $${item.cost.toLocaleString()}`);
+        });
+      } else {
+        this.doc.fontSize(11)
+          .fillColor(this.secondaryColor)
+          .text('• No immediate life safety concerns identified');
+      }
+
+      this.doc.moveDown()
+        .fontSize(14)
+        .fillColor(this.primaryColor)
+        .text('Short-Term Actions (1-3 Years)', { underline: true })
+        .moveDown(0.5);
+
+      const shortTerm = categories.filter(c =>
+        c.name === 'Critical Systems' || c.name === 'Energy Efficiency'
+      );
+
+      shortTerm.forEach(category => {
+        category.items.slice(0, 5).forEach((item: any) => {
+          this.doc.fontSize(11)
+            .fillColor('#000000')
+            .text(`• ${item.description} - $${item.cost.toLocaleString()}`);
+        });
+      });
+
+      this.doc.moveDown()
+        .fontSize(14)
+        .fillColor(this.primaryColor)
+        .text('Long-Term Planning (3-5 Years)', { underline: true })
+        .moveDown(0.5);
+
+      const longTerm = categories.filter(c =>
+        c.name === 'Asset Life Cycle' || c.name === 'User Experience'
+      );
+
+      longTerm.forEach(category => {
+        category.items.slice(0, 5).forEach((item: any) => {
+          this.doc.fontSize(11)
+            .fillColor('#000000')
+            .text(`• ${item.description} - $${item.cost.toLocaleString()}`);
+        });
+      });
     }
-
-    this.doc.moveDown()
-      .fontSize(14)
-      .fillColor(this.primaryColor)
-      .text('Short-Term Actions (1-3 Years)', { underline: true })
-      .moveDown(0.5);
-
-    const shortTerm = categories.filter(c => 
-      c.name === 'Critical Systems' || c.name === 'Energy Efficiency'
-    );
-    
-    shortTerm.forEach(category => {
-      category.items.slice(0, 5).forEach((item: any) => {
-        this.doc.fontSize(11)
-          .fillColor('#000000')
-          .text(`• ${item.description} - $${item.cost.toLocaleString()}`);
-      });
-    });
-
-    this.doc.moveDown()
-      .fontSize(14)
-      .fillColor(this.primaryColor)
-      .text('Long-Term Planning (3-5 Years)', { underline: true })
-      .moveDown(0.5);
-
-    const longTerm = categories.filter(c => 
-      c.name === 'Asset Life Cycle' || c.name === 'User Experience'
-    );
-    
-    longTerm.forEach(category => {
-      category.items.slice(0, 5).forEach((item: any) => {
-        this.doc.fontSize(11)
-          .fillColor('#000000')
-          .text(`• ${item.description} - $${item.cost.toLocaleString()}`);
-      });
-    });
   }
 
   private async addAppendix(data: AssessmentReportData) {
@@ -445,32 +574,59 @@ class ReportGeneratorService {
       .text(value);
   }
 
+  /**
+   * STANDARDIZED FCI RATING THRESHOLDS (Industry Standard)
+   * - Good: 0.00-0.05 (0-5%)
+   * - Fair: 0.05-0.10 (5-10%)
+   * - Poor: 0.10-0.30 (10-30%)
+   * - Critical: >0.30 (>30%)
+   */
   private getFCIStatus(fci: number): { label: string; color: string; description: string } {
-    if (fci <= 0.1) {
-      return {
-        label: 'Excellent',
-        color: this.accentColor,
-        description: 'The building is in excellent condition with minimal deferred maintenance. Continue with preventive maintenance program.'
-      };
-    } else if (fci <= 0.4) {
+    if (fci <= 0.05) {
       return {
         label: 'Good',
-        color: this.primaryColor,
-        description: 'The building is in good condition but requires some capital investment to address deferred maintenance items.'
+        color: this.accentColor,
+        description: 'The building is in good condition with minimal deferred maintenance. Continue with preventive maintenance program.'
       };
-    } else if (fci <= 0.7) {
+    } else if (fci <= 0.10) {
       return {
         label: 'Fair',
+        color: this.primaryColor,
+        description: 'The building is in fair condition but requires routine maintenance and some capital investment to address deferred maintenance items.'
+      };
+    } else if (fci <= 0.30) {
+      return {
+        label: 'Poor',
         color: this.warningColor,
-        description: 'The building requires significant renovation. A comprehensive capital improvement plan should be developed.'
+        description: 'The building is in poor condition and requires significant repairs. A comprehensive capital improvement plan should be developed immediately.'
       };
     } else {
       return {
         label: 'Critical',
         color: this.dangerColor,
-        description: 'The building is in critical condition. Consider major renovation or replacement options.'
+        description: 'The building is in critical condition with major deficiencies. Consider substantial renovation or replacement options.'
       };
     }
+  }
+
+  /**
+   * Download image from URL (supports http, https, and Cloudinary URLs)
+   */
+  private async downloadImage(url: string): Promise<Buffer> {
+    return new Promise((resolve, reject) => {
+      const client = url.startsWith('https') ? https : http;
+      client.get(url, (response) => {
+        if (response.statusCode !== 200) {
+          reject(new Error(`Failed to download image: ${response.statusCode}`));
+          return;
+        }
+
+        const chunks: Buffer[] = [];
+        response.on('data', (chunk) => chunks.push(chunk));
+        response.on('end', () => resolve(Buffer.concat(chunks)));
+        response.on('error', reject);
+      }).on('error', reject);
+    });
   }
 
   private getConditionColor(rating: number): string {

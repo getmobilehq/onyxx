@@ -473,12 +473,18 @@ export class ComprehensiveFCIReportGenerator {
     }
   }
 
+  /**
+   * STANDARDIZED FCI RATING THRESHOLDS (Industry Standard)
+   * - Good: 0.00-0.05 (0-5%)
+   * - Fair: 0.05-0.10 (5-10%)
+   * - Poor: 0.10-0.30 (10-30%)
+   * - Critical: >0.30 (>30%)
+   */
   private getFCIColor(fciScore: number): [number, number, number] {
-    if (fciScore <= 0.05) return this.successColor;
-    if (fciScore <= 0.10) return [52, 152, 219]; // Light blue
-    if (fciScore <= 0.30) return this.warningColor;
-    if (fciScore <= 0.50) return [230, 126, 34]; // Dark orange
-    return this.dangerColor;
+    if (fciScore <= 0.05) return this.successColor;      // Good - Green
+    if (fciScore <= 0.10) return [52, 152, 219];         // Fair - Light Blue
+    if (fciScore <= 0.30) return this.warningColor;      // Poor - Orange
+    return this.dangerColor;                             // Critical - Red
   }
 
   private getConditionLabel(rating: number | string): string {
