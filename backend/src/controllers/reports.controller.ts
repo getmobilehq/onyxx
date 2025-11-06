@@ -32,6 +32,13 @@ export const createReport = async (
 
     const user = (req as any).user;
 
+    if (!user || !user.organization_id) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. Organization context is required.'
+      });
+    }
+
     // Validate required fields
     if (!building_id || !title) {
       return res.status(400).json({
@@ -40,13 +47,25 @@ export const createReport = async (
       });
     }
 
-    // Check if building exists
+    // Check if building exists for this organization
     const buildingCheck = await pool.query(
-      'SELECT id FROM buildings WHERE id = $1',
-      [building_id]
+      'SELECT id FROM buildings WHERE id = $1 AND organization_id = $2',
+      [building_id, user.organization_id]
     );
 
     if (buildingCheck.rows.length === 0) {
+      const crossOrgBuilding = await pool.query(
+        'SELECT id FROM buildings WHERE id = $1',
+        [building_id]
+      );
+
+      if (crossOrgBuilding.rows.length > 0) {
+        return res.status(403).json({
+          success: false,
+          message: 'Access denied to this building'
+        });
+      }
+
       return res.status(404).json({
         success: false,
         message: 'Building not found'
@@ -56,11 +75,29 @@ export const createReport = async (
     // Check if assessment exists (if provided)
     if (assessment_id) {
       const assessmentCheck = await pool.query(
-        'SELECT id FROM assessments WHERE id = $1',
-        [assessment_id]
+        `SELECT a.id
+         FROM assessments a
+         JOIN buildings b ON a.building_id = b.id
+         WHERE a.id = $1 AND b.organization_id = $2`,
+        [assessment_id, user.organization_id]
       );
 
       if (assessmentCheck.rows.length === 0) {
+        const crossOrgAssessment = await pool.query(
+          `SELECT a.id, b.organization_id
+           FROM assessments a
+           JOIN buildings b ON a.building_id = b.id
+           WHERE a.id = $1`,
+          [assessment_id]
+        );
+
+        if (crossOrgAssessment.rows.length > 0) {
+          return res.status(403).json({
+            success: false,
+            message: 'Access denied to this assessment'
+          });
+        }
+
         return res.status(404).json({
           success: false,
           message: 'Assessment not found'
@@ -130,8 +167,24 @@ export const getAllReports = async (
       search
     } = req.query;
 
+    const user = (req as any).user;
+
+    if (!user || !user.organization_id) {
+      return res.json({
+        success: true,
+        data: {
+          reports: [],
+          pagination: {
+            total: 0,
+            limit: parseInt(limit as string),
+            offset: parseInt(offset as string)
+          }
+        }
+      });
+    }
+
     let query = `
-      SELECT 
+      SELECT
         r.*,
         b.name as building_name,
         b.address as street_address,
@@ -141,12 +194,12 @@ export const getAllReports = async (
         u.name as created_by_name,
         a.assessment_type
       FROM reports r
-      LEFT JOIN buildings b ON r.building_id = b.id
+      JOIN buildings b ON r.building_id = b.id
       LEFT JOIN users u ON r.generated_by = u.id
       LEFT JOIN assessments a ON r.assessment_id = a.id
-      WHERE 1=1
+      WHERE b.organization_id = $1
     `;
-    const params: any[] = [];
+    const params: any[] = [user.organization_id];
 
     if (building_id) {
       params.push(building_id);
@@ -169,8 +222,10 @@ export const getAllReports = async (
     }
 
     if (search) {
-      params.push(`%${search}%`);
-      query += ` AND (r.title ILIKE $${params.length} OR b.name ILIKE $${params.length} OR r.description ILIKE $${params.length})`;
+      const searchValue = `%${search}%`;
+      params.push(searchValue);
+      const searchPlaceholder = `$${params.length}`;
+      query += ` AND (r.title ILIKE ${searchPlaceholder} OR b.name ILIKE ${searchPlaceholder} OR r.description ILIKE ${searchPlaceholder})`;
     }
 
     query += ` ORDER BY r.created_at DESC`;
@@ -183,12 +238,12 @@ export const getAllReports = async (
 
     // Get total count for pagination
     let countQuery = `
-      SELECT COUNT(*) 
+      SELECT COUNT(*)
       FROM reports r
-      LEFT JOIN buildings b ON r.building_id = b.id
-      WHERE 1=1
+      JOIN buildings b ON r.building_id = b.id
+      WHERE b.organization_id = $1
     `;
-    const countParams: any[] = [];
+    const countParams: any[] = [user.organization_id];
 
     if (building_id) {
       countParams.push(building_id);
@@ -211,8 +266,10 @@ export const getAllReports = async (
     }
 
     if (search) {
-      countParams.push(`%${search}%`);
-      countQuery += ` AND (r.title ILIKE $${countParams.length} OR b.name ILIKE $${countParams.length} OR r.description ILIKE $${countParams.length})`;
+      const searchValue = `%${search}%`;
+      countParams.push(searchValue);
+      const countPlaceholder = `$${countParams.length}`;
+      countQuery += ` AND (r.title ILIKE ${countPlaceholder} OR b.name ILIKE ${countPlaceholder} OR r.description ILIKE ${countPlaceholder})`;
     }
 
     const countResult = await pool.query(countQuery, countParams);
@@ -241,9 +298,17 @@ export const getReportById = async (
 ) => {
   try {
     const { id } = req.params;
+    const user = (req as any).user;
+
+    if (!user || !user.organization_id) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. Organization context is required.'
+      });
+    }
 
     const result = await pool.query(
-      `SELECT 
+      `SELECT
         r.*,
         b.name as building_name,
         b.address as street_address,
@@ -257,14 +322,29 @@ export const getReportById = async (
         a.assessment_date as assessment_started,
         a.completion_date as assessment_completed
       FROM reports r
-      LEFT JOIN buildings b ON r.building_id = b.id
+      JOIN buildings b ON r.building_id = b.id
       LEFT JOIN users u ON r.generated_by = u.id
       LEFT JOIN assessments a ON r.assessment_id = a.id
-      WHERE r.id = $1`,
-      [id]
+      WHERE r.id = $1 AND b.organization_id = $2`,
+      [id, user.organization_id]
     );
 
     if (result.rows.length === 0) {
+      const reportAccessCheck = await pool.query(
+        `SELECT r.id, b.organization_id
+         FROM reports r
+         JOIN buildings b ON r.building_id = b.id
+         WHERE r.id = $1`,
+        [id]
+      );
+
+      if (reportAccessCheck.rows.length > 0) {
+        return res.status(403).json({
+          success: false,
+          message: 'Access denied to this report'
+        });
+      }
+
       return res.status(404).json({
         success: false,
         message: 'Report not found'
@@ -310,13 +390,40 @@ export const updateReport = async (
       excel_url
     } = req.body;
 
-    // Check if report exists
+    const user = (req as any).user;
+
+    if (!user || !user.organization_id) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. Organization context is required.'
+      });
+    }
+
+    // Check if report exists within the user's organization
     const reportCheck = await pool.query(
-      'SELECT id FROM reports WHERE id = $1',
-      [id]
+      `SELECT r.id
+       FROM reports r
+       JOIN buildings b ON r.building_id = b.id
+       WHERE r.id = $1 AND b.organization_id = $2`,
+      [id, user.organization_id]
     );
 
     if (reportCheck.rows.length === 0) {
+      const crossOrgReport = await pool.query(
+        `SELECT r.id, b.organization_id
+         FROM reports r
+         JOIN buildings b ON r.building_id = b.id
+         WHERE r.id = $1`,
+        [id]
+      );
+
+      if (crossOrgReport.rows.length > 0) {
+        return res.status(403).json({
+          success: false,
+          message: 'Access denied to this report'
+        });
+      }
+
       return res.status(404).json({
         success: false,
         message: 'Report not found'
@@ -440,13 +547,16 @@ export const updateReport = async (
     // Always update the updated_at timestamp
     updates.push('updated_at = NOW()');
 
-    // Add the ID parameter for WHERE clause
-    params.push(id);
+    // Add the ID and organization parameters for WHERE clause
+    params.push(id, user.organization_id);
 
     const query = `
-      UPDATE reports 
-      SET ${updates.join(', ')} 
-      WHERE id = $${params.length}
+      UPDATE reports
+      SET ${updates.join(', ')}
+      WHERE id = $${params.length - 1}
+        AND building_id IN (
+          SELECT id FROM buildings WHERE organization_id = $${params.length}
+        )
       RETURNING *
     `;
 
@@ -471,13 +581,41 @@ export const deleteReport = async (
 ) => {
   try {
     const { id } = req.params;
+    const user = (req as any).user;
+
+    if (!user || !user.organization_id) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. Organization context is required.'
+      });
+    }
 
     const result = await pool.query(
-      'DELETE FROM reports WHERE id = $1 RETURNING *',
-      [id]
+      `DELETE FROM reports
+       WHERE id = $1
+         AND building_id IN (
+           SELECT id FROM buildings WHERE organization_id = $2
+         )
+       RETURNING *`,
+      [id, user.organization_id]
     );
 
     if (result.rows.length === 0) {
+      const crossOrgReport = await pool.query(
+        `SELECT r.id, b.organization_id
+         FROM reports r
+         JOIN buildings b ON r.building_id = b.id
+         WHERE r.id = $1`,
+        [id]
+      );
+
+      if (crossOrgReport.rows.length > 0) {
+        return res.status(403).json({
+          success: false,
+          message: 'Access denied to this report'
+        });
+      }
+
       return res.status(404).json({
         success: false,
         message: 'Report not found'
@@ -502,7 +640,7 @@ export const generateReportFromAssessment = async (
   try {
     const { assessmentId } = req.params;
     const user = (req as any).user;
-    
+
     console.log('📊 generateReportFromAssessment called with:', { assessmentId, userId: user?.id });
 
     // Validate assessmentId format
@@ -514,16 +652,38 @@ export const generateReportFromAssessment = async (
       });
     }
 
+    if (!user || !user.organization_id) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. Organization context is required.'
+      });
+    }
+
     // Check if assessment exists and is completed
     const assessmentResult = await pool.query(
       `SELECT a.*, b.name as building_name, b.id as building_id, b.square_footage, b.type as building_type
        FROM assessments a
        JOIN buildings b ON a.building_id = b.id
-       WHERE a.id = $1`,
-      [assessmentId]
+       WHERE a.id = $1 AND b.organization_id = $2`,
+      [assessmentId, user.organization_id]
     );
 
     if (assessmentResult.rows.length === 0) {
+      const crossOrgAssessment = await pool.query(
+        `SELECT a.id, b.organization_id
+         FROM assessments a
+         JOIN buildings b ON a.building_id = b.id
+         WHERE a.id = $1`,
+        [assessmentId]
+      );
+
+      if (crossOrgAssessment.rows.length > 0) {
+        return res.status(403).json({
+          success: false,
+          message: 'Access denied to this assessment'
+        });
+      }
+
       return res.status(404).json({
         success: false,
         message: 'Assessment not found'
