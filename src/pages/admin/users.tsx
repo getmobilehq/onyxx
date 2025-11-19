@@ -98,7 +98,7 @@ interface Organization {
 const userSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Please enter a valid email address'),
-  role: z.enum(['admin', 'manager', 'assessor']),
+  role: z.enum(['manager', 'assessor']), // Managers can only create managers and assessors
   organization_id: z.string().min(1, 'Please select an organization'),
 });
 
@@ -106,7 +106,7 @@ type UserForm = z.infer<typeof userSchema>;
 
 const editUserSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
-  role: z.enum(['admin', 'manager', 'assessor']),
+  role: z.enum(['manager', 'assessor']), // Managers can only assign manager and assessor roles
   organization_id: z.string().min(1, 'Please select an organization'),
   is_organization_owner: z.boolean(),
 });
@@ -145,8 +145,8 @@ export function AdminUsersPage() {
     },
   });
 
-  // Check if user is admin
-  if (!user || user.role !== 'admin') {
+  // Check if user is manager (organization access required)
+  if (!user || user.role !== 'manager') {
     return <Navigate to="/dashboard" replace />;
   }
 
@@ -411,11 +411,13 @@ export function AdminUsersPage() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="admin">Administrator</SelectItem>
                               <SelectItem value="manager">Manager</SelectItem>
                               <SelectItem value="assessor">Assessor</SelectItem>
                             </SelectContent>
                           </Select>
+                          <FormDescription>
+                            Managers can invite other managers and assessors within the organization.
+                          </FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -648,11 +650,13 @@ export function AdminUsersPage() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="admin">Administrator</SelectItem>
                         <SelectItem value="manager">Manager</SelectItem>
                         <SelectItem value="assessor">Assessor</SelectItem>
                       </SelectContent>
                     </Select>
+                    <FormDescription>
+                      Managers have full operational access within the organization.
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}

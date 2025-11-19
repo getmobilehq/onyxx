@@ -115,8 +115,8 @@ export function DashboardLayout() {
     },
   ];
 
-  // Admin-only navigation items
-  const adminNavigation = user?.role === 'admin' ? [
+  // Manager navigation items (organization management)
+  const adminNavigation = user?.role === 'manager' ? [
     {
       name: 'Admin Dashboard',
       href: '/admin/dashboard',

@@ -142,9 +142,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const register = async (
-    name: string, 
-    email: string, 
-    password: string, 
+    name: string,
+    email: string,
+    password: string,
     organizationName: string
   ) => {
     setLoading(true);
@@ -154,7 +154,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         email,
         password,
         organization_name: organizationName,
-        role: 'admin' // Default to admin for new registrations
+        role: 'manager' // New users are created as managers (organization owners)
       });
       
       if (response.data.success) {

@@ -4,16 +4,18 @@ import { ForbiddenPage } from '@/pages/403-forbidden';
 
 interface ProtectedRouteProps {
   children: ReactNode;
-  adminOnly?: boolean;
+  adminOnly?: boolean; // Deprecated: use managerOnly instead
+  managerOnly?: boolean;
   platformAdminOnly?: boolean;
-  roles?: Array<'admin' | 'manager' | 'assessor'>;
+  roles?: Array<'manager' | 'assessor'>;
 }
 
-export function ProtectedRoute({ 
-  children, 
+export function ProtectedRoute({
+  children,
   adminOnly = false,
-  platformAdminOnly = false, 
-  roles 
+  managerOnly = false,
+  platformAdminOnly = false,
+  roles
 }: ProtectedRouteProps) {
   const { user } = useAuth();
 
@@ -22,8 +24,8 @@ export function ProtectedRoute({
     return <ForbiddenPage />;
   }
 
-  // If admin only and user is not admin, show 403
-  if (adminOnly && user?.role !== 'admin') {
+  // If manager only (or deprecated adminOnly) and user is not manager, show 403
+  if ((managerOnly || adminOnly) && user?.role !== 'manager') {
     return <ForbiddenPage />;
   }
 
