@@ -28,11 +28,6 @@ import { NewReportPage } from '@/pages/reports/new';
 import { ReportDetailsPage } from '@/pages/reports/report-details';
 import { SettingsPage } from '@/pages/settings';
 import { ProfilePage } from '@/pages/profile';
-import { AnalyticsPage } from '@/pages/analytics';
-import { AnalyticsTestPage } from '@/pages/analytics/test';
-import { SimpleAnalyticsPage } from '@/pages/analytics/simple';
-import { DebugAnalyticsPage } from '@/pages/analytics/debug';
-import { FixedAnalyticsPage } from '@/pages/analytics/fixed';
 // TODO: Fast follow after MVP launch
 // import { PredictiveMaintenancePage } from '@/pages/predictive-maintenance';
 import { TeamPage } from '@/pages/team';
@@ -130,13 +125,10 @@ export const AppRoutes = () => {
         <Route path="reports/new" element={<NewReportPage />} />
         <Route path="reports/:id" element={<ReportDetailsPage />} />
         
-        {/* Analytics */}
-        <Route path="analytics" element={<FixedAnalyticsPage />} />
-        
         {/* Predictive Maintenance */}
         {/* TODO: Fast follow after MVP launch */}
         {/* <Route path="predictive-maintenance" element={<PredictiveMaintenancePage />} /> */}
-        
+
         {/* Team Management */}
         <Route path="team" element={<TeamPage />} />
         

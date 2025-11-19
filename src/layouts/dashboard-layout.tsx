@@ -7,7 +7,6 @@ import { cn } from '@/lib/utils';
 
 import {
   AlertCircle,
-  BarChart3,
   Building2,
   ClipboardList,
   DollarSign,
@@ -87,12 +86,6 @@ export function DashboardLayout() {
       href: '/reports',
       icon: FileText,
       current: pathname.startsWith('/reports'),
-    },
-    {
-      name: 'Analytics',
-      href: '/analytics',
-      icon: BarChart3,
-      current: pathname.startsWith('/analytics'),
     },
     // TODO: Fast follow after MVP launch
     // {
