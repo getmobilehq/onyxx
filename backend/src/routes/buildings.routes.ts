@@ -8,7 +8,7 @@ import {
   deleteBuilding,
   uploadBuildingImage,
 } from '../controllers/buildings.controller';
-import { authenticate, authorize } from '../middleware/auth.middleware';
+import { authenticate, authorize, requireOrganizationOwner } from '../middleware/auth.middleware';
 import { 
   uploadSingleImage, 
   handleUploadError, 
@@ -75,8 +75,8 @@ router.post('/upload-image',
   uploadBuildingImage
 );
 
-router.post('/', authorize('admin', 'manager'), buildingValidation, createBuilding);
-router.put('/:id', authorize('admin', 'manager'), updateBuilding);
-router.delete('/:id', authorize('admin'), deleteBuilding);
+router.post('/', authorize('manager'), buildingValidation, createBuilding);
+router.put('/:id', authorize('manager'), updateBuilding);
+router.delete('/:id', requireOrganizationOwner, deleteBuilding);
 
 export default router;

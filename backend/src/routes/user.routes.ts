@@ -8,7 +8,7 @@ import {
   inviteUser,
   updateProfile,
 } from '../controllers/user.controller';
-import { authenticate, authorize } from '../middleware/auth.middleware';
+import { authenticate, authorize, requireOrganizationOwner } from '../middleware/auth.middleware';
 
 const router = Router();
 
@@ -61,11 +61,11 @@ const inviteUserValidation = [
 ];
 
 // Routes
-router.get('/', authorize('admin', 'manager'), getAllUsers);
+router.get('/', authorize('manager'), getAllUsers);
 router.get('/:id', getUserById);
 router.put('/profile', updateProfileValidation, updateProfile);
 router.put('/:id', updateUserValidation, updateUser);
-router.delete('/:id', authorize('admin'), deleteUser);
-router.post('/invite', authorize('admin', 'manager'), inviteUserValidation, inviteUser);
+router.delete('/:id', requireOrganizationOwner, deleteUser);
+router.post('/invite', authorize('manager'), inviteUserValidation, inviteUser);
 
 export default router;

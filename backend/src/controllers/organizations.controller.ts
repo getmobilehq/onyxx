@@ -304,3 +304,172 @@ export const leaveOrganization = async (
     next(error);
   }
 };
+
+// Update organization (organization owner only)
+export const updateOrganization = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        errors: errors.array()
+      });
+    }
+
+    const { id } = req.params;
+    const userId = req.user?.id;
+    const { name, description, industry, size, website, phone, address, city, state, zip_code, country, subscription_plan } = req.body;
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required',
+      });
+    }
+
+    // Check if user is platform admin or organization owner
+    const userCheck = await pool.query(
+      'SELECT is_platform_admin, is_organization_owner, organization_id FROM users WHERE id = $1',
+      [userId]
+    );
+
+    if (userCheck.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
+    }
+
+    const userData = userCheck.rows[0];
+
+    // Verify permission: platform admin OR organization owner
+    if (!userData.is_platform_admin) {
+      if (!userData.is_organization_owner || userData.organization_id !== id) {
+        return res.status(403).json({
+          success: false,
+          message: 'Only organization owners can update their organization',
+        });
+      }
+    }
+
+    // Update organization
+    const result = await pool.query(
+      `UPDATE organizations
+       SET name = COALESCE($1, name),
+           description = COALESCE($2, description),
+           industry = COALESCE($3, industry),
+           size = COALESCE($4, size),
+           website = COALESCE($5, website),
+           phone = COALESCE($6, phone),
+           address = COALESCE($7, address),
+           city = COALESCE($8, city),
+           state = COALESCE($9, state),
+           zip_code = COALESCE($10, zip_code),
+           country = COALESCE($11, country),
+           subscription_plan = COALESCE($12, subscription_plan),
+           updated_at = NOW()
+       WHERE id = $13
+       RETURNING *`,
+      [name, description, industry, size, website, phone, address, city, state, zip_code, country, subscription_plan, id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Organization not found',
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Organization updated successfully',
+      data: {
+        organization: result.rows[0],
+      },
+    });
+  } catch (error: any) {
+    if (error.code === '23505') {
+      return res.status(409).json({
+        success: false,
+        message: 'Organization with this name already exists',
+      });
+    }
+    next(error);
+  }
+};
+
+// Delete organization (platform admin only)
+export const deleteOrganization = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required',
+      });
+    }
+
+    // Check if user is platform admin
+    const userCheck = await pool.query(
+      'SELECT is_platform_admin FROM users WHERE id = $1',
+      [userId]
+    );
+
+    if (userCheck.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
+    }
+
+    if (!userCheck.rows[0].is_platform_admin) {
+      return res.status(403).json({
+        success: false,
+        message: 'Only platform admins can delete organizations',
+      });
+    }
+
+    // Check if organization has members
+    const memberCheck = await pool.query(
+      'SELECT COUNT(*) as count FROM users WHERE organization_id = $1',
+      [id]
+    );
+
+    if (parseInt(memberCheck.rows[0].count) > 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Cannot delete organization with existing members. Please remove all members first.',
+      });
+    }
+
+    // Delete organization
+    const result = await pool.query(
+      'DELETE FROM organizations WHERE id = $1 RETURNING id',
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Organization not found',
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Organization deleted successfully',
+    });
+  } catch (error) {
+    next(error);
+  }
+};

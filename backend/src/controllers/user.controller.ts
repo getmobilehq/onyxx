@@ -363,13 +363,56 @@ export const inviteUser = async (
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({ 
-        success: false, 
-        errors: errors.array() 
+      return res.status(400).json({
+        success: false,
+        errors: errors.array()
       });
     }
 
     const { email, role, name } = req.body;
+    const inviter = req.user;
+
+    if (!inviter) {
+      return res.status(401).json({
+        success: false,
+        message: 'Unauthorized',
+      });
+    }
+
+    // Get inviter details to check permissions
+    const inviterResult = await pool.query(
+      'SELECT is_platform_admin, is_organization_owner, organization_id FROM users WHERE id = $1',
+      [inviter.id]
+    );
+
+    if (inviterResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Inviter not found',
+      });
+    }
+
+    const inviterData = inviterResult.rows[0];
+
+    // Managers (organization owners) can only invite managers and assessors
+    // Platform admins can invite anyone, including other platform admins
+    if (!inviterData.is_platform_admin) {
+      // Check if requesting to create platform admin (not allowed for managers)
+      if (req.body.is_platform_admin === true) {
+        return res.status(403).json({
+          success: false,
+          message: 'Only platform admins can create other platform admins',
+        });
+      }
+
+      // Managers can only create within their organization
+      if (!inviterData.organization_id) {
+        return res.status(400).json({
+          success: false,
+          message: 'Organization owner must have an organization',
+        });
+      }
+    }
 
     // Check if user already exists
     const existingUser = await pool.query(
@@ -384,17 +427,38 @@ export const inviteUser = async (
       });
     }
 
+    // Validate role
+    const validRoles = ['manager', 'assessor'];
+    if (inviterData.is_platform_admin) {
+      // Platform admins can create any role
+    } else {
+      // Managers can only create managers and assessors
+      if (!validRoles.includes(role)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Managers can only invite other managers or assessors',
+        });
+      }
+    }
+
     // Generate temporary password
     const tempPassword = crypto.randomBytes(8).toString('hex');
     const salt = await bcrypt.genSalt(10);
     const password_hash = await bcrypt.hash(tempPassword, salt);
 
+    // Determine organization_id and admin status
+    const organization_id = inviterData.is_platform_admin
+      ? (req.body.organization_id || inviterData.organization_id)
+      : inviterData.organization_id;
+
+    const is_platform_admin = req.body.is_platform_admin === true && inviterData.is_platform_admin;
+
     // Create user
     const result = await pool.query(
-      `INSERT INTO users (name, email, password_hash, role) 
-       VALUES ($1, $2, $3, $4) 
-       RETURNING id, name, email, role, created_at`,
-      [name, email, password_hash, role]
+      `INSERT INTO users (name, email, password_hash, role, organization_id, is_organization_owner, is_platform_admin)
+       VALUES ($1, $2, $3, $4, $5, false, $6)
+       RETURNING id, name, email, role, organization_id, created_at`,
+      [name, email, password_hash, role, organization_id, is_platform_admin]
     );
 
     const newUser = result.rows[0];

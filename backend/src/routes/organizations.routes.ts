@@ -1,11 +1,13 @@
 import { Router } from 'express';
 import { body } from 'express-validator';
-import { authenticate } from '../middleware/auth.middleware';
+import { authenticate, requirePlatformAdmin, requireOrganizationOwner } from '../middleware/auth.middleware';
 import {
   getAllOrganizations,
   getOrganizationById,
   getCurrentOrganization,
   createOrganization,
+  updateOrganization,
+  deleteOrganization,
   joinOrganization,
   leaveOrganization
 } from '../controllers/organizations.controller';
@@ -42,5 +44,11 @@ router.post('/join', body('organizationId').notEmpty().withMessage('Organization
 
 // Leave organization
 router.post('/leave', leaveOrganization);
+
+// Update organization (organization owner or platform admin)
+router.put('/:id', requireOrganizationOwner, updateOrganization);
+
+// Delete organization (platform admin only)
+router.delete('/:id', requirePlatformAdmin, deleteOrganization);
 
 export default router;

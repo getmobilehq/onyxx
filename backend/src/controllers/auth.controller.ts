@@ -112,10 +112,10 @@ export const register = async (
       );
       organization = orgResult.rows[0];
 
-      // Create user as admin of the new organization
+      // Create user as organization owner (manager role) - first user of new organization
       const userResult = await client.query(
-        `INSERT INTO users (name, email, password_hash, role, organization_id, is_organization_owner)
-         VALUES ($1, $2, $3, 'admin', $4, true)
+        `INSERT INTO users (name, email, password_hash, role, organization_id, is_organization_owner, is_platform_admin)
+         VALUES ($1, $2, $3, 'manager', $4, true, false)
          RETURNING id, name, email, role, organization_id, created_at`,
         [name, email, password_hash, organization.id]
       );
