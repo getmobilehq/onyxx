@@ -1,16 +1,14 @@
 import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'axios';
 import { trackAPICall } from '@/config/sentry';
 
-// CRITICAL FIX: Hardcoded API URL to bypass manage.onyxreport.com DNS issue
-// TODO: Remove this hardcoded fix once DNS is properly configured
+// API URL configuration from environment variables
 let API_BASE_URL: string;
 
 if (import.meta.env.DEV) {
   API_BASE_URL = 'http://localhost:5001/api';
 } else {
-  // FORCE use of working backend URL - ignore any environment variables
-  API_BASE_URL = 'https://onyx-backend-f7vh.onrender.com/api';
-  console.log('🔧 FORCED API URL (bypassing manage.onyxreport.com DNS issue):', API_BASE_URL);
+  API_BASE_URL = import.meta.env.VITE_API_URL || 'https://manage.onyxreport.com/api';
+  console.log('🔗 Using production API URL:', API_BASE_URL);
 }
 
 // Debug: Log the API URL being used

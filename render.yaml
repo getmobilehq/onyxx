@@ -40,7 +40,7 @@ services:
     staticPublishPath: ./dist
     envVars:
       - key: VITE_API_URL
-        value: https://onyx-backend-f7vh.onrender.com/api
+        value: https://manage.onyxreport.com/api
     routes:
       - type: rewrite
         source: /*

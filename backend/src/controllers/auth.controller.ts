@@ -114,10 +114,10 @@ export const register = async (
 
       // Create user as admin of the new organization
       const userResult = await client.query(
-        `INSERT INTO users (name, email, password_hash, role, organization_id, is_organization_owner, signup_token) 
-         VALUES ($1, $2, $3, 'admin', $4, true, $5) 
+        `INSERT INTO users (name, email, password_hash, role, organization_id, is_organization_owner)
+         VALUES ($1, $2, $3, 'admin', $4, true)
          RETURNING id, name, email, role, organization_id, created_at`,
-        [name, email, password_hash, organization.id, token ? token.id : null]
+        [name, email, password_hash, organization.id]
       );
       const user = userResult.rows[0];
 
