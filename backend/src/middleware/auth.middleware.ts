@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { JWTPayload } from '../types/user.types';
+import pool from '../config/database';
 
 // Extend Express Request type to include user
 declare global {
@@ -114,7 +115,6 @@ export const requireOrganizationOwner = async (req: Request, res: Response, next
 
   // Check if user is organization owner
   try {
-    const pool = require('../config/database').default;
     const result = await pool.query(
       'SELECT is_organization_owner FROM users WHERE id = $1',
       [req.user.id]
