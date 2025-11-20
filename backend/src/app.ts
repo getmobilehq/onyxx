@@ -1,5 +1,4 @@
 import express, { Application } from 'express';
-import cors from 'cors';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
 
@@ -8,7 +7,7 @@ dotenv.config();
 import { initSentry } from './config/sentry';
 import pool from './config/database';
 import { securityMiddleware } from './middleware/security.middleware';
-import { corsOptions, authLimiter, apiLimiter, securityHeaders } from './config/security';
+import { authLimiter, apiLimiter, securityHeaders } from './config/security';
 import authRoutes from './routes/auth.routes';
 import userRoutes from './routes/user.routes';
 import buildingsRoutes from './routes/buildings.routes';
@@ -34,9 +33,8 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 app.use(helmet(securityHeaders));
-app.use(cors(corsOptions));
 
-// Enhanced CORS middleware with explicit header setting
+// CORS middleware - must be before other middleware
 app.use((req, res, next) => {
   const origin = req.headers.origin;
   const allowedOrigins = [
@@ -48,24 +46,27 @@ app.use((req, res, next) => {
     'http://localhost:5174'
   ];
 
-  console.log(`🔍 Incoming request from origin: ${origin}, Method: ${req.method}`);
+  console.log(`🔍 Incoming request from origin: ${origin}, Method: ${req.method}, Path: ${req.path}`);
 
+  // Always set CORS headers for allowed origins
   if (origin && allowedOrigins.includes(origin)) {
-    res.header('Access-Control-Allow-Origin', origin);
-    res.header('Access-Control-Allow-Credentials', 'true');
-    res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS,PATCH');
-    res.header('Access-Control-Allow-Headers', 'Origin,X-Requested-With,Content-Type,Accept,Authorization,Access-Control-Request-Method,Access-Control-Request-Headers');
-    res.header('Access-Control-Max-Age', '86400');
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS,PATCH');
+    res.setHeader('Access-Control-Allow-Headers', 'Origin,X-Requested-With,Content-Type,Accept,Authorization,Access-Control-Request-Method,Access-Control-Request-Headers');
+    res.setHeader('Access-Control-Max-Age', '86400');
     console.log(`✅ CORS headers set for allowed origin: ${origin}`);
   } else if (origin) {
     console.log(`❌ Origin not in allowed list: ${origin}`);
+  } else {
+    // No origin header (e.g., same-origin requests or Postman)
+    console.log(`ℹ️ No origin header present`);
   }
 
-  // Handle preflight requests
+  // Handle preflight requests immediately
   if (req.method === 'OPTIONS') {
     console.log(`✈️ Handling OPTIONS preflight request from: ${origin}`);
-    res.status(200).end();
-    return;
+    return res.status(200).end();
   }
 
   next();
