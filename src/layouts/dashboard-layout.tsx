@@ -108,13 +108,19 @@ export function DashboardLayout() {
     },
   ];
 
-  // Manager navigation items (organization management)
-  const adminNavigation = user?.role === 'manager' ? [
+  // Platform Admin navigation items (cross-organization management)
+  const adminNavigation = user?.is_platform_admin ? [
     {
       name: 'Admin Dashboard',
       href: '/admin/dashboard',
       icon: Shield,
       current: pathname === '/admin/dashboard',
+    },
+    {
+      name: 'All Users',
+      href: '/admin/users',
+      icon: Users,
+      current: pathname === '/admin/users',
     },
     {
       name: 'Building Costs',
@@ -177,13 +183,13 @@ export function DashboardLayout() {
                 </Link>
               ))}
               
-              {/* Admin Navigation */}
+              {/* Platform Admin Navigation */}
               {adminNavigation.length > 0 && (
                 <>
                   <div className="border-t border-border/50 mx-4 my-4" />
                   <div className="px-4 mb-2">
                     <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                      Admin
+                      Platform Admin
                     </p>
                   </div>
                   {adminNavigation.map((item) => (
@@ -291,13 +297,13 @@ export function DashboardLayout() {
                       </Link>
                     ))}
                     
-                    {/* Admin Navigation in Mobile */}
+                    {/* Platform Admin Navigation in Mobile */}
                     {adminNavigation.length > 0 && (
                       <>
                         <div className="border-t border-border/50 mx-2 my-4" />
                         <div className="px-2 mb-2">
                           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                            Admin
+                            Platform Admin
                           </p>
                         </div>
                         {adminNavigation.map((item) => (
