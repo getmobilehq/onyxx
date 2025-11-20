@@ -68,23 +68,20 @@ interface TeamMember {
 }
 
 const inviteSchema = z.object({
+  name: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Please enter a valid email address'),
-  role: z.string().min(1, 'Please select a role'),
+  role: z.enum(['manager', 'assessor'], {
+    errorMap: () => ({ message: 'Please select a role' }),
+  }),
   message: z.string().optional(),
 });
 
 type InviteForm = z.infer<typeof inviteSchema>;
 
 const roleConfig = {
-  admin: {
-    label: 'Administrator',
-    description: 'Full access to all features and settings',
-    icon: ShieldCheck,
-    color: 'bg-red-100 text-red-800',
-  },
   manager: {
     label: 'Manager',
-    description: 'Can manage buildings and assessments',
+    description: 'Can manage buildings, assessments, and invite users',
     icon: Shield,
     color: 'bg-blue-100 text-blue-800',
   },
@@ -107,8 +104,9 @@ export function TeamPage() {
   const form = useForm<InviteForm>({
     resolver: zodResolver(inviteSchema),
     defaultValues: {
+      name: '',
       email: '',
-      role: '',
+      role: 'assessor',
       message: '',
     },
   });
@@ -122,18 +120,21 @@ export function TeamPage() {
       setLoading(true);
       const response = await usersAPI.getAll();
       if (response.data.success) {
-        const users = response.data.data.users.map((user: any): TeamMember => ({
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-          phone: user.phone || '',
-          avatar: '',
-          status: 'active',
-          lastActive: 'Recently',
-          joinedAt: user.createdAt,
-          assessmentsCompleted: 0,
-        }));
+        // Filter users to only show those in the current user's organization
+        const users = response.data.data.users
+          .filter((u: any) => u.organization_id === user?.organization_id)
+          .map((user: any): TeamMember => ({
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            phone: user.phone || '',
+            avatar: '',
+            status: 'active',
+            lastActive: 'Recently',
+            joinedAt: user.created_at || user.createdAt,
+            assessmentsCompleted: 0,
+          }));
         setTeamMembers(users);
       }
     } catch (error) {
@@ -151,13 +152,25 @@ export function TeamPage() {
     return matchesSearch && matchesRole;
   });
 
-  const handleInviteSubmit = (data: InviteForm) => {
-    console.log('Inviting team member:', data);
-    
-    // In real app, this would send an API request
-    toast.success(`Invitation sent to ${data.email}`);
-    setIsInviteDialogOpen(false);
-    form.reset();
+  const handleInviteSubmit = async (data: InviteForm) => {
+    try {
+      const response = await usersAPI.invite({
+        name: data.name,
+        email: data.email,
+        role: data.role,
+      });
+
+      if (response.data.success) {
+        toast.success(`Invitation sent to ${data.email}`);
+        setIsInviteDialogOpen(false);
+        form.reset();
+        // Refresh team members list
+        fetchTeamMembers();
+      }
+    } catch (error: any) {
+      const message = error.response?.data?.message || 'Failed to send invitation';
+      toast.error(message);
+    }
   };
 
   const handleRemoveMember = (memberId: string, memberName: string) => {
@@ -212,6 +225,19 @@ export function TeamPage() {
             </DialogHeader>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(handleInviteSubmit)} className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Full Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="John Doe" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 <FormField
                   control={form.control}
                   name="email"
@@ -356,7 +382,6 @@ export function TeamPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Roles</SelectItem>
-                <SelectItem value="admin">Administrator</SelectItem>
                 <SelectItem value="manager">Manager</SelectItem>
                 <SelectItem value="assessor">Assessor</SelectItem>
               </SelectContent>
@@ -368,110 +393,135 @@ export function TeamPage() {
       {/* Team Members Table */}
       <Card>
         <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Member</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Contact</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Last Active</TableHead>
-                <TableHead>Assessments</TableHead>
-                <TableHead className="w-[70px]"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredMembers.map((member) => {
-                const roleInfo = roleConfig[member.role as keyof typeof roleConfig];
-                const IconComponent = roleInfo.icon;
-                
-                return (
-                  <TableRow key={member.id}>
-                    <TableCell>
-                      <div className="flex items-center space-x-3">
-                        <Avatar>
-                          <AvatarImage src={member.avatar} />
-                          <AvatarFallback>{getInitials(member.name)}</AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <div className="font-medium">{member.name}</div>
-                          <div className="text-sm text-muted-foreground">
-                            Joined {new Date(member.joinedAt).toLocaleDateString()}
+          {filteredMembers.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 px-4">
+              <Users className="h-12 w-12 text-muted-foreground mb-4" />
+              <h3 className="text-lg font-semibold mb-2">No Team Members Yet</h3>
+              <p className="text-muted-foreground text-center mb-6 max-w-md">
+                {searchTerm || selectedRole !== 'all'
+                  ? 'No team members match your search criteria. Try adjusting your filters.'
+                  : 'Start building your team by inviting managers and assessors to collaborate on building assessments.'}
+              </p>
+              {!searchTerm && selectedRole === 'all' && (
+                <Dialog open={isInviteDialogOpen} onOpenChange={setIsInviteDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button>
+                      <UserPlus className="mr-2 h-4 w-4" />
+                      Invite Your First Team Member
+                    </Button>
+                  </DialogTrigger>
+                </Dialog>
+              )}
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Member</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead>Contact</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Last Active</TableHead>
+                  <TableHead>Assessments</TableHead>
+                  <TableHead className="w-[70px]"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredMembers.map((member) => {
+                  const roleInfo = roleConfig[member.role as keyof typeof roleConfig];
+                  const IconComponent = roleInfo?.icon;
+
+                  // Skip if role not found in roleConfig (e.g., admin users)
+                  if (!roleInfo) return null;
+
+                  return (
+                    <TableRow key={member.id}>
+                      <TableCell>
+                        <div className="flex items-center space-x-3">
+                          <Avatar>
+                            <AvatarImage src={member.avatar} />
+                            <AvatarFallback>{getInitials(member.name)}</AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <div className="font-medium">{member.name}</div>
+                            <div className="text-sm text-muted-foreground">
+                              Joined {new Date(member.joinedAt).toLocaleDateString()}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="secondary" className={roleInfo.color}>
-                        <IconComponent className="mr-1 h-3 w-3" />
-                        {roleInfo.label}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="space-y-1">
-                        <div className="flex items-center text-sm">
-                          <Mail className="mr-2 h-3 w-3 text-muted-foreground" />
-                          {member.email}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="secondary" className={roleInfo.color}>
+                          <IconComponent className="mr-1 h-3 w-3" />
+                          {roleInfo.label}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="space-y-1">
+                          <div className="flex items-center text-sm">
+                            <Mail className="mr-2 h-3 w-3 text-muted-foreground" />
+                            {member.email}
+                          </div>
+                          <div className="flex items-center text-sm text-muted-foreground">
+                            <Phone className="mr-2 h-3 w-3" />
+                            {member.phone}
+                          </div>
                         </div>
-                        <div className="flex items-center text-sm text-muted-foreground">
-                          <Phone className="mr-2 h-3 w-3" />
-                          {member.phone}
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={member.status === 'active' ? 'default' : 'secondary'}>
-                        {member.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {member.lastActive}
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      {member.assessmentsCompleted}
-                    </TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" className="h-8 w-8 p-0">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuItem onClick={() => console.log('View profile', member.id)}>
-                            View Profile
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => console.log('Send message', member.id)}>
-                            Send Message
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuLabel>Change Role</DropdownMenuLabel>
-                          {Object.entries(roleConfig).map(([key, config]) => (
-                            <DropdownMenuItem
-                              key={key}
-                              onClick={() => handleRoleChange(member.id, key, member.name)}
-                              disabled={member.role === key}
-                            >
-                              <config.icon className="mr-2 h-4 w-4" />
-                              {config.label}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={member.status === 'active' ? 'default' : 'secondary'}>
+                          {member.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {member.lastActive}
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        {member.assessmentsCompleted}
+                      </TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuItem onClick={() => console.log('View profile', member.id)}>
+                              View Profile
                             </DropdownMenuItem>
-                          ))}
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem 
-                            onClick={() => handleRemoveMember(member.id, member.name)}
-                            className="text-red-600"
-                          >
-                            Remove from Team
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
+                            <DropdownMenuItem onClick={() => console.log('Send message', member.id)}>
+                              Send Message
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuLabel>Change Role</DropdownMenuLabel>
+                            {Object.entries(roleConfig).map(([key, config]) => (
+                              <DropdownMenuItem
+                                key={key}
+                                onClick={() => handleRoleChange(member.id, key, member.name)}
+                                disabled={member.role === key}
+                              >
+                                <config.icon className="mr-2 h-4 w-4" />
+                                {config.label}
+                              </DropdownMenuItem>
+                            ))}
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onClick={() => handleRemoveMember(member.id, member.name)}
+                              className="text-red-600"
+                            >
+                              Remove from Team
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
     </div>
