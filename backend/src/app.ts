@@ -98,7 +98,7 @@ app.get('/api/health', (req, res) => {
   res.json({
     status: 'OK',
     message: 'Onyx Backend API is running',
-    version: '1.0.1', // Updated to force deployment
+    version: '1.0.2', // Updated to force deployment with auth fix
     timestamp: new Date().toISOString(),
     cors_enabled: true
   });
