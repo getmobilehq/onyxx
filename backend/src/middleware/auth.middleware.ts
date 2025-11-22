@@ -69,7 +69,16 @@ export const authorize = (...roles: string[]) => {
       });
     }
 
-    if (!roles.includes(req.user.role)) {
+    // Platform admins can access everything
+    if (req.user.is_platform_admin) {
+      return next();
+    }
+
+    // Normalize role for backward compatibility
+    // Old 'admin' users are treated as 'manager' since admin role was deprecated
+    const userRole = req.user.role === 'admin' ? 'manager' : req.user.role;
+
+    if (!roles.includes(userRole)) {
       return res.status(403).json({
         success: false,
         message: 'Forbidden. Insufficient permissions.',
