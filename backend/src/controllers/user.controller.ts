@@ -441,10 +441,11 @@ export const inviteUser = async (
       }
     }
 
-    // Generate temporary password
-    const tempPassword = crypto.randomBytes(8).toString('hex');
+    // Get password from request or generate temporary one
+    const { password } = req.body;
+    const userPassword = password || crypto.randomBytes(8).toString('hex');
     const salt = await bcrypt.genSalt(10);
-    const password_hash = await bcrypt.hash(tempPassword, salt);
+    const password_hash = await bcrypt.hash(userPassword, salt);
 
     // Determine organization_id and admin status
     const organization_id = inviterData.is_platform_admin
@@ -463,22 +464,13 @@ export const inviteUser = async (
 
     const newUser = result.rows[0];
 
-    // In a real application, you would send an email here
-    // For now, we'll return the temporary password in development mode
-    const responseData: any = {
+    res.status(201).json({
       success: true,
-      message: 'User invited successfully',
+      message: 'User added successfully',
       data: {
         user: newUser,
       },
-    };
-
-    if (process.env.NODE_ENV === 'development') {
-      responseData.data.tempPassword = tempPassword;
-      responseData.message += ' (Temporary password included for development only)';
-    }
-
-    res.status(201).json(responseData);
+    });
   } catch (error) {
     next(error);
   }

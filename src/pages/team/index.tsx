@@ -70,10 +70,10 @@ interface TeamMember {
 const inviteSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Please enter a valid email address'),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
   role: z.enum(['manager', 'assessor'], {
     errorMap: () => ({ message: 'Please select a role' }),
   }),
-  message: z.string().optional(),
 });
 
 type InviteForm = z.infer<typeof inviteSchema>;
@@ -106,8 +106,8 @@ export function TeamPage() {
     defaultValues: {
       name: '',
       email: '',
+      password: '',
       role: 'assessor',
-      message: '',
     },
   });
 
@@ -157,18 +157,19 @@ export function TeamPage() {
       const response = await usersAPI.invite({
         name: data.name,
         email: data.email,
+        password: data.password,
         role: data.role,
       });
 
       if (response.data.success) {
-        toast.success(`Invitation sent to ${data.email}`);
+        toast.success(`User ${data.name} has been added to the team`);
         setIsInviteDialogOpen(false);
         form.reset();
         // Refresh team members list
         fetchTeamMembers();
       }
     } catch (error: any) {
-      const message = error.response?.data?.message || 'Failed to send invitation';
+      const message = error.response?.data?.message || 'Failed to add team member';
       toast.error(message);
     }
   };
@@ -283,15 +284,15 @@ export function TeamPage() {
                 />
                 <FormField
                   control={form.control}
-                  name="message"
+                  name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Personal Message (Optional)</FormLabel>
+                      <FormLabel>Initial Password</FormLabel>
                       <FormControl>
-                        <Input placeholder="Welcome to the team!" {...field} />
+                        <Input type="password" placeholder="Enter a password for the user" {...field} />
                       </FormControl>
                       <FormDescription>
-                        Add a personal note to the invitation email
+                        Set an initial password for the new team member (min. 8 characters)
                       </FormDescription>
                       <FormMessage />
                     </FormItem>

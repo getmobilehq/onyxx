@@ -50,14 +50,17 @@ const inviteUserValidation = [
     .normalizeEmail()
     .withMessage('Please provide a valid email'),
   body('role')
-    .isIn(['admin', 'manager', 'assessor'])
-    .withMessage('Invalid role'),
+    .isIn(['manager', 'assessor'])
+    .withMessage('Invalid role - must be manager or assessor'),
   body('name')
     .trim()
     .notEmpty()
     .withMessage('Name is required')
     .isLength({ min: 2 })
     .withMessage('Name must be at least 2 characters'),
+  body('password')
+    .isLength({ min: 8 })
+    .withMessage('Password must be at least 8 characters'),
 ];
 
 // Routes

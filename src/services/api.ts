@@ -292,7 +292,7 @@ export const reportsAPI = {
 export const usersAPI = {
   getAll: () => api.get('/users'),
   getById: (id: string) => api.get(`/users/${id}`),
-  invite: (data: { email: string; role: string; name: string }) =>
+  invite: (data: { email: string; role: string; name: string; password: string }) =>
     api.post('/users/invite', data),
   update: (id: string, data: any) => api.put(`/users/${id}`, data),
   delete: (id: string) => api.delete(`/users/${id}`),
